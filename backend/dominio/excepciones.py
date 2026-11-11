@@ -10,11 +10,11 @@ class TurnoSuperpuestoError(VeterinariaError):
 class TransicionInvalidaError(VeterinariaError):
     """Transicion Invalida"""
 
-class MuestraRechazadaError(VeterinariaError):
-    """La Muestra ha sido Rechazada"""
-
 class VacunasPendientesError(VeterinariaError):
     """La Mascota tiene Vacunas Pendientes"""
 
 class DerivacionCirugiaError(VeterinariaError):
     """Error al Derivar una Cirugia"""
+
+class DatosInvalidosError(VeterinariaError):
+    """Error al ingresar datos..."""
