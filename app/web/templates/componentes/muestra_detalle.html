@@ -14,7 +14,9 @@
           {% if r %}<div>{{ r.valores }} {{ r.unidad }}</div><div class="small text-muted">Ref.: {{ r.valores_referencia }} · {{ r.analista }} · {{ r.fecha_hora|fecha_hora }}</div><i class="small">{{ r.interpretacion }}</i>
           {% else %}<span class="text-muted small">– sin resultado</span>{% endif %}</div>
       {% endfor %}
-      {% if m.motivo_rechazo() %}<div class="alert alert-danger mb-0">Muestra rechazada: {{ m.motivo_rechazo() }}. No admite resultados.</div>{% endif %}
+      {% if m.motivo_rechazo() %}<div class="alert alert-danger mb-0">Muestra rechazada: {{ m.motivo_rechazo() }}. No admite resultados.
+        {% if u.portal == 'laboratorio' %}<a class="alert-link d-block mt-1" href="/laboratorio/muestras/{{ m.id }}/resultados">Intentar cargar un resultado (el dominio lo impide)</a>{% endif %}</div>{% endif %}
+      {% if u.portal == 'laboratorio' and 'cargar_resultado' in m.acciones() %}<a class="btn btn-portal" href="/laboratorio/muestras/{{ m.id }}/resultados">Cargar resultados</a>{% endif %}
     </div></div>
   </div>
 </div>
