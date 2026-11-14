@@ -1,0 +1,27 @@
+# Entornos virtuales
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Base de datos local
+*.db
+*.db-journal
+
+# Tests / herramientas
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Configuración local
+.env
+
+# Editores / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
