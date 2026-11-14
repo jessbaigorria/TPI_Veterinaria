@@ -108,7 +108,7 @@ class CatalogosService(ServicioBase):
     @transaccional
     def cambiar_estado_contenedor(self, contenedor_id, accion: str) -> Contenedor:
         c = self.obtener(Contenedor, contenedor_id)
-        {"mantenimiento": c.enviar_a_mantenimiento, "habilitar": c.liberar}[accion]()
+        {"mantenimiento": c.enviar_a_mantenimiento, "habilitar": c.habilitar}[accion]()
         return c
 
     # --- auxiliares -------------------------------------------------------------------

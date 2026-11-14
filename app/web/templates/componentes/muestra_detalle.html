@@ -1,0 +1,21 @@
+{% extends base %}
+{% from "componentes/macros.html" import encabezado, badge_muestra, badge_remito, linea_tiempo, custodia %}
+{% block contenido %}
+{% call encabezado("Muestra " ~ m.codigo, m.tipo.etiqueta ~ " · " ~ m.orden.mascota.nombre ~ " · orden " ~ m.orden.numero) %}{{ badge_muestra(m) }}{% endcall %}
+<div class="row g-3">
+  <div class="col-lg-5"><div class="card h-100"><div class="card-header"><i class="bi bi-clock-history"></i> Línea de tiempo (trazabilidad)</div>
+    <div class="card-body">{{ linea_tiempo(m.historial()) }}</div></div></div>
+  <div class="col-lg-7">
+    <div class="card mb-3"><div class="card-header"><i class="bi bi-link-45deg"></i> Cadena de custodia</div><div class="card-body">{{ custodia(m) }}</div></div>
+    <div class="card"><div class="card-header">Análisis y resultados</div><div class="card-body">
+      {% for t in m.analisis_requeridos() %}
+        {% set r = m.resultados|selectattr('tipo_analisis', 'equalto', t)|first %}
+        <div class="border rounded p-2 mb-2"><b>{{ t.nombre }}</b>
+          {% if r %}<div>{{ r.valores }} {{ r.unidad }}</div><div class="small text-muted">Ref.: {{ r.valores_referencia }} · {{ r.analista }} · {{ r.fecha_hora|fecha_hora }}</div><i class="small">{{ r.interpretacion }}</i>
+          {% else %}<span class="text-muted small">– sin resultado</span>{% endif %}</div>
+      {% endfor %}
+      {% if m.motivo_rechazo() %}<div class="alert alert-danger mb-0">Muestra rechazada: {{ m.motivo_rechazo() }}. No admite resultados.</div>{% endif %}
+    </div></div>
+  </div>
+</div>
+{% endblock %}

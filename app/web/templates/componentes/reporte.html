@@ -1,0 +1,45 @@
+{% extends base %}
+{% from "componentes/macros.html" import encabezado, vacio %}
+{% block contenido %}
+{% call encabezado(rep.codigo ~ " · " ~ rep.titulo, rep.descripcion) %}
+  <a href="?{{ request.query_params }}{{ '&' if request.query_params }}formato=csv" class="btn btn-outline-secondary"><i class="bi bi-filetype-csv"></i> Exportar CSV</a>
+{% endcall %}
+<ul class="nav nav-pills mb-3">{% for c in disponibles %}<li class="nav-item"><a class="nav-link {{ 'active' if c == codigo }} {{ 'btn-portal' if c == codigo }}" href="/{{ portal }}/reportes/{{ c }}">{{ c|upper }}</a></li>{% endfor %}</ul>
+<div class="card mb-3"><div class="card-body">
+<form class="row g-2 align-items-end">
+  <div class="col-md-2"><label class="form-label small">Desde</label><input type="date" class="form-control" name="desde" value="{{ rep.filtro.desde or '' }}"></div>
+  <div class="col-md-2"><label class="form-label small">Hasta{{ ' (fecha de corte)' if codigo == 'r5' }}</label><input type="date" class="form-control" name="hasta" value="{{ rep.filtro.hasta or '' }}"></div>
+  {% if clinicas %}
+  <div class="col-md-3"><label class="form-label small">{{ 'Clínica de última atención' if codigo == 'r5' else ('Clínica de origen' if codigo in ('r2','r3') else 'Clínica') }}</label>
+    <select class="form-select" name="clinica_id"><option value="">Toda la red</option>
+      {% for c in clinicas %}<option value="{{ c.id }}" {{ 'selected' if rep.filtro.clinica_id == c.id }}>{{ c.nombre }}</option>{% endfor %}</select></div>
+  {% endif %}
+  {% if laboratorios and codigo in ('r2', 'r3') %}
+  <div class="col-md-3"><label class="form-label small">Laboratorio</label>
+    <select class="form-select" name="laboratorio_id"><option value="">Todos</option>
+      {% for l in laboratorios %}<option value="{{ l.id }}" {{ 'selected' if rep.filtro.laboratorio_id == l.id }}>{{ l.nombre }}</option>{% endfor %}</select></div>
+  {% endif %}
+  {% if codigo == 'r5' %}
+  <div class="col-md-2"><label class="form-label small">Especie</label><select class="form-select" name="especie"><option value="">Todas</option>
+    {% for e in enums.Especie %}<option value="{{ e.value }}" {{ 'selected' if rep.filtro.especie == e.value }}>{{ e.etiqueta }}</option>{% endfor %}</select></div>
+  {% endif %}
+  <div class="col-md-2"><button class="btn btn-portal w-100"><i class="bi bi-funnel"></i> Aplicar</button></div>
+</form></div></div>
+<div class="row g-3 mb-3">{% for t, v in rep.indicadores %}<div class="col-6 col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">{{ t }}</div><div class="fs-4 fw-bold">{{ v }}</div></div></div></div>{% endfor %}</div>
+{% if rep.vacio %}<div class="card"><div class="card-body">{{ vacio("No hay datos para los filtros elegidos.") }}</div></div>
+{% else %}
+<div class="row g-3 mb-3">
+  {% for g in rep.graficos %}<div class="col-lg-{{ 12 if rep.graficos|length == 1 else 6 }}"><div class="card h-100"><div class="card-header">{{ g.titulo }}</div>
+    <div class="card-body"><div class="grafico"><canvas data-grafico='{{ g.config()|tojson }}'></canvas></div></div></div></div>{% endfor %}
+</div>
+{% for t in rep.tablas %}
+<div class="card mb-3"><div class="card-header">{{ t.titulo }}</div><div class="card-body p-0 table-responsive">
+{% if t.filas %}<table class="table table-sm table-striped mb-0">
+  <thead><tr>{% for c in t.columnas %}<th>{{ c }}</th>{% endfor %}</tr></thead>
+  <tbody>{% for f in t.filas %}<tr>{% for v in f %}<td>{{ v|celda }}{{ ' %' if t.columnas[loop.index0].startswith('%') }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+  {% if t.totales %}<tfoot class="fw-bold"><tr>{% for v in t.totales %}<td>{{ v|celda }}{{ ' %' if t.columnas[loop.index0].startswith('%') }}</td>{% endfor %}</tr></tfoot>{% endif %}
+</table>{% else %}{{ vacio() }}{% endif %}
+</div></div>
+{% endfor %}
+{% endif %}
+{% endblock %}

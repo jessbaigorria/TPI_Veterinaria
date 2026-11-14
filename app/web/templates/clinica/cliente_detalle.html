@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import encabezado, badge_enum, vacio %}
+{% block contenido %}
+{% call encabezado(t.nombre_completo(), "DNI " ~ t.dni ~ (" · DADO DE BAJA" if not t.activo else "")) %}
+  <a href="/clinica/clientes/{{ t.id }}/editar" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i> Editar</a>
+  {% if t.activo %}
+  <a href="/clinica/mascotas/nueva?titular={{ t.id }}" class="btn btn-portal"><i class="bi bi-plus-lg"></i> Nueva mascota</a>
+  <form method="post" action="/clinica/clientes/{{ t.id }}/baja" data-confirm="¿Dar de baja al titular y sus mascotas? (baja lógica)"><button class="btn btn-outline-danger"><i class="bi bi-person-x"></i> Baja</button></form>
+  {% else %}
+  <form method="post" action="/clinica/clientes/{{ t.id }}/reactivar"><button class="btn btn-outline-success">Reactivar</button></form>
+  {% endif %}
+{% endcall %}
+<div class="row g-3">
+  <div class="col-lg-4"><div class="card"><div class="card-header">Datos</div><div class="card-body">
+    <dl class="row mb-0">
+      <dt class="col-4">Dirección</dt><dd class="col-8">{{ t.direccion or '–' }}</dd>
+      <dt class="col-4">Teléfono</dt><dd class="col-8">{{ t.telefono or '–' }}</dd>
+      <dt class="col-4">Email</dt><dd class="col-8">{{ t.email or '–' }}</dd>
+      <dt class="col-4">Alta</dt><dd class="col-8">{{ t.fecha_alta|fecha }}</dd>
+    </dl></div></div></div>
+  <div class="col-lg-8">
+    <div class="card mb-3"><div class="card-header">Mascotas</div><div class="card-body p-0">
+      {% if t.mascotas %}<table class="table table-hover tabla-compacta mb-0"><tbody>
+      {% for m in t.mascotas %}<tr onclick="location='/clinica/mascotas/{{ m.id }}'" style="cursor:pointer" class="{{ 'text-muted' if not m.activa }}">
+        <td class="fw-semibold">{{ m.nombre }}</td><td>{{ m.especie.etiqueta }} · {{ m.raza }}</td><td>{{ m.edad_texto() }}</td>
+        <td>{{ m.historia_clinica.numero }}</td>
+        <td>{% set p = m.historia_clinica.vacunas_pendientes() %}{% if p %}<span class="badge estado estado-rojo">{{ p|length }} vacuna(s) pendiente(s)</span>{% else %}<span class="badge estado estado-verde">Vacunas al día</span>{% endif %}</td>
+        <td>{{ '' if m.activa else 'Baja' }}</td></tr>{% endfor %}
+      </tbody></table>{% else %}{{ vacio("Sin mascotas.") }}{% endif %}
+    </div></div>
+    <div class="card"><div class="card-header">Facturas</div><div class="card-body p-0">
+      {% if t.facturas %}<table class="table tabla-compacta mb-0"><tbody>
+      {% for f in t.facturas|sort(attribute='fecha_emision', reverse=True) %}<tr><td><a href="/clinica/facturacion/{{ f.id }}">{{ f.numero }}</a></td><td>{{ f.fecha_emision|fecha }}</td>
+        <td>{{ f.tipo.etiqueta }}</td><td>{{ f.clinica.nombre }}</td><td class="text-end">{{ f.total|moneda }}</td><td>{{ badge_enum(f.estado) }}</td></tr>{% endfor %}
+      </tbody></table>{% else %}{{ vacio("Sin facturas.") }}{% endif %}
+    </div></div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import badge_enum, encabezado, vacio %}
+{% block contenido %}
+{% call encabezado("Agenda", "La atención en estado RESERVADA funciona como turno") %}
+  <a href="/clinica/agenda/nuevo?fecha={{ dia }}" class="btn btn-portal"><i class="bi bi-calendar-plus"></i> Reservar turno</a>
+{% endcall %}
+<div class="card mb-3"><div class="card-body d-flex flex-wrap gap-2 align-items-center">
+  <a class="btn btn-outline-secondary btn-sm" href="?fecha={{ anterior }}"><i class="bi bi-chevron-left"></i></a>
+  <form class="d-flex gap-2"><input type="date" class="form-control form-control-sm" name="fecha" value="{{ dia }}" onchange="this.form.submit()"></form>
+  <a class="btn btn-outline-secondary btn-sm" href="?fecha={{ siguiente }}"><i class="bi bi-chevron-right"></i></a>
+  <a class="btn btn-outline-secondary btn-sm" href="/clinica/agenda">Hoy</a>
+  <span class="ms-2 fw-semibold">{{ dia|fecha }}</span>
+</div></div>
+<div class="card"><div class="card-body p-0 table-responsive">
+<table class="table table-bordered agenda mb-0">
+  <thead class="table-light"><tr><th class="franja">Hora</th>
+    {% for p in profesionales %}<th>{{ p.nombre_completo() }}<div class="small text-muted fw-normal">{{ p.especialidad }}</div></th>{% endfor %}</tr></thead>
+  <tbody>
+  {% for f in franjas %}
+    <tr><td class="franja">{{ f|hora }}</td>
+    {% for p in profesionales %}
+      {% set a = grilla.get((p.id, f)) %}
+      {% if a %}
+        <td class="ocupado">
+          {% if a.fecha_hora_inicio >= f and a.fecha_hora_inicio < f + (franjas[1] - franjas[0]) %}
+          <div class="d-flex justify-content-between align-items-start gap-1">
+            <div><a href="/clinica/atenciones/{{ a.id }}" class="fw-semibold">{{ a.mascota.nombre }}</a>
+              <span class="text-muted">· {{ a.tipo.etiqueta }}</span>
+              <div class="small text-muted">{{ a.fecha_hora_inicio|hora }}–{{ a.fecha_hora_fin|hora }} · {{ a.titular.apellido }}</div></div>
+            <div class="text-end">{{ badge_enum(a.estado) }}
+              {% if enums.EstadoAtencion.EN_PROGRESO in a.transiciones_posibles() %}
+              <form method="post" action="/clinica/atenciones/{{ a.id }}/iniciar" class="d-inline"><button class="btn btn-sm btn-link p-0 ms-1" title="Iniciar"><i class="bi bi-play-circle"></i></button></form>
+              {% endif %}
+            </div>
+          </div>
+          {% else %}<span class="text-muted small">↳ {{ a.mascota.nombre }}</span>{% endif %}
+        </td>
+      {% else %}
+        <td><a class="text-muted small text-decoration-none" href="/clinica/agenda/nuevo?fecha={{ dia }}&hora={{ f|hora }}&profesional={{ p.id }}">+</a></td>
+      {% endif %}
+    {% endfor %}</tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div></div>
+<div class="card mt-3"><div class="card-header">Turnos del día ({{ turnos|length }})</div><div class="card-body p-0">
+{% if turnos %}
+<table class="table tabla-compacta mb-0">
+  <thead><tr><th>Hora</th><th>Mascota</th><th>Titular</th><th>Profesional</th><th>Tipo</th><th>Motivo</th><th>Estado</th><th></th></tr></thead>
+  <tbody>{% for a in turnos %}
+  <tr><td>{{ a.fecha_hora_inicio|hora }}–{{ a.fecha_hora_fin|hora }}</td><td>{{ a.mascota.nombre }}</td><td>{{ a.titular.nombre_completo() }}</td>
+    <td>{{ a.profesional.nombre_completo() }}</td><td>{{ a.tipo.etiqueta }}</td><td class="small text-pre">{{ a.observaciones|truncate(60) }}</td>
+    <td>{{ badge_enum(a.estado) }}</td>
+    <td class="text-nowrap">
+      {% if enums.EstadoAtencion.EN_PROGRESO in a.transiciones_posibles() %}
+      <form method="post" action="/clinica/atenciones/{{ a.id }}/iniciar" class="d-inline"><button class="btn btn-sm btn-portal"><i class="bi bi-play"></i> Iniciar</button></form>
+      {% endif %}
+      {% if enums.EstadoAtencion.CANCELADA in a.transiciones_posibles() %}
+      <form method="post" action="/clinica/atenciones/{{ a.id }}/cancelar" class="d-inline-flex gap-1" data-confirm="¿Cancelar el turno?">
+        <input name="motivo" class="form-control form-control-sm" placeholder="Motivo" required style="width:140px">
+        <button class="btn btn-sm btn-outline-danger"><i class="bi bi-x"></i></button></form>
+      {% endif %}
+      <a href="/clinica/atenciones/{{ a.id }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a>
+    </td></tr>
+  {% endfor %}</tbody>
+</table>
+{% else %}{{ vacio("No hay turnos para este día.") }}{% endif %}
+</div></div>
+{% endblock %}

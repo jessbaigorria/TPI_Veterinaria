@@ -18,7 +18,6 @@ from app import db
 from app.domain import reloj
 from app.domain.atencion import AtencionClinica, Clinica, Profesional
 from app.domain.enums import FormaPago, Prioridad, RiesgoAnestesico, TipoAtencion
-from app.domain.excepciones import TurnoSuperpuestoError, VacunasPendientesError
 from app.domain.personas import Titular
 from app.services.atenciones import AtencionesService
 from app.services.catalogos import CatalogosService

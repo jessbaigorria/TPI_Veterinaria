@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import encabezado, campo %}
+{% block contenido %}
+{% call encabezado("Editar titular" if t else "Nuevo titular") %}{% endcall %}
+<div class="card" style="max-width: 760px"><div class="card-body">
+<form method="post" action="{{ '/clinica/clientes/' ~ t.id if t else '/clinica/clientes' }}">
+  <div class="row">
+    <div class="col-md-4">{{ campo('dni', 'DNI', previo.dni or (t.dni if t), requerido=True) }}</div>
+    <div class="col-md-4">{{ campo('nombre', 'Nombre', previo.nombre or (t.nombre if t), requerido=True) }}</div>
+    <div class="col-md-4">{{ campo('apellido', 'Apellido', previo.apellido or (t.apellido if t), requerido=True) }}</div>
+    <div class="col-md-12">{{ campo('direccion', 'Dirección', previo.direccion or (t.direccion if t)) }}</div>
+    <div class="col-md-6">{{ campo('telefono', 'Teléfono', previo.telefono or (t.telefono if t)) }}</div>
+    <div class="col-md-6">{{ campo('email', 'Email', previo.email or (t.email if t), tipo='email') }}</div>
+  </div>
+  <input type="hidden" name="volver" value="{{ query.volver }}">
+  <button class="btn btn-portal"><i class="bi bi-check-lg"></i> Guardar</button>
+  <a href="{{ '/clinica/clientes/' ~ t.id if t else '/clinica/clientes' }}" class="btn btn-outline-secondary">Cancelar</a>
+</form></div></div>
+{% endblock %}

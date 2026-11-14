@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta
 import pytest
 
 from app.domain import reloj
-from app.domain.enums import EstadoAtencion, RiesgoAnestesico, TipoAtencion
+from app.domain.enums import EstadoAtencion, RiesgoAnestesico
 from app.domain.excepciones import (
     DerivacionCirugiaError, MascotaSinTitularError, MuestraRechazadaError, TurnoSuperpuestoError,
     VacunasPendientesError, VeterinariaError,

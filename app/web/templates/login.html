@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block contenido %}
+<div class="container" style="max-width: 980px">
+  <div class="text-center my-4">
+    <h2 class="fw-bold">VetRed – Red de Clínicas y Laboratorio Central</h2>
+    <p class="text-muted">Elegí el portal con el que vas a trabajar. Los dos comparten los mismos datos.</p>
+    {% if actual %}<div class="alert alert-info d-inline-block py-2">Sesión actual: {{ actual.sede_nombre }} · {{ actual.usuario }}
+      <a href="/{{ actual.portal }}" class="ms-2">Continuar</a> · <a href="/salir">Salir</a></div>{% endif %}
+  </div>
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div class="card tarjeta-portal h-100"><div class="card-body p-4">
+        <h4><span class="fs-2">🏥</span> Entrar como Clínica</h4>
+        <p class="text-muted small">Atención de pacientes, órdenes, empaquetado y despacho de muestras, cirugías y facturación.</p>
+        <form method="post" action="/ingresar">
+          <input type="hidden" name="portal" value="clinica">
+          <label class="form-label">Clínica</label>
+          <select class="form-select mb-3" name="clinica_id" id="sel-clinica" required>
+            {% for c in clinicas %}<option value="{{ c.id }}">{{ c.nombre }}{{ ' (alta complejidad)' if c.alta_complejidad }}</option>{% endfor %}
+          </select>
+          <label class="form-label">Usuario</label>
+          <select class="form-select mb-3" name="usuario" id="sel-usuario" required></select>
+          <button class="btn btn-clinica w-100"><i class="bi bi-box-arrow-in-right"></i> Ingresar al Portal Clínica</button>
+        </form>
+      </div></div>
+    </div>
+    <div class="col-md-6">
+      <div class="card tarjeta-portal lab h-100"><div class="card-body p-4">
+        <h4><span class="fs-2">🧪</span> Entrar como Laboratorio</h4>
+        <p class="text-muted small">Recepción de remitos, verificación de precinto y temperatura, análisis y resultados.</p>
+        <form method="post" action="/ingresar">
+          <input type="hidden" name="portal" value="laboratorio">
+          <label class="form-label">Laboratorio</label>
+          <select class="form-select mb-3" name="laboratorio_id" required>
+            {% for l in laboratorios %}<option value="{{ l.id }}">{{ l.nombre }}</option>{% endfor %}
+          </select>
+          <label class="form-label">Nombre del operador</label>
+          <input class="form-control mb-3" name="usuario" list="operadores" placeholder="Ej.: Gómez" required>
+          <datalist id="operadores"><option value="Gómez (bioquímico)"><option value="Ibarra (técnica)"></datalist>
+          <button class="btn btn-lab w-100"><i class="bi bi-box-arrow-in-right"></i> Ingresar al Portal Laboratorio</button>
+        </form>
+      </div></div>
+    </div>
+  </div>
+  <p class="text-center text-muted small mt-4">TP Integrador DAO 2026 · Grupo 30 · Sin contraseñas: el usuario elegido queda registrado en toda la auditoría.</p>
+</div>
+<script>
+  const USUARIOS = {{ usuarios|tojson }};
+  const selC = document.getElementById("sel-clinica"), selU = document.getElementById("sel-usuario");
+  const llenar = () => { selU.innerHTML = ""; (USUARIOS[selC.value] || []).forEach(n => selU.add(new Option(n, n))); };
+  selC.addEventListener("change", llenar); llenar();
+</script>
+{% endblock %}

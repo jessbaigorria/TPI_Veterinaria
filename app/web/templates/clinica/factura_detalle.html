@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import encabezado, badge_enum %}
+{% block contenido %}
+{% set t = f.transiciones_posibles() %}
+{% call encabezado("Comprobante " ~ f.numero, f.tipo.etiqueta ~ " · " ~ f.clinica.nombre) %}{{ badge_enum(f.estado) }}{% endcall %}
+<div class="row g-3">
+  <div class="col-lg-8"><div class="card"><div class="card-body">
+    <div class="d-flex justify-content-between mb-3"><div><b>{{ f.clinica.nombre }}</b><br><small>{{ f.clinica.direccion }} · {{ f.clinica.telefono }}</small></div>
+      <div class="text-end"><b>{{ f.numero }}</b><br><small>{{ f.fecha_emision|fecha_hora }}</small></div></div>
+    <div class="mb-3">A nombre de: <b>{{ f.titular.nombre_completo() }}</b> · DNI {{ f.titular.dni }}</div>
+    <table class="table"><thead><tr><th>Descripción</th><th class="text-end">Cant.</th><th class="text-end">Precio unitario</th><th class="text-end">Subtotal</th></tr></thead>
+      <tbody>{% for i in f.items %}<tr><td>{{ i.descripcion }}</td><td class="text-end">{{ i.cantidad }}</td><td class="text-end">{{ i.precio_unitario|moneda }}</td><td class="text-end">{{ i.subtotal()|moneda }}</td></tr>{% endfor %}</tbody>
+      <tfoot><tr><th colspan="3" class="text-end">Total</th><th class="text-end fs-5">{{ f.total|moneda }}</th></tr></tfoot></table>
+    <div class="small text-muted">
+      {% if f.atencion %}Atención: <a href="/clinica/atenciones/{{ f.atencion.id }}">{{ f.atencion.fecha_hora_inicio|fecha }}</a>{% endif %}
+      {% if f.orden %}Orden: <a href="/clinica/ordenes/{{ f.orden.id }}">{{ f.orden.numero }}</a> (solo se facturan análisis realizados){% endif %}
+      {% if f.derivacion %}Cirugía: <a href="/clinica/cirugias/{{ f.derivacion.id }}">{{ f.derivacion.numero }}</a>{% endif %}
+      {% if f.forma_pago %} · Pagada con {{ f.forma_pago.etiqueta }} el {{ f.fecha_pago|fecha_hora }}{% endif %}
+    </div>
+  </div></div></div>
+  <div class="col-lg-4">
+    {% if enums.EstadoFactura.PAGADA in t %}
+    <div class="card mb-3"><div class="card-header">Registrar pago</div><div class="card-body">
+      <form method="post" action="/clinica/facturas/{{ f.id }}/pagar" class="d-flex gap-2">
+        <select class="form-select" name="forma_pago">{% for fp in enums.FormaPago %}<option value="{{ fp.value }}">{{ fp.etiqueta }}</option>{% endfor %}</select>
+        <button class="btn btn-success">Pagar</button></form></div></div>
+    {% endif %}
+    {% if enums.EstadoFactura.ANULADA in t %}
+    <form method="post" action="/clinica/facturas/{{ f.id }}/anular" data-confirm="¿Anular el comprobante?"><button class="btn btn-outline-danger w-100">Anular comprobante</button></form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

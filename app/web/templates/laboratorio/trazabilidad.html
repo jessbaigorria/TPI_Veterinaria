@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import encabezado, badge_muestra, badge_remito, linea_tiempo, custodia, vacio %}
+{% block contenido %}
+{% call encabezado("Trazabilidad", "Buscá por código de muestra (M-…) o de remito (REM-…)") %}{% endcall %}
+<div class="card mb-3"><div class="card-body"><form class="d-flex gap-2">
+  <input class="form-control form-control-lg" name="codigo" value="{{ codigo }}" placeholder="M-000001 o REM-000001" autofocus>
+  <button class="btn btn-portal px-4"><i class="bi bi-search"></i></button></form></div></div>
+{% if m %}
+<div class="row g-3">
+  <div class="col-lg-5"><div class="card h-100"><div class="card-header d-flex justify-content-between">{{ m.codigo }} · {{ m.tipo.etiqueta }} {{ badge_muestra(m) }}</div>
+    <div class="card-body">{{ linea_tiempo(m.historial()) }}</div></div></div>
+  <div class="col-lg-7"><div class="card"><div class="card-header">Cadena de custodia</div><div class="card-body">{{ custodia(m) }}
+    <a class="btn btn-sm btn-outline-secondary mt-2" href="/laboratorio/muestras/{{ m.id }}">Ver detalle y resultados</a></div></div></div>
+</div>
+{% elif remito %}
+<div class="card mb-3"><div class="card-header d-flex justify-content-between">Remito {{ remito.numero }} · {{ remito.clinica_origen.nombre }} {{ badge_remito(remito) }}</div>
+<div class="card-body">
+  <div class="row g-3">{% for mu in remito.muestras %}<div class="col-lg-6"><div class="border rounded p-3">
+    <div class="d-flex justify-content-between mb-2"><a href="?codigo={{ mu.codigo }}" class="fw-semibold">{{ mu.codigo }} · {{ mu.tipo.etiqueta }}</a>{{ badge_muestra(mu) }}</div>
+    {{ linea_tiempo(mu.historial()) }}</div></div>{% endfor %}</div>
+</div></div>
+{% else %}
+<div class="card"><div class="card-header">Remitos recientes de este laboratorio</div><div class="card-body p-0">
+{% if recientes %}<table class="table tabla-compacta mb-0"><tbody>{% for r in recientes %}<tr><td><a href="?codigo={{ r.numero }}">{{ r.numero }}</a></td><td>{{ r.clinica_origen.nombre }}</td>
+  <td>{% for mu in r.muestras %}<a href="?codigo={{ mu.codigo }}">{{ mu.codigo }}</a> {% endfor %}</td><td>{{ badge_remito(r) }}</td></tr>{% endfor %}</tbody></table>
+{% else %}{{ vacio() }}{% endif %}</div></div>
+{% endif %}
+{% endblock %}

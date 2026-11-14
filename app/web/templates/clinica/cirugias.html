@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import encabezado, badge_enum, vacio %}
+{% block contenido %}
+{% call encabezado("Cirugías de alta complejidad", "Derivaciones dentro de la red hacia clínicas habilitadas") %}{% endcall %}
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item"><a class="nav-link {{ 'active' if tab == 'enviadas' }}" href="?tab=enviadas">Enviadas ({{ enviadas|length }})</a></li>
+  {% if u.alta_complejidad %}<li class="nav-item"><a class="nav-link {{ 'active' if tab == 'recibidas' }}" href="?tab=recibidas">Recibidas ({{ recibidas|length }})</a></li>{% endif %}
+</ul>
+{% set lista = recibidas if tab == 'recibidas' and u.alta_complejidad else enviadas %}
+<div class="card"><div class="card-body p-0">
+{% if lista %}<table class="table table-hover mb-0">
+  <thead><tr><th>N°</th><th>Solicitud</th><th>Mascota</th><th>Cirugía</th><th>{{ 'Origen' if tab == 'recibidas' else 'Destino' }}</th><th>Prioridad</th><th>Riesgo</th><th>Consentimiento</th><th>Programada</th><th>Estado</th></tr></thead>
+  <tbody>{% for d in lista %}<tr onclick="location='/clinica/cirugias/{{ d.id }}'" style="cursor:pointer">
+    <td class="fw-semibold">{{ d.numero }}</td><td>{{ d.fecha_solicitud|fecha }}</td><td>{{ d.mascota.nombre }}</td><td>{{ d.tipo_cirugia }}</td>
+    <td>{{ d.clinica_origen.nombre if tab == 'recibidas' else d.destino.nombre }}</td><td>{{ badge_enum(d.prioridad) }}</td><td>{{ d.riesgo_anestesico.etiqueta }}</td>
+    <td>{{ '✔' if d.consentimiento_firmado else '–' }}</td><td>{{ d.fecha_programada|fecha_hora }}</td><td>{{ badge_enum(d.estado) }}</td></tr>{% endfor %}</tbody>
+</table>{% else %}{{ vacio("Sin derivaciones. Se crean desde una atención (“Derivar a cirugía”).") }}{% endif %}
+</div></div>
+{% endblock %}

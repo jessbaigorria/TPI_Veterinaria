@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import encabezado, badge_remito, vacio %}
+{% block contenido %}
+{% call encabezado("Bandeja de recepción", "Remitos en tránsito hacia " ~ u.sede_nombre) %}{% endcall %}
+<div class="card mb-3"><div class="card-body p-0">
+{% if en_transito or esperando %}
+<table class="table table-hover mb-0">
+  <thead><tr><th>Remito</th><th>Clínica de origen</th><th>Muestras</th><th>Despacho</th><th>Llegada estimada</th><th>Precinto esperado</th><th>Rango temp.</th><th>Estado</th><th></th></tr></thead>
+  <tbody>
+  {% for r in en_transito %}<tr>
+    <td class="fw-semibold">{{ r.numero }}</td><td>{{ r.clinica_origen.nombre }}</td><td>{{ r.muestras|length }}</td><td>{{ r.envio.fecha_hora_despacho|fecha_hora }}</td>
+    <td>{{ r.envio.fecha_hora_estimada_llegada|fecha_hora }}</td><td><code>{{ r.precinto.codigo }}</code></td><td>{{ r.contenedor.rango_texto() }}</td><td>{{ badge_remito(r) }}</td>
+    <td>{% if 'recibir' in r.acciones() %}<a href="/laboratorio/recepcion/{{ r.id }}" class="btn btn-sm btn-portal"><i class="bi bi-box-arrow-in-down"></i> Recibir</a>{% endif %}</td></tr>{% endfor %}
+  {% for r in esperando %}<tr class="text-muted">
+    <td>{{ r.numero }}</td><td>{{ r.clinica_origen.nombre }}</td><td>{{ r.muestras|length }}</td><td>{{ r.envio.fecha_hora_despacho|fecha_hora }}</td>
+    <td>{{ r.envio.fecha_hora_estimada_llegada|fecha_hora }}</td><td><code>{{ r.precinto.codigo }}</code></td><td>{{ r.contenedor.rango_texto() }}</td><td>{{ badge_remito(r) }}</td>
+    <td class="small">esperando retiro</td></tr>{% endfor %}
+  </tbody></table>
+{% else %}{{ vacio("No hay remitos en camino.") }}{% endif %}
+</div></div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import encabezado, badge_enum, badge_muestra, linea_tiempo, vacio %}
+{% block contenido %}
+{% call encabezado("Orden " ~ o.numero, o.mascota.nombre ~ " · " ~ o.laboratorio.nombre) %}
+  {{ badge_enum(o.prioridad) }} {{ badge_enum(o.estado) }}
+  {% if o.facturable() %}
+  <form method="post" action="/clinica/facturacion/orden/{{ o.id }}"><button class="btn btn-success"><i class="bi bi-receipt"></i> Facturar laboratorio</button></form>
+  {% endif %}
+{% endcall %}
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card mb-3"><div class="card-header">Orden</div><div class="card-body"><dl class="row mb-0">
+      <dt class="col-5">Emisión</dt><dd class="col-7">{{ o.fecha_emision|fecha_hora }}</dd>
+      <dt class="col-5">Atención</dt><dd class="col-7"><a href="/clinica/atenciones/{{ o.atencion.id }}">{{ o.atencion.tipo.etiqueta }} {{ o.atencion.fecha_hora_inicio|fecha }}</a></dd>
+      <dt class="col-5">Profesional</dt><dd class="col-7">{{ o.atencion.profesional.nombre_completo() }}</dd>
+      <dt class="col-5">Mascota</dt><dd class="col-7"><a href="/clinica/mascotas/{{ o.mascota.id }}?tab=laboratorio">{{ o.mascota.nombre }}</a></dd>
+      <dt class="col-5">Indicaciones</dt><dd class="col-7 text-pre">{{ o.observaciones or '–' }}</dd>
+    </dl>
+    <div class="fw-semibold mt-2">Análisis solicitados</div>
+    <ul class="mb-0">{% for t in o.analisis %}<li>{{ t.nombre }} <small class="text-muted">({{ t.tipo_muestra_requerida.etiqueta }})</small></li>{% endfor %}</ul>
+    {% if o.tipos_sin_muestra() and o.esta_abierta() %}<div class="alert alert-warning small mt-2 mb-0">Falta registrar muestra de: {{ o.tipos_sin_muestra()|map(attribute='etiqueta')|join(', ') }}</div>{% endif %}
+    </div></div>
+    {% if o.esta_abierta() %}
+    <div class="card mb-3"><div class="card-header"><i class="bi bi-droplet"></i> Registrar muestra extraída</div><div class="card-body">
+      <form method="post" action="/clinica/ordenes/{{ o.id }}/muestras">
+        <label class="form-label">Tipo de muestra</label>
+        <select class="form-select mb-2" name="tipo">{% for t in tipos_muestra %}<option value="{{ t.value }}">{{ t.etiqueta }}</option>{% endfor %}</select>
+        <label class="form-label">Volumen (ml)</label><input class="form-control mb-2" name="volumen" value="3" required>
+        <input class="form-control mb-2" name="observaciones" placeholder="Observaciones (opcional)">
+        <button class="btn btn-portal w-100">Registrar (nace Extraída)</button>
+      </form></div></div>
+    {% if not o.muestras|selectattr('remito')|list %}
+    <div class="card"><div class="card-body"><form method="post" action="/clinica/ordenes/{{ o.id }}/anular" data-confirm="¿Anular la orden?">
+      <input class="form-control mb-2" name="motivo" placeholder="Motivo de anulación" required>
+      <button class="btn btn-outline-danger w-100">Anular orden</button></form></div></div>
+    {% endif %}
+    {% endif %}
+  </div>
+  <div class="col-lg-8">
+    {% for m in o.muestras %}
+    <div class="card mb-3"><div class="card-header d-flex justify-content-between align-items-center">
+      <span><a href="/clinica/muestras/{{ m.id }}">{{ m.codigo }}</a> · {{ m.tipo.etiqueta }} · {{ m.volumen }} ml</span>{{ badge_muestra(m) }}</div>
+      <div class="card-body"><div class="row">
+        <div class="col-md-6">{{ linea_tiempo(m.historial()) }}</div>
+        <div class="col-md-6">
+          {% if m.remito %}<div class="small mb-2">Remito: <a href="/clinica/envios/{{ m.remito.id }}">{{ m.remito.numero }}</a></div>{% endif %}
+          {% if 'empaquetar' in m.acciones() %}<a href="/clinica/envios/nuevo" class="btn btn-sm btn-outline-primary mb-2"><i class="bi bi-box-seam"></i> Empaquetar en un remito</a>{% endif %}
+          {% for r in m.resultados %}<div class="p-2 bg-light rounded mb-2 small"><b>{{ r.tipo_analisis.nombre }}</b><br>{{ r.valores }} {{ r.unidad }}
+            <div class="text-muted">Ref.: {{ r.valores_referencia }}</div><i>{{ r.interpretacion }}</i><div class="text-muted">{{ r.analista }} · {{ r.fecha_hora|fecha_hora }}</div></div>{% endfor %}
+          {% if m.motivo_rechazo() %}<div class="alert alert-danger small">Rechazada: {{ m.motivo_rechazo() }}</div>{% endif %}
+        </div>
+      </div></div></div>
+    {% else %}<div class="card"><div class="card-body">{{ vacio("Todavía no se registró ninguna muestra.") }}</div></div>{% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import encabezado %}
+{% block contenido %}
+{% call encabezado(("Editar · " if obj else "Nuevo · ") ~ cat.titulo) %}{% endcall %}
+<div class="card" style="max-width: 760px"><div class="card-body">
+<form method="post" action="/clinica/catalogos/{{ cat.clave }}{{ '/' ~ obj.id if obj }}">
+  <div class="row">
+  {% for c in cat.campos %}
+    {% set actual = previo[c.nombre] if c.nombre in previo else (obj[c.nombre] if obj else none) %}
+    <div class="col-md-6 mb-3">
+    {% if c.tipo == 'bool' %}
+      <div class="form-check form-switch mt-4"><input class="form-check-input" type="checkbox" name="{{ c.nombre }}" value="1" id="{{ c.nombre }}" {{ 'checked' if actual or (not obj and c.nombre in ('activa','activo','obligatoria')) }}>
+        <label class="form-check-label" for="{{ c.nombre }}">{{ c.etiqueta }}</label></div>
+    {% elif c.tipo == 'select' %}
+      <label class="form-label">{{ c.etiqueta }}</label>
+      <select class="form-select" name="{{ c.nombre }}">
+        {% if c.nombre == 'clinica_id' %}{% for cl in clinicas %}<option value="{{ cl.id }}" {{ 'selected' if actual == cl.id or actual == cl.id|string }}>{{ cl.nombre }}</option>{% endfor %}
+        {% else %}{% for valor, texto in c.opciones %}<option value="{{ valor }}" {{ 'selected' if (actual.value if actual is not string and actual else actual) == valor }}>{{ texto }}</option>{% endfor %}{% endif %}
+      </select>
+    {% else %}
+      <label class="form-label">{{ c.etiqueta }}{{ ' *' if c.requerido }}</label>
+      <input class="form-control" name="{{ c.nombre }}" value="{{ actual if actual is not none }}" {{ 'required' if c.requerido }}>
+    {% endif %}
+    </div>
+  {% endfor %}
+  </div>
+  <button class="btn btn-portal">Guardar</button> <a href="/clinica/catalogos?tab={{ cat.clave }}" class="btn btn-outline-secondary">Cancelar</a>
+</form></div></div>
+{% endblock %}

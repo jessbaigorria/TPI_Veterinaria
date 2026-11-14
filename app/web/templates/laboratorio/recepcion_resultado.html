@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import encabezado, badge_remito, badge_muestra, badge_enum %}
+{% block contenido %}
+{% call encabezado("Recepción del remito " ~ r.numero, rec.fecha_hora|fecha_hora ~ " · recibió " ~ rec.usuario_receptor) %}{{ badge_remito(r) }}{% endcall %}
+<div class="card mb-3 border-{{ 'success' if rec.es_aceptada() else 'danger' }}"><div class="card-body text-center">
+  <div class="resultado-recepcion text-{{ 'success' if rec.es_aceptada() else 'danger' }}">
+    <i class="bi bi-{{ 'check-circle' if rec.es_aceptada() else 'x-octagon' }}"></i> {{ rec.resultado.etiqueta|upper }}</div>
+  {% if rec.motivo_rechazo %}<div class="fs-5 text-danger">{{ rec.motivo_rechazo }}</div>{% endif %}
+  <div class="text-muted mt-2">Precinto {{ r.precinto.codigo }}: {{ badge_enum(rec.estado_precinto_observado) }} · Temperatura {{ rec.temperatura_recepcion }} °C (admitido {{ r.contenedor.rango_texto() }})
+    · Tránsito {{ r.envio.horas_transito() }} h</div>
+</div></div>
+<div class="card"><div class="card-header">Muestras del remito</div><div class="card-body p-0">
+<table class="table mb-0"><tbody>{% for m in r.muestras %}<tr>
+  <td><a href="/laboratorio/muestras/{{ m.id }}">{{ m.codigo }}</a></td><td>{{ m.tipo.etiqueta }}</td><td>{{ m.orden.mascota.nombre }} ({{ m.orden.clinica.nombre }})</td>
+  <td>{{ badge_muestra(m) }}</td>
+  <td>{% if 'cargar_resultado' in m.acciones() %}<a class="btn btn-sm btn-portal" href="/laboratorio/muestras/{{ m.id }}/resultados">Cargar resultados</a>
+      {% elif m.motivo_rechazo() %}<span class="small text-danger">{{ m.motivo_rechazo() }}</span>{% endif %}</td></tr>{% endfor %}</tbody></table>
+</div></div>
+<a href="/laboratorio/recepcion" class="btn btn-outline-secondary mt-3"><i class="bi bi-arrow-left"></i> Volver a la bandeja</a>
+{% endblock %}

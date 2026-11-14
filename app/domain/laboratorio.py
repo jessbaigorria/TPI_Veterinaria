@@ -11,7 +11,7 @@ from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, St
 from sqlalchemy.orm import Mapped, mapped_column, reconstructor, relationship
 
 from app.domain import reloj
-from app.domain.base import Base, Dinero, EnumCol, a_decimal
+from app.domain.base import Base, Dinero, EnumCol
 from app.domain.enums import (
     EstadoFactura, EstadoOrden, EstadoPrecinto, Prioridad, TipoComprobante, TipoMuestra,
 )
@@ -191,6 +191,10 @@ class OrdenDerivacion(Base):
 
     def tiene_factura_vigente(self) -> bool:
         return any(f.estado is not EstadoFactura.ANULADA for f in self.facturas)
+
+    def facturable(self) -> bool:
+        """Completada, con análisis realizados y sin comprobante vigente."""
+        return self.estado is EstadoOrden.COMPLETADA and not self.tiene_factura_vigente() and bool(self.resultados())
 
     def resultados(self) -> list["ResultadoAnalisis"]:
         return [r for m in self.muestras for r in m.resultados]

@@ -41,6 +41,10 @@ class VacunasPendientesError(VeterinariaError):
         super().__init__(mensaje)
         self.vacunas = list(vacunas or [])
         self.mascota = mascota
+        # Datos planos (la UI los usa después del rollback, cuando los objetos ORM ya expiraron).
+        self.nombres_vacunas = [v.nombre for v in self.vacunas]
+        self.mascota_id = getattr(mascota, "id", None)
+        self.mascota_nombre = getattr(mascota, "nombre", "")
 
 
 class DerivacionCirugiaError(VeterinariaError):

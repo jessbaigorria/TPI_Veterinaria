@@ -65,6 +65,18 @@ class Contenedor(Base):
     def enviar_a_mantenimiento(self) -> None:
         self._transicionar(EstadoContenedor.EN_MANTENIMIENTO, "enviar a mantenimiento")
 
+    def habilitar(self) -> None:
+        """Vuelve a DISPONIBLE un contenedor que estaba en mantenimiento."""
+        if not self.en_mantenimiento():
+            raise VeterinariaError(f"El contenedor {self.codigo} no está en mantenimiento.")
+        self._transicionar(EstadoContenedor.DISPONIBLE, "habilitar")
+
+    def en_mantenimiento(self) -> bool:
+        return self.estado is EstadoContenedor.EN_MANTENIMIENTO
+
+    def puede_ir_a_mantenimiento(self) -> bool:
+        return EstadoContenedor.EN_MANTENIMIENTO in self._TRANSICIONES[self.estado]
+
     def esta_disponible(self) -> bool:
         return EstadoContenedor.EN_USO in self._TRANSICIONES[self.estado]
 

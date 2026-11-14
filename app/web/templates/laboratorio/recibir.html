@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import encabezado, badge_remito, badge_muestra %}
+{% block contenido %}
+{% call encabezado("Recibir remito " ~ r.numero, r.clinica_origen.nombre ~ " · " ~ r.muestras|length ~ " muestra(s)") %}{{ badge_remito(r) }}{% endcall %}
+<div class="row g-3">
+  <div class="col-lg-7"><div class="card border-primary"><div class="card-body">
+  <form method="post" action="/laboratorio/recepcion/{{ r.id }}">
+    <div class="mb-3"><label class="form-label">Código de precinto leído</label>
+      <input class="form-control form-control-lg" name="codigo_precinto" value="{{ r.precinto.codigo if r.precinto }}">
+      <div class="form-text">Esperado: <code>{{ r.precinto.codigo if r.precinto }}</code>. Si no coincide, se considera precinto violado.</div></div>
+    <label class="form-label">¿Precinto íntegro?</label>
+    <div class="btn-group toggle-grande w-100 mb-3" role="group">
+      <input type="radio" class="btn-check" name="precinto_integro" id="pi-si" value="1" checked><label class="btn btn-outline-success" for="pi-si"><i class="bi bi-shield-check"></i> Sí, íntegro</label>
+      <input type="radio" class="btn-check" name="precinto_integro" id="pi-no" value="0"><label class="btn btn-outline-danger" for="pi-no"><i class="bi bi-shield-x"></i> No, roto</label>
+    </div>
+    <div class="mb-3"><label class="form-label">Temperatura medida (°C) <span class="text-danger">*</span></label>
+      <input class="form-control form-control-lg" name="temperatura" required placeholder="Rango admitido: {{ r.contenedor.rango_texto() }}">
+      <div class="form-text">Fuera de {{ r.contenedor.rango_texto() }} el remito queda “Recibido con observaciones” y sus muestras Rechazadas.</div></div>
+    <div class="mb-3"><label class="form-label">Observaciones</label><textarea class="form-control" name="observaciones" rows="2"></textarea></div>
+    <button class="btn btn-portal btn-lg w-100"><i class="bi bi-check2-circle"></i> Confirmar recepción</button>
+  </form></div></div></div>
+  <div class="col-lg-5"><div class="card"><div class="card-header">Contenido declarado</div><div class="card-body">
+    <dl class="row small">
+      <dt class="col-5">Contenedor</dt><dd class="col-7">{{ r.contenedor.codigo }} ({{ r.contenedor.rango_texto() }})</dd>
+      <dt class="col-5">Temp. despacho</dt><dd class="col-7">{{ r.temperatura_despacho }} °C</dd>
+      <dt class="col-5">Armó / precintó</dt><dd class="col-7">{{ r.usuario_armador }} / {{ r.precinto.usuario_colocador if r.precinto }}</dd>
+      <dt class="col-5">Transportista</dt><dd class="col-7">{{ r.envio.transportista if r.envio }} · {{ r.envio.vehiculo if r.envio }}</dd>
+      <dt class="col-5">Despacho</dt><dd class="col-7">{{ r.envio.fecha_hora_despacho|fecha_hora if r.envio }}</dd>
+    </dl>
+    <ul class="list-group">{% for m in r.muestras %}<li class="list-group-item d-flex justify-content-between"><span>{{ m.codigo }} · {{ m.tipo.etiqueta }} · {{ m.analisis_requeridos()|map(attribute='codigo')|join(', ') }}</span>{{ badge_muestra(m) }}</li>{% endfor %}</ul>
+  </div></div></div>
+</div>
+{% endblock %}

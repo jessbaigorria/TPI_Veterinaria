@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import encabezado, badge_enum %}
+{% block contenido %}
+{% set E = enums.EstadoDerivacionCirugia %}
+{% set t = d.transiciones_posibles() %}
+{% call encabezado("Derivación " ~ d.numero, d.tipo_cirugia ~ " · " ~ d.mascota.nombre) %}{{ badge_enum(d.prioridad) }} {{ badge_enum(d.estado) }}{% endcall %}
+<div class="row g-3">
+  <div class="col-lg-6"><div class="card"><div class="card-header">Datos</div><div class="card-body"><dl class="row mb-0">
+    <dt class="col-5">Origen</dt><dd class="col-7">{{ d.clinica_origen.nombre }} · <a href="/clinica/atenciones/{{ d.atencion.id }}">atención {{ d.atencion.fecha_hora_inicio|fecha }}</a></dd>
+    <dt class="col-5">Destino</dt><dd class="col-7">{{ d.destino.nombre }}</dd>
+    <dt class="col-5">Solicitud</dt><dd class="col-7">{{ d.fecha_solicitud|fecha_hora }}</dd>
+    <dt class="col-5">Diagnóstico presuntivo</dt><dd class="col-7">{{ d.diagnostico_presuntivo or '–' }}</dd>
+    <dt class="col-5">Riesgo anestésico</dt><dd class="col-7">{{ d.riesgo_anestesico.etiqueta }}</dd>
+    <dt class="col-5">Estudios prequirúrgicos</dt><dd class="col-7">{{ d.estudios_prequirurgicos or '–' }}</dd>
+    <dt class="col-5">Consentimiento</dt><dd class="col-7">{{ ('Firmado (registró ' ~ d.consentimiento_registrado_por ~ ')') if d.consentimiento_firmado else 'Pendiente' }}</dd>
+    <dt class="col-5">Cirujano</dt><dd class="col-7">{{ d.cirujano.nombre_completo() if d.cirujano else '–' }}</dd>
+    <dt class="col-5">Programada</dt><dd class="col-7">{{ d.fecha_programada|fecha_hora }}</dd>
+    {% if d.motivo_rechazo %}<dt class="col-5">Motivo</dt><dd class="col-7 text-danger">{{ d.motivo_rechazo }}</dd>{% endif %}
+    {% if d.informe_quirurgico %}<dt class="col-5">Informe quirúrgico</dt><dd class="col-7 text-pre">{{ d.informe_quirurgico }}</dd>{% endif %}
+  </dl></div></div></div>
+  <div class="col-lg-6">
+    {% if d.admite_consentimiento() %}
+    <div class="card mb-3"><div class="card-body d-flex justify-content-between align-items-center">
+      <span><i class="bi bi-pen"></i> Consentimiento del titular ({{ d.atencion.titular.nombre_completo() }})</span>
+      <form method="post" action="/clinica/cirugias/{{ d.id }}/consentimiento"><button class="btn btn-outline-primary btn-sm">Registrar firmado</button></form></div></div>
+    {% endif %}
+    {% if E.PROGRAMADA in t or E.ACEPTADA in t %}
+    <div class="card mb-3"><div class="card-header">Estudios prequirúrgicos</div><div class="card-body">
+      <form method="post" action="/clinica/cirugias/{{ d.id }}/estudios" class="d-flex gap-2">
+        <input class="form-control" name="estudios" value="{{ d.estudios_prequirurgicos }}" placeholder="Hemograma, ECG, Rx de tórax..."><button class="btn btn-outline-secondary">Guardar</button></form></div></div>
+    {% endif %}
+    {% if es_destino %}
+      {% if E.ACEPTADA in t %}
+      <div class="card mb-3 border-success"><div class="card-header">Aceptar (hospital de destino)</div><div class="card-body">
+        <form method="post" action="/clinica/cirugias/{{ d.id }}/aceptar" class="d-flex gap-2">
+          <select class="form-select" name="cirujano_id">{% for p in cirujanos %}<option value="{{ p.id }}">{{ p.nombre_completo() }} · {{ p.especialidad }}</option>{% endfor %}</select>
+          <button class="btn btn-success">Aceptar</button></form></div></div>
+      {% endif %}
+      {% if E.RECHAZADA in t %}
+      <div class="card mb-3"><div class="card-body"><form method="post" action="/clinica/cirugias/{{ d.id }}/rechazar" class="d-flex gap-2" data-confirm="¿Rechazar la derivación?">
+        <input class="form-control" name="motivo" placeholder="Motivo del rechazo" required><button class="btn btn-outline-danger">Rechazar</button></form></div></div>
+      {% endif %}
+      {% if E.PROGRAMADA in t %}
+      <div class="card mb-3 border-primary"><div class="card-header">Programar cirugía</div><div class="card-body">
+        <form method="post" action="/clinica/cirugias/{{ d.id }}/programar" class="d-flex gap-2">
+          <input type="datetime-local" class="form-control" name="fecha" required min="{{ ahora.strftime('%Y-%m-%dT%H:%M') }}">
+          <button class="btn btn-portal">Programar</button></form>
+        <div class="form-text">Requiere consentimiento firmado; con ASA III o mayor, también estudios prequirúrgicos.</div></div></div>
+      {% endif %}
+      {% if E.REALIZADA in t %}
+      <div class="card mb-3 border-primary"><div class="card-header">Registrar cirugía realizada</div><div class="card-body">
+        <form method="post" action="/clinica/cirugias/{{ d.id }}/realizar">
+          <textarea class="form-control mb-2" name="informe" rows="3" placeholder="Informe quirúrgico" required></textarea>
+          <button class="btn btn-portal">Registrar informe</button></form></div></div>
+      {% endif %}
+    {% elif t %}
+      <div class="alert alert-info small">La aceptación, programación e informe los registra {{ d.destino.nombre }} (entrando con esa clínica).</div>
+    {% endif %}
+    {% if E.CANCELADA in t %}
+    <div class="card mb-3"><div class="card-body"><form method="post" action="/clinica/cirugias/{{ d.id }}/cancelar" class="d-flex gap-2" data-confirm="¿Cancelar la cirugía?">
+      <input class="form-control" name="motivo" placeholder="Motivo de cancelación" required><button class="btn btn-outline-danger">Cancelar</button></form></div></div>
+    {% endif %}
+    {% if es_destino and d.esta_realizada() %}
+    <div class="card border-success"><div class="card-header">Facturación</div><div class="card-body">
+      {% if d.tiene_factura_vigente() %}
+        {% for f in d.facturas %}<a href="/clinica/facturacion/{{ f.id }}">{{ f.numero }}</a> {{ badge_enum(f.estado) }} {% endfor %}
+      {% else %}
+      <form method="post" action="/clinica/facturacion/cirugia/{{ d.id }}" class="d-flex gap-2">
+        <input class="form-control" name="importe" placeholder="Importe $" required><button class="btn btn-success text-nowrap"><i class="bi bi-receipt"></i> Emitir comprobante</button></form>
+      {% endif %}</div></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

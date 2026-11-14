@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import encabezado, badge_muestra, vacio %}
+{% block contenido %}
+{% call encabezado("Armar remito · Paso 1 de 3", "Laboratorio de destino y conservadora (contenedor) disponible") %}{% endcall %}
+<div class="row g-3">
+  <div class="col-lg-5"><div class="card"><div class="card-body">
+    <form method="post" action="/clinica/envios">
+      <label class="form-label">Laboratorio de destino</label>
+      <select class="form-select mb-3" name="laboratorio_id">{% for l in laboratorios %}<option value="{{ l.id }}">{{ l.nombre }}</option>{% endfor %}</select>
+      <label class="form-label">Contenedor disponible</label>
+      {% if contenedores %}
+      <select class="form-select mb-3" name="contenedor_id">{% for c in contenedores %}<option value="{{ c.id }}">{{ c.codigo }} · capacidad {{ c.capacidad }} · {{ c.rango_texto() }}</option>{% endfor %}</select>
+      {% else %}<div class="alert alert-warning">No hay contenedores disponibles en la clínica.</div>{% endif %}
+      <label class="form-label">Observaciones</label><input class="form-control mb-3" name="observaciones">
+      <button class="btn btn-portal w-100" {{ 'disabled' if not contenedores }}>Crear remito y continuar <i class="bi bi-arrow-right"></i></button>
+    </form></div></div></div>
+  <div class="col-lg-7"><div class="card"><div class="card-header">Muestras Extraídas pendientes de empaquetar ({{ muestras|length }})</div><div class="card-body p-0">
+    {% if muestras %}<table class="table tabla-compacta mb-0"><tbody>
+      {% for m in muestras %}<tr><td><a href="/clinica/muestras/{{ m.id }}">{{ m.codigo }}</a></td><td>{{ m.tipo.etiqueta }}</td><td>{{ m.orden.mascota.nombre }}</td>
+        <td>{{ m.orden.numero }}</td><td class="small">{{ m.orden.laboratorio.nombre }}</td><td>{{ badge_muestra(m) }}</td></tr>{% endfor %}
+    </tbody></table>{% else %}{{ vacio("No hay muestras extraídas sin empaquetar.") }}{% endif %}
+  </div></div></div>
+</div>
+{% endblock %}

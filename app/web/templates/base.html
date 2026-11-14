@@ -1,0 +1,81 @@
+{%- from "componentes/macros.html" import badge_enum -%}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}VetRed{% endblock %} · {{ 'Laboratorio' if u and u.portal == 'laboratorio' else 'Clínica' }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="/static/estilos.css" rel="stylesheet">
+</head>
+<body class="portal-{{ u.portal if u else 'clinica' }}">
+<header class="topbar d-flex align-items-center px-3 justify-content-between">
+  <div class="d-flex align-items-center gap-2">
+    {% if u and u.portal == 'laboratorio' %}
+      <span class="fs-4">🧪</span><span class="marca">VetRed · Laboratorio</span>
+    {% else %}
+      <span class="fs-4">🏥</span><span class="marca">VetRed · Clínica</span>
+    {% endif %}
+  </div>
+  {% if u %}
+  <div class="d-flex align-items-center gap-3">
+    <span><i class="bi bi-building"></i> {{ u.sede_nombre }}</span>
+    <span><i class="bi bi-person-circle"></i> {{ 'Operador: ' if u.portal == 'laboratorio' }}{{ u.usuario }}</span>
+    <a href="/" class="btn btn-sm btn-outline-light">Cambiar</a>
+  </div>
+  {% endif %}
+</header>
+<div class="d-flex flex-column flex-md-row">
+  {% if u %}
+  <nav class="sidebar py-3">
+    {% if u.portal == 'clinica' %}
+      {% set menu = [('inicio','/clinica','house','Inicio'), ('agenda','/clinica/agenda','calendar3','Agenda'),
+         ('atenciones','/clinica/atenciones','clipboard2-heart','Atenciones'), ('clientes','/clinica/clientes','people','Clientes'),
+         ('mascotas','/clinica/mascotas','heart','Mascotas'), ('ordenes','/clinica/ordenes','file-earmark-medical','Órdenes lab'),
+         ('envios','/clinica/envios','truck','Envíos'), ('cirugias','/clinica/cirugias','bandaid','Cirugías'),
+         ('facturacion','/clinica/facturacion','receipt','Facturación'), ('reportes','/clinica/reportes','bar-chart','Reportes'),
+         ('catalogos','/clinica/catalogos','gear','Catálogos')] %}
+    {% else %}
+      {% set menu = [('inicio','/laboratorio','house','Inicio'), ('recepcion','/laboratorio/recepcion','inbox','Recepción'),
+         ('muestras','/laboratorio/muestras','eyedropper','Muestras a analizar'), ('trazabilidad','/laboratorio/trazabilidad','search','Trazabilidad'),
+         ('recepciones','/laboratorio/recepciones','list-check','Recepciones'), ('reportes','/laboratorio/reportes','bar-chart','Reportes')] %}
+    {% endif %}
+    <ul class="nav flex-column">
+      {% for clave, url, icono, texto in menu %}
+      <li class="nav-item"><a class="nav-link {{ 'active' if seccion == clave }}" href="{{ url }}"><i class="bi bi-{{ icono }}"></i> {{ texto }}</a></li>
+      {% endfor %}
+    </ul>
+  </nav>
+  {% endif %}
+  <main class="contenido flex-grow-1">
+    {% for m in mensajes if m.tipo in ('danger', 'warning') %}
+      <div class="alert alert-{{ m.tipo }} alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-{{ 'x-octagon' if m.tipo == 'danger' else 'exclamation-triangle' }}"></i>
+        {% if m.error %}<b>{{ m.error }}:</b>{% endif %} {{ m.texto }}
+        {% if m.vacunas %}
+          <ul class="mb-1 mt-2">{% for v in m.vacunas %}<li>{{ v }}</li>{% endfor %}</ul>
+          <a class="btn btn-sm btn-light border" href="/clinica/agenda/nuevo?mascota={{ m.mascota_id }}&tipo=VACUNACION">
+            <i class="bi bi-calendar-plus"></i> Reservar turno de VACUNACIÓN para {{ m.mascota }}</a>
+          <a class="btn btn-sm btn-light border" href="/clinica/atenciones/nueva?mascota={{ m.mascota_id }}&tipo=VACUNACION">
+            <i class="bi bi-syringe"></i> Atender ahora como VACUNACIÓN</a>
+        {% endif %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+    {% block contenido %}{% endblock %}
+  </main>
+</div>
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  {% for m in mensajes if m.tipo not in ('danger', 'warning') %}
+  <div class="toast align-items-center text-bg-{{ m.tipo }} border-0" role="status">
+    <div class="d-flex"><div class="toast-body"><i class="bi bi-check-circle"></i> {{ m.texto }}</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>
+  </div>
+  {% endfor %}
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

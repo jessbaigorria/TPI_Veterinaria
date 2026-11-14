@@ -5,7 +5,7 @@ se validan con una tabla ``_TRANSICIONES`` (no con if por estado).
 """
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 
@@ -290,7 +290,18 @@ class AtencionClinica(Base):
         return set(self._TRANSICIONES[self.estado])
 
     def tiene_factura_vigente(self) -> bool:
-        return any(f.estado is not EstadoFactura.ANULADA for f in self.facturas)
+        return self.factura_vigente() is not None
+
+    def factura_vigente(self) -> "Factura | None":
+        return next((f for f in self.facturas if f.estado is not EstadoFactura.ANULADA), None)
+
+    def esta_finalizada(self) -> bool:
+        return self.estado is EstadoAtencion.FINALIZADA
+
+    def bloqueara_por_vacunas(self) -> bool:
+        """True si todavía no se inició y su tipo bloquea con vacunas pendientes (para avisar en la UI)."""
+        return (EstadoAtencion.EN_PROGRESO in self._TRANSICIONES[self.estado]
+                and self.tipo in self._TIPOS_QUE_BLOQUEAN_POR_VACUNAS)
 
     def _validar_transicion(self, nuevo: EstadoAtencion) -> None:
         if nuevo not in self._TRANSICIONES[self.estado]:
@@ -461,6 +472,9 @@ class DerivacionCirugia(Base):
 
     def tiene_factura_vigente(self) -> bool:
         return any(f.estado is not EstadoFactura.ANULADA for f in self.facturas)
+
+    def esta_realizada(self) -> bool:
+        return self.estado is EstadoDerivacionCirugia.REALIZADA
 
     def _validar_transicion(self, nuevo: EstadoDerivacionCirugia) -> None:
         if nuevo not in self._TRANSICIONES[self.estado]:

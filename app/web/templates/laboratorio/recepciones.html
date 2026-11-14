@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import encabezado, badge_enum, vacio %}
+{% block contenido %}
+{% call encabezado("Recepciones", "Historial de recepciones aceptadas y rechazadas") %}
+  <form class="d-flex gap-2"><select class="form-select" name="resultado" onchange="this.form.submit()"><option value="">Todas</option>
+    {% for r in enums.ResultadoRecepcion %}<option value="{{ r.value }}" {{ 'selected' if query.resultado == r.value }}>{{ r.etiqueta }}</option>{% endfor %}</select></form>
+{% endcall %}
+<div class="card"><div class="card-body p-0">
+{% if recepciones %}<table class="table table-hover mb-0">
+  <thead><tr><th>Fecha</th><th>Remito</th><th>Clínica de origen</th><th>Muestras</th><th>Precinto</th><th>Temp.</th><th>Recibió</th><th>Resultado</th><th>Motivo</th></tr></thead>
+  <tbody>{% for rec in recepciones %}<tr onclick="location='/laboratorio/recepciones/{{ rec.id }}'" style="cursor:pointer">
+    <td>{{ rec.fecha_hora|fecha_hora }}</td><td>{{ rec.remito.numero }}</td><td>{{ rec.remito.clinica_origen.nombre }}</td><td>{{ rec.remito.muestras|length }}</td>
+    <td>{{ badge_enum(rec.estado_precinto_observado) }}</td><td>{{ rec.temperatura_recepcion }} °C</td><td>{{ rec.usuario_receptor }}</td>
+    <td>{{ badge_enum(rec.resultado) }}</td><td class="small text-danger">{{ rec.motivo_rechazo or '' }}</td></tr>{% endfor %}</tbody></table>
+{% else %}{{ vacio() }}{% endif %}
+</div></div>
+{% endblock %}

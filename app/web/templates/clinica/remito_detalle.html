@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import encabezado, badge_remito, badge_muestra, badge_enum, vacio %}
+{% block contenido %}
+{% set acc = r.acciones() %}
+{% call encabezado("Remito " ~ r.numero, r.clinica_origen.nombre ~ " → " ~ r.laboratorio.nombre) %}{{ badge_remito(r) }}{% endcall %}
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card mb-3"><div class="card-header">Datos del remito</div><div class="card-body"><dl class="row mb-0">
+      <dt class="col-5">Emisión</dt><dd class="col-7">{{ r.fecha_emision|fecha_hora }}</dd>
+      <dt class="col-5">Armó</dt><dd class="col-7">{{ r.usuario_armador }}</dd>
+      <dt class="col-5">Contenedor</dt><dd class="col-7">{{ r.contenedor.codigo }} · {{ r.muestras|length }}/{{ r.contenedor.capacidad }} · {{ r.contenedor.rango_texto() }} · {{ badge_enum(r.contenedor.estado) }}</dd>
+      <dt class="col-5">Precinto</dt><dd class="col-7">{% if r.precinto %}{{ r.precinto.codigo }} · {{ badge_enum(r.precinto.estado) }}<br><small>Colocó {{ r.precinto.usuario_colocador }} el {{ r.precinto.fecha_colocacion|fecha_hora }}</small>{% else %}–{% endif %}</dd>
+      <dt class="col-5">Temp. despacho</dt><dd class="col-7">{{ (r.temperatura_despacho ~ ' °C') if r.temperatura_despacho is not none else '–' }}</dd>
+      {% if r.envio %}
+      <dt class="col-5">Transportista</dt><dd class="col-7">{{ r.envio.transportista }} · {{ r.envio.vehiculo }}</dd>
+      <dt class="col-5">Despacho</dt><dd class="col-7">{{ r.envio.fecha_hora_despacho|fecha_hora }}</dd>
+      <dt class="col-5">Llegada estimada</dt><dd class="col-7">{{ r.envio.fecha_hora_estimada_llegada|fecha_hora }}</dd>
+      <dt class="col-5">Llegada real</dt><dd class="col-7">{{ r.envio.fecha_hora_llegada_real|fecha_hora }}{% if r.envio.horas_transito() %} ({{ r.envio.horas_transito() }} h){% endif %}</dd>
+      {% endif %}
+      {% if r.recepcion %}
+      <dt class="col-5">Recepción</dt><dd class="col-7">{{ badge_enum(r.recepcion.resultado) }} · {{ r.recepcion.usuario_receptor }} · {{ r.recepcion.temperatura_recepcion }} °C
+        {% if r.recepcion.motivo_rechazo %}<div class="text-danger small">{{ r.recepcion.motivo_rechazo }}</div>{% endif %}</dd>
+      {% endif %}
+    </dl></div></div>
+
+    {# Las acciones las decide el estado del remito (State): r.acciones() #}
+    {% if 'cerrar' in acc %}
+    <div class="card mb-3 border-primary"><div class="card-header">Paso 3 · Cerrar con precinto sanitario</div><div class="card-body">
+      <form method="post" action="/clinica/envios/{{ r.id }}/cerrar">
+        <label class="form-label">Código de precinto</label><input class="form-control mb-2" name="codigo_precinto" value="{{ proximo_precinto }}">
+        <label class="form-label">Temperatura de despacho (°C) <span class="text-danger">*</span></label>
+        <input class="form-control mb-2" name="temperatura_despacho" required placeholder="Rango del contenedor: {{ r.contenedor.rango_texto() }}">
+        <button class="btn btn-portal w-100"><i class="bi bi-lock"></i> Cerrar remito</button></form></div></div>
+    {% endif %}
+    {% if 'despachar' in acc %}
+    <div class="card mb-3 border-primary"><div class="card-header"><i class="bi bi-truck"></i> Despachar</div><div class="card-body">
+      {% if not r.contenedor.temperatura_adecuada(r.temperatura_despacho) %}<div class="alert alert-warning small">La temperatura de despacho está fuera de rango: el dominio no permitirá despachar.</div>{% endif %}
+      <form method="post" action="/clinica/envios/{{ r.id }}/despachar">
+        <label class="form-label">Transportista *</label>
+        <input class="form-control mb-2" name="transportista" list="transportistas" required>
+        <datalist id="transportistas"><option value="Logística Fría SRL"><option value="BioExpress Córdoba"></datalist>
+        <label class="form-label">Vehículo</label><input class="form-control mb-2" name="vehiculo">
+        <label class="form-label">Llegada estimada *</label>
+        <input type="datetime-local" class="form-control mb-2" name="llegada_estimada" required value="{{ llegada_sugerida.strftime('%Y-%m-%dT%H:%M') }}">
+        <input class="form-control mb-2" name="observaciones" placeholder="Observaciones">
+        <button class="btn btn-portal w-100">Despachar (muestras → En tránsito)</button></form></div></div>
+    {% endif %}
+    {% if 'iniciar_transito' in acc %}
+    <div class="card mb-3 border-warning"><div class="card-body">
+      <p class="mb-2">El remito está despachado y espera que el transportista lo retire.</p>
+      <form method="post" action="/clinica/envios/{{ r.id }}/retiro"><button class="btn btn-warning w-100"><i class="bi bi-truck"></i> Confirmar retiro (en tránsito)</button></form>
+    </div></div>
+    {% endif %}
+  </div>
+  <div class="col-lg-7">
+    <div class="card mb-3"><div class="card-header">Muestras en el remito ({{ r.muestras|length }})</div><div class="card-body p-0">
+      {% if r.muestras %}<table class="table tabla-compacta mb-0"><tbody>
+      {% for m in r.muestras %}<tr><td><a href="/clinica/muestras/{{ m.id }}">{{ m.codigo }}</a></td><td>{{ m.tipo.etiqueta }}</td><td>{{ m.orden.mascota.nombre }}</td><td>{{ m.orden.numero }}</td><td>{{ badge_muestra(m) }}</td></tr>{% endfor %}
+      </tbody></table>{% else %}{{ vacio("Todavía no hay muestras.") }}{% endif %}
+    </div></div>
+    {% if 'agregar_muestra' in acc %}
+    <div class="card border-primary"><div class="card-header">Paso 2 · Tildá las muestras Extraídas para {{ r.laboratorio.nombre }}</div><div class="card-body">
+      {% if candidatas %}
+      <form method="post" action="/clinica/envios/{{ r.id }}/muestras">
+        {% for m in candidatas %}<div class="form-check"><input class="form-check-input" type="checkbox" name="muestra_id" value="{{ m.id }}" id="m{{ m.id }}">
+          <label class="form-check-label" for="m{{ m.id }}">{{ m.codigo }} · {{ m.tipo.etiqueta }} · {{ m.orden.mascota.nombre }} · {{ m.orden.numero }} {{ badge_enum(m.orden.prioridad) }}</label></div>{% endfor %}
+        <div class="form-text mb-2">Capacidad restante del contenedor: {{ r.contenedor.capacidad - r.muestras|length }}.</div>
+        <button class="btn btn-portal"><i class="bi bi-box-seam"></i> Empaquetar (Extraída → Empaquetada)</button></form>
+      {% else %}{{ vacio("No hay muestras extraídas para este laboratorio.") }}{% endif %}
+    </div></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

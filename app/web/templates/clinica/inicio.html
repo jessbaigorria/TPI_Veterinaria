@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import kpi, badge_enum, badge_remito, vacio, encabezado %}
+{% block contenido %}
+{% call encabezado("Inicio", u.sede_nombre ~ " · " ~ reloj.hoy()|fecha) %}
+  <a href="/clinica/agenda/nuevo" class="btn btn-outline-secondary"><i class="bi bi-calendar-plus"></i> Reservar turno</a>
+  <a href="/clinica/atenciones/nueva" class="btn btn-portal"><i class="bi bi-plus-lg"></i> Registrar atención</a>
+{% endcall %}
+<div class="row g-3 mb-4">
+  {% for k in kpis %}<div class="col-6 col-lg-3">{{ kpi(k) }}</div>{% endfor %}
+</div>
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card h-100"><div class="card-header"><i class="bi bi-calendar3"></i> Turnos de hoy</div>
+      <div class="card-body p-0">
+      {% if turnos %}
+      <table class="table table-hover tabla-compacta mb-0">
+        <thead><tr><th>Hora</th><th>Mascota</th><th>Profesional</th><th>Tipo</th><th>Estado</th></tr></thead>
+        <tbody>{% for a in turnos %}
+          <tr onclick="location='/clinica/atenciones/{{ a.id }}'" style="cursor:pointer">
+            <td>{{ a.fecha_hora_inicio|hora }}</td><td>{{ a.mascota.nombre }}</td><td>{{ a.profesional.nombre_completo() }}</td>
+            <td>{{ a.tipo.etiqueta }}</td><td>{{ badge_enum(a.estado) }}</td></tr>
+        {% endfor %}</tbody>
+      </table>
+      {% else %}{{ vacio("No hay turnos para hoy.") }}{% endif %}
+      </div></div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card mb-3"><div class="card-header"><i class="bi bi-clipboard2-pulse"></i> Resultados de laboratorio recientes</div>
+      <div class="card-body p-0">
+      {% if resultados %}
+      <table class="table tabla-compacta mb-0"><tbody>
+        {% for r in resultados %}
+        <tr><td>{{ r.fecha_hora|fecha_hora }}</td><td><a href="/clinica/muestras/{{ r.muestra.id }}">{{ r.muestra.codigo }}</a></td>
+          <td>{{ r.muestra.orden.mascota.nombre }}</td><td>{{ r.tipo_analisis.nombre }}</td></tr>
+        {% endfor %}</tbody></table>
+      {% else %}{{ vacio("Sin resultados recientes.") }}{% endif %}
+      </div></div>
+    <div class="card"><div class="card-header"><i class="bi bi-truck"></i> Últimos remitos</div>
+      <div class="card-body p-0">
+      {% if remitos %}
+      <table class="table tabla-compacta mb-0"><tbody>
+        {% for r in remitos %}
+        <tr><td><a href="/clinica/envios/{{ r.id }}">{{ r.numero }}</a></td><td>{{ r.fecha_emision|fecha }}</td>
+          <td>{{ r.muestras|length }} muestra(s)</td><td>{{ badge_remito(r) }}</td></tr>
+        {% endfor %}</tbody></table>
+      {% else %}{{ vacio() }}{% endif %}
+      </div></div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import encabezado, badge_muestra, linea_tiempo %}
+{% block contenido %}
+{% call encabezado("Cargar resultados · " ~ m.codigo, m.tipo.etiqueta ~ " · " ~ m.orden.mascota.nombre ~ " · orden " ~ m.orden.numero) %}{{ badge_muestra(m) }}{% endcall %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    {% if 'cargar_resultado' not in m.acciones() %}
+    <div class="alert alert-danger"><i class="bi bi-x-octagon"></i> Esta muestra está <b>{{ m.estado_actual() }}</b>{{ (': ' ~ m.motivo_rechazo()) if m.motivo_rechazo() }}.
+      El estado no admite cargar resultados; si se intenta, el dominio lo rechaza ({{ 'MuestraRechazadaError' if m.motivo_rechazo() else 'TransicionInvalidaError' }}).</div>
+    {% endif %}
+    <form method="post" action="/laboratorio/muestras/{{ m.id }}/resultados">
+    {% if m.orden.observaciones %}<div class="alert alert-light border small"><b>Indicaciones clínicas:</b> {{ m.orden.observaciones }}</div>{% endif %}
+    {% for t in analisis %}
+    <div class="card mb-3"><div class="card-header">{{ t.nombre }} <small class="text-muted">({{ t.codigo }} · ~{{ t.tiempo_estimado_horas }} h)</small></div><div class="card-body">
+      <input type="hidden" name="tipo_analisis_id" value="{{ t.id }}">
+      <div class="row g-2">
+        <div class="col-md-8"><label class="form-label">Valores</label><textarea class="form-control" name="valores_{{ t.id }}" rows="2"></textarea></div>
+        <div class="col-md-4"><label class="form-label">Unidad</label><input class="form-control" name="unidad_{{ t.id }}"></div>
+        <div class="col-md-6"><label class="form-label">Valores de referencia</label><input class="form-control" name="referencia_{{ t.id }}"></div>
+        <div class="col-md-6"><label class="form-label">Interpretación</label><input class="form-control" name="interpretacion_{{ t.id }}"></div>
+      </div></div></div>
+    {% endfor %}
+    <button class="btn btn-portal btn-lg {{ 'btn-outline-danger' if 'cargar_resultado' not in m.acciones() }}">
+      <i class="bi bi-save"></i> {{ 'Guardar resultados (→ Analizada)' if 'cargar_resultado' in m.acciones() else 'Intentar registrar resultado igualmente' }}</button>
+    </form>
+  </div>
+  <div class="col-lg-4"><div class="card"><div class="card-header">Trazabilidad</div><div class="card-body">{{ linea_tiempo(m.historial()) }}</div></div></div>
+</div>
+{% endblock %}

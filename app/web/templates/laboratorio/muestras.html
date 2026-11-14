@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import encabezado, badge_muestra, badge_enum, vacio %}
+{% block contenido %}
+{% call encabezado("Muestras a analizar", "Cola de muestras Recibidas: URGENTE primero, luego por antigüedad") %}{% endcall %}
+<div class="card"><div class="card-body p-0">
+{% if muestras %}<table class="table table-hover mb-0">
+  <thead><tr><th>Muestra</th><th>Tipo</th><th>Mascota</th><th>Clínica</th><th>Orden</th><th>Prioridad</th><th>Extracción</th><th>Análisis pendientes</th><th>Estado</th><th></th></tr></thead>
+  <tbody>{% for m in muestras %}<tr>
+    <td class="fw-semibold"><a href="/laboratorio/muestras/{{ m.id }}">{{ m.codigo }}</a></td><td>{{ m.tipo.etiqueta }}</td><td>{{ m.orden.mascota.nombre }}</td><td>{{ m.orden.clinica.nombre }}</td>
+    <td>{{ m.orden.numero }}</td><td>{{ badge_enum(m.orden.prioridad) }}</td><td>{{ m.fecha_hora_extraccion|fecha_hora }}</td>
+    <td class="small">{{ m.analisis_pendientes()|map(attribute='nombre')|join(', ') }}</td><td>{{ badge_muestra(m) }}</td>
+    <td>{% if 'cargar_resultado' in m.acciones() %}<a href="/laboratorio/muestras/{{ m.id }}/resultados" class="btn btn-sm btn-portal">Cargar resultados</a>{% endif %}</td></tr>{% endfor %}</tbody></table>
+{% else %}{{ vacio("No hay muestras pendientes de análisis. (Las rechazadas no aparecen acá.)") }}{% endif %}
+</div></div>
+{% endblock %}

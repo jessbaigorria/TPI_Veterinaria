@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import encabezado, badge_enum, badge_muestra, linea_tiempo, vacio %}
+{% block contenido %}
+{% call encabezado(m.nombre ~ (" (baja)" if not m.activa else ""), "Historia clínica " ~ hc.numero ~ " · " ~ m.especie.etiqueta ~ " " ~ m.raza ~ " · " ~ m.edad_texto()) %}
+  <a href="/clinica/mascotas/{{ m.id }}/editar" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i> Editar</a>
+  {% if m.activa %}
+  <a href="/clinica/agenda/nuevo?mascota={{ m.id }}" class="btn btn-outline-secondary"><i class="bi bi-calendar-plus"></i> Turno</a>
+  <a href="/clinica/atenciones/nueva?mascota={{ m.id }}" class="btn btn-portal"><i class="bi bi-plus-lg"></i> Atención</a>
+  <form method="post" action="/clinica/mascotas/{{ m.id }}/baja" data-confirm="¿Dar de baja a {{ m.nombre }}? (baja lógica)"><button class="btn btn-outline-danger"><i class="bi bi-archive"></i></button></form>
+  {% else %}
+  <form method="post" action="/clinica/mascotas/{{ m.id }}/reactivar"><button class="btn btn-outline-success">Reactivar</button></form>
+  {% endif %}
+{% endcall %}
+{% set tabs = [('resumen','Resumen'), ('atenciones','Atenciones'), ('vacunas','Vacunas'), ('laboratorio','Laboratorio'), ('cirugias','Cirugías'), ('facturas','Facturas')] %}
+<ul class="nav nav-tabs mb-3">
+  {% for clave, texto in tabs %}<li class="nav-item"><a class="nav-link {{ 'active' if tab == clave }}" href="?tab={{ clave }}">{{ texto }}
+    {% if clave == 'vacunas' and pendientes %}<span class="badge estado estado-rojo">{{ pendientes|length }}</span>{% endif %}</a></li>{% endfor %}
+</ul>
+
+{% if tab == 'resumen' %}
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card mb-3"><div class="card-header">Paciente</div><div class="card-body"><dl class="row mb-0">
+      <dt class="col-5">Titular</dt><dd class="col-7"><a href="/clinica/clientes/{{ m.titular.id }}">{{ m.titular.nombre_completo() }}</a><br><small>{{ m.titular.telefono }}</small></dd>
+      <dt class="col-5">Sexo</dt><dd class="col-7">{{ m.sexo.etiqueta }}</dd>
+      <dt class="col-5">Nacimiento</dt><dd class="col-7">{{ m.fecha_nacimiento|fecha }} ({{ m.edad_en_semanas() }} semanas)</dd>
+      <dt class="col-5">Peso</dt><dd class="col-7">{{ m.peso }} kg</dd>
+      <dt class="col-5">Alta HC</dt><dd class="col-7">{{ hc.fecha_registro|fecha }}</dd>
+      <dt class="col-5">Vacunas</dt><dd class="col-7">{% if pendientes %}<span class="badge estado estado-rojo">{{ pendientes|length }} pendiente(s)</span>{% else %}<span class="badge estado estado-verde">Al día</span>{% endif %}</dd>
+      <dt class="col-5">Última atención</dt><dd class="col-7">{% set ua = hc.ultima_atencion() %}{{ (ua.fecha_hora_inicio|fecha ~ ' · ' ~ ua.clinica.nombre) if ua else '–' }}</dd>
+    </dl></div></div>
+    <div class="card"><div class="card-header">Cambiar titular</div><div class="card-body">
+      <form method="post" action="/clinica/mascotas/{{ m.id }}/titular" class="d-flex gap-2">
+        <select class="form-select" name="titular_id"><option value="">— Sin titular —</option>
+          {% for t in titulares %}<option value="{{ t.id }}" {{ 'selected' if t.id == m.titular.id }}>{{ t.nombre_completo() }}</option>{% endfor %}</select>
+        <button class="btn btn-outline-secondary">Cambiar</button></form></div></div>
+  </div>
+  <div class="col-lg-7"><div class="card"><div class="card-header">Historia clínica</div><div class="card-body">
+    <form method="post" action="/clinica/mascotas/{{ m.id }}/historia">
+      <label class="form-label text-danger">Alergias</label><textarea class="form-control mb-3" name="alergias" rows="2">{{ hc.alergias }}</textarea>
+      <label class="form-label">Antecedentes</label><textarea class="form-control mb-3" name="antecedentes" rows="3">{{ hc.antecedentes }}</textarea>
+      <label class="form-label">Observaciones generales</label><textarea class="form-control mb-3" name="observaciones_generales" rows="2">{{ hc.observaciones_generales }}</textarea>
+      <button class="btn btn-portal"><i class="bi bi-save"></i> Guardar historia</button>
+    </form></div></div></div>
+</div>
+
+{% elif tab == 'atenciones' %}
+<div class="card"><div class="card-body p-0">
+{% if hc.atenciones %}<table class="table table-hover mb-0">
+  <thead><tr><th>Fecha</th><th>Clínica</th><th>Profesional</th><th>Tipo</th><th>Diagnóstico</th><th>Peso</th><th>Estado</th></tr></thead>
+  <tbody>{% for a in hc.atenciones|reverse %}<tr onclick="location='/clinica/atenciones/{{ a.id }}'" style="cursor:pointer">
+    <td>{{ a.fecha_hora_inicio|fecha_hora }}</td><td>{{ a.clinica.nombre }}</td><td>{{ a.profesional.nombre_completo() }}</td><td>{{ a.tipo.etiqueta }}</td>
+    <td class="small">{{ a.diagnostico }}</td><td>{{ a.peso_registrado or '–' }}</td><td>{{ badge_enum(a.estado) }}</td></tr>{% endfor %}</tbody>
+</table>{% else %}{{ vacio("Sin atenciones.") }}{% endif %}
+</div></div>
+
+{% elif tab == 'vacunas' %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    {% if pendientes %}<div class="alert alert-danger"><b>Pendientes:</b>
+      <ul class="mb-0">{% for d in pendientes %}<li>{{ d.vacuna.nombre }} – {{ d.motivo }} desde {{ d.vencida_desde|fecha }} ({{ d.dias_atraso }} días de atraso)</li>{% endfor %}</ul>
+      <a href="/clinica/agenda/nuevo?mascota={{ m.id }}&tipo=VACUNACION" class="btn btn-sm btn-light border mt-2">Reservar turno de vacunación</a></div>
+    {% else %}<div class="alert alert-success mb-3"><i class="bi bi-shield-check"></i> Esquema obligatorio al día.</div>{% endif %}
+    <div class="card"><div class="card-header">Vacunas aplicadas</div><div class="card-body p-0">
+    {% if hc.aplicaciones %}<table class="table tabla-compacta mb-0">
+      <thead><tr><th>Vacuna</th><th>Aplicación</th><th>Lote</th><th>Dosis</th><th>Próxima dosis</th><th>Vigente</th></tr></thead>
+      <tbody>{% for ap in hc.aplicaciones|reverse %}<tr><td>{{ ap.vacuna.nombre }}</td><td>{{ ap.fecha_aplicacion|fecha }}</td><td>{{ ap.lote }}</td>
+        <td>{{ ap.dosis_numero }}</td><td>{{ ap.fecha_proxima_dosis|fecha }}</td>
+        <td>{% if ap.esta_vigente() %}<span class="badge estado estado-verde">Sí</span>{% else %}<span class="badge estado estado-gris">No</span>{% endif %}</td></tr>{% endfor %}</tbody>
+    </table>{% else %}{{ vacio("Sin vacunas registradas.") }}{% endif %}
+    </div></div>
+  </div>
+  <div class="col-lg-5"><div class="card"><div class="card-header">Registrar vacuna aplicada (antecedente)</div><div class="card-body">
+    <form method="post" action="/clinica/mascotas/{{ m.id }}/vacunas">
+      <select class="form-select mb-2" name="vacuna_id" required>{% for v in vacunas %}<option value="{{ v.id }}">{{ v.nombre }}{{ ' (obligatoria)' if v.obligatoria }}</option>{% endfor %}</select>
+      <input type="date" class="form-control mb-2" name="fecha_aplicacion" value="{{ reloj.hoy() }}" max="{{ reloj.hoy() }}">
+      <div class="d-flex gap-2 mb-2"><input class="form-control" name="lote" placeholder="Lote"><input class="form-control" type="number" name="dosis_numero" value="1" min="1"></div>
+      <button class="btn btn-portal w-100">Registrar</button>
+      <div class="form-text">Para vacunas aplicadas en la clínica usá una atención de tipo VACUNACIÓN.</div>
+    </form></div></div></div>
+</div>
+
+{% elif tab == 'laboratorio' %}
+{% for o in hc.ordenes_derivacion()|reverse %}
+<div class="card mb-3"><div class="card-header d-flex justify-content-between">
+  <span><a href="/clinica/ordenes/{{ o.id }}">{{ o.numero }}</a> · {{ o.fecha_emision|fecha }} · {{ o.analisis|map(attribute='nombre')|join(', ') }}</span>{{ badge_enum(o.estado) }}</div>
+  <div class="card-body"><div class="row g-3">
+  {% for mu in o.muestras %}
+    <div class="col-md-6"><div class="border rounded p-3">
+      <div class="d-flex justify-content-between mb-2"><a href="/clinica/muestras/{{ mu.id }}" class="fw-semibold">{{ mu.codigo }} · {{ mu.tipo.etiqueta }}</a>{{ badge_muestra(mu) }}</div>
+      {{ linea_tiempo(mu.historial()) }}
+      {% for r in mu.resultados %}<div class="mt-2 p-2 bg-light rounded small"><b>{{ r.tipo_analisis.nombre }}:</b> {{ r.valores }} {{ r.unidad }}<br><i>{{ r.interpretacion }}</i></div>{% endfor %}
+    </div></div>
+  {% else %}<div class="text-muted">Sin muestras registradas.</div>{% endfor %}
+  </div></div></div>
+{% else %}{{ vacio("Sin órdenes de laboratorio.") }}{% endfor %}
+
+{% elif tab == 'cirugias' %}
+<div class="card"><div class="card-body p-0">
+{% set ders = hc.derivaciones_cirugia() %}
+{% if ders %}<table class="table table-hover mb-0"><thead><tr><th>N°</th><th>Fecha</th><th>Cirugía</th><th>Destino</th><th>Riesgo</th><th>Programada</th><th>Estado</th></tr></thead>
+<tbody>{% for d in ders %}<tr onclick="location='/clinica/cirugias/{{ d.id }}'" style="cursor:pointer"><td>{{ d.numero }}</td><td>{{ d.fecha_solicitud|fecha }}</td><td>{{ d.tipo_cirugia }}</td>
+  <td>{{ d.destino.nombre }}</td><td>{{ d.riesgo_anestesico.etiqueta }}</td><td>{{ d.fecha_programada|fecha_hora }}</td><td>{{ badge_enum(d.estado) }}</td></tr>{% endfor %}</tbody></table>
+{% else %}{{ vacio("Sin derivaciones a cirugía.") }}{% endif %}
+</div></div>
+
+{% elif tab == 'facturas' %}
+<div class="card"><div class="card-body p-0">
+{% set fs = hc.facturas() %}
+{% if fs %}<table class="table tabla-compacta mb-0"><tbody>
+{% for f in fs %}<tr><td><a href="/clinica/facturacion/{{ f.id }}">{{ f.numero }}</a></td><td>{{ f.fecha_emision|fecha }}</td><td>{{ f.tipo.etiqueta }}</td>
+  <td>{{ f.clinica.nombre }}</td><td class="text-end">{{ f.total|moneda }}</td><td>{{ badge_enum(f.estado) }}</td></tr>{% endfor %}</tbody></table>
+{% else %}{{ vacio("Sin facturas.") }}{% endif %}
+</div></div>
+{% endif %}
+{% endblock %}

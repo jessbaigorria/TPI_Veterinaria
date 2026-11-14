@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import encabezado %}
+{% block contenido %}
+{% call encabezado("Derivar a cirugía de alta complejidad", a.mascota.nombre ~ " · atención del " ~ a.fecha_hora_inicio|fecha_hora) %}{% endcall %}
+<div class="card" style="max-width: 860px"><div class="card-body">
+<form method="post" action="/clinica/cirugias">
+  <input type="hidden" name="atencion_id" value="{{ a.id }}">
+  <div class="row g-3">
+    <div class="col-md-6"><label class="form-label">Clínica de destino</label>
+      <select class="form-select" name="destino_id">{% for c in clinicas %}<option value="{{ c.id }}" {{ 'selected' if c.alta_complejidad }}>{{ c.nombre }}{{ ' ★ alta complejidad' if c.alta_complejidad }}</option>{% endfor %}</select>
+      <div class="form-text">Solo las clínicas con alta complejidad aceptan derivaciones (si no, DerivacionCirugiaError).</div></div>
+    <div class="col-md-6"><label class="form-label">Tipo de cirugía *</label><input class="form-control" name="tipo_cirugia" required value="{{ previo.tipo_cirugia }}"></div>
+    <div class="col-12"><label class="form-label">Diagnóstico presuntivo</label><input class="form-control" name="diagnostico_presuntivo" value="{{ previo.diagnostico_presuntivo or a.diagnostico }}"></div>
+    <div class="col-md-6"><label class="form-label">Prioridad</label><select class="form-select" name="prioridad">{% for p in enums.Prioridad %}<option value="{{ p.value }}">{{ p.etiqueta }}</option>{% endfor %}</select></div>
+    <div class="col-md-6"><label class="form-label">Riesgo anestésico (ASA)</label><select class="form-select" name="riesgo_anestesico">{% for r in enums.RiesgoAnestesico %}<option value="{{ r.value }}">{{ r.etiqueta }}</option>{% endfor %}</select></div>
+    <div class="col-12"><label class="form-label">Estudios prequirúrgicos</label><textarea class="form-control" name="estudios_prequirurgicos" rows="2" placeholder="Obligatorios para ASA III o mayor antes de programar"></textarea></div>
+  </div>
+  <div class="mt-3"><button class="btn btn-portal"><i class="bi bi-send"></i> Enviar derivación</button>
+    <a href="/clinica/atenciones/{{ a.id }}" class="btn btn-outline-secondary">Volver</a></div>
+</form></div></div>
+{% endblock %}

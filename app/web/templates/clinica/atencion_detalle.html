@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import badge_enum, badge_muestra, encabezado, vacio %}
+{% block contenido %}
+{% set E = enums.EstadoAtencion %}
+{% call encabezado("Atención · " ~ a.mascota.nombre, a.tipo.etiqueta ~ " · " ~ a.fecha_hora_inicio|fecha_hora ~ " · " ~ a.clinica.nombre) %}
+  {{ badge_enum(a.estado) }}
+  {% if E.EN_PROGRESO in a.transiciones_posibles() %}
+    <form method="post" action="/clinica/atenciones/{{ a.id }}/iniciar"><button class="btn btn-portal"><i class="bi bi-play"></i> Iniciar atención</button></form>
+  {% endif %}
+{% endcall %}
+{% if pendientes %}
+<div class="alert {{ 'alert-danger' if a.bloqueara_por_vacunas() else 'alert-warning' }}">
+  <i class="bi bi-shield-exclamation"></i> <b>Vacunas obligatorias pendientes:</b>
+  {% for d in pendientes %}{{ d.vacuna.nombre }} ({{ d.motivo|lower }}, {{ d.dias_atraso }} días){{ ', ' if not loop.last }}{% endfor %}.
+  {% if a.bloqueara_por_vacunas() %}Al iniciar esta {{ a.tipo.etiqueta|lower }} se bloqueará (VacunasPendientesError).
+  <a href="/clinica/atenciones/nueva?mascota={{ a.mascota.id }}&tipo=VACUNACION" class="alert-link">Atender como VACUNACIÓN</a>{% endif %}
+</div>
+{% endif %}
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card mb-3"><div class="card-header">Datos</div><div class="card-body">
+      <dl class="row mb-0">
+        <dt class="col-5">Mascota</dt><dd class="col-7"><a href="/clinica/mascotas/{{ a.mascota.id }}">{{ a.mascota.nombre }}</a> · {{ a.mascota.especie.etiqueta }} · {{ a.mascota.edad_texto() }}</dd>
+        <dt class="col-5">Historia clínica</dt><dd class="col-7">{{ a.historia.numero }}</dd>
+        <dt class="col-5">Titular</dt><dd class="col-7"><a href="/clinica/clientes/{{ a.titular.id }}">{{ a.titular.nombre_completo() }}</a></dd>
+        <dt class="col-5">¿Asiste el titular?</dt><dd class="col-7">{{ 'Sí' if a.asiste_titular else 'No – ' ~ a.responsable_presente }}</dd>
+        <dt class="col-5">Profesional</dt><dd class="col-7">{{ a.profesional.nombre_completo() }}</dd>
+        <dt class="col-5">Horario</dt><dd class="col-7">{{ a.fecha_hora_inicio|hora }} – {{ a.fecha_hora_fin|hora }}</dd>
+        <dt class="col-5">Observaciones</dt><dd class="col-7 text-pre">{{ a.observaciones or '–' }}</dd>
+        {% if a.diagnostico %}<dt class="col-5">Diagnóstico</dt><dd class="col-7 text-pre">{{ a.diagnostico }}</dd>{% endif %}
+        {% if a.peso_registrado %}<dt class="col-5">Peso</dt><dd class="col-7">{{ a.peso_registrado }} kg</dd>{% endif %}
+        {% if a.importe %}<dt class="col-5">Importe</dt><dd class="col-7">{{ a.importe|moneda }}</dd>{% endif %}
+        {% if a.historia.alergias %}<dt class="col-5 text-danger">Alergias</dt><dd class="col-7 text-danger">{{ a.historia.alergias }}</dd>{% endif %}
+      </dl>
+    </div></div>
+    {% if a.esta_realizada() %}
+    <div class="card mb-3"><div class="card-header">Acciones</div><div class="card-body d-grid gap-2">
+      <a class="btn btn-outline-primary" href="/clinica/ordenes/nueva?atencion={{ a.id }}"><i class="bi bi-file-earmark-medical"></i> Emitir orden de laboratorio</a>
+      <a class="btn btn-outline-secondary" href="/clinica/cirugias/nueva?atencion={{ a.id }}"><i class="bi bi-bandaid"></i> Derivar a cirugía</a>
+      {% if a.esta_finalizada() %}
+        {% set fv = a.factura_vigente() %}
+        {% if fv %}
+          <a class="btn btn-outline-success" href="/clinica/facturacion/{{ fv.id }}"><i class="bi bi-receipt"></i> Ver comprobante {{ fv.numero }}</a>
+        {% else %}
+        <form method="post" action="/clinica/facturacion/atencion/{{ a.id }}" class="d-grid"><button class="btn btn-success"><i class="bi bi-receipt"></i> Emitir comprobante de atención</button></form>
+        {% endif %}
+      {% endif %}
+    </div></div>
+    {% endif %}
+    {% if E.CANCELADA in a.transiciones_posibles() %}
+    <div class="card"><div class="card-body">
+      <form method="post" action="/clinica/atenciones/{{ a.id }}/cancelar" class="d-flex gap-2" data-confirm="¿Cancelar el turno?">
+        <input name="motivo" class="form-control" placeholder="Motivo de cancelación" required>
+        <button class="btn btn-outline-danger text-nowrap"><i class="bi bi-x-circle"></i> Cancelar turno</button></form>
+    </div></div>
+    {% endif %}
+  </div>
+  <div class="col-lg-7">
+    {% if E.FINALIZADA in a.transiciones_posibles() %}
+    <div class="card mb-3 border-primary"><div class="card-header">Finalizar atención</div><div class="card-body">
+      <form method="post" action="/clinica/atenciones/{{ a.id }}/finalizar">
+        <label class="form-label">Diagnóstico (lo que dice el médico) <span class="text-danger">*</span></label>
+        <textarea class="form-control mb-3" name="diagnostico" rows="3" required>{{ previo.diagnostico }}</textarea>
+        <label class="form-label">Observaciones (lo que cuenta el cliente)</label>
+        <textarea class="form-control mb-3" name="observaciones" rows="2">{{ previo.observaciones or a.observaciones }}</textarea>
+        <div class="row g-2 mb-3">
+          <div class="col-md-6"><label class="form-label">Peso registrado (kg)</label><input class="form-control" name="peso" value="{{ previo.peso or a.mascota.peso }}"></div>
+          <div class="col-md-6"><label class="form-label">Importe ($)</label><input class="form-control" name="importe" value="{{ previo.importe }}" placeholder="Ej.: 15000"></div>
+        </div>
+        {% if a.tipo.value == 'VACUNACION' %}
+        <div class="border rounded p-3 mb-3 bg-light">
+          <div class="fw-semibold mb-2"><i class="bi bi-shield-plus"></i> Vacunas aplicadas en esta atención</div>
+          {% set ids_pend = pendientes|map(attribute='vacuna.id')|list %}
+          {% for v in vacunas %}
+          <div class="row g-2 align-items-center mb-1">
+            <div class="col-md-5"><div class="form-check">
+              <input class="form-check-input" type="checkbox" name="vacuna_id" value="{{ v.id }}" id="v{{ v.id }}" {{ 'checked' if v.id in ids_pend }}>
+              <label class="form-check-label" for="v{{ v.id }}">{{ v.nombre }} {% if v.obligatoria %}<span class="badge text-bg-light border">obligatoria</span>{% endif %}
+                {% if v.id in ids_pend %}<span class="badge estado estado-rojo">pendiente</span>{% endif %}</label></div></div>
+            <div class="col-md-4"><input class="form-control form-control-sm" name="lote_{{ v.id }}" placeholder="Lote"></div>
+            <div class="col-md-3"><input class="form-control form-control-sm" type="number" name="dosis_{{ v.id }}" value="1" min="1" title="Dosis N°"></div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        <button class="btn btn-portal"><i class="bi bi-check2-circle"></i> Finalizar</button>
+      </form>
+    </div></div>
+    {% endif %}
+    <div class="card mb-3"><div class="card-header">Órdenes de laboratorio</div><div class="card-body p-0">
+      {% if a.ordenes %}<table class="table tabla-compacta mb-0"><tbody>
+        {% for o in a.ordenes %}<tr><td><a href="/clinica/ordenes/{{ o.id }}">{{ o.numero }}</a></td><td>{{ o.analisis|map(attribute='nombre')|join(', ') }}</td>
+          <td>{% for m in o.muestras %}{{ badge_muestra(m) }} {% endfor %}</td><td>{{ badge_enum(o.estado) }}</td></tr>{% endfor %}
+      </tbody></table>{% else %}{{ vacio("Sin órdenes.") }}{% endif %}
+    </div></div>
+    <div class="card"><div class="card-header">Derivaciones a cirugía</div><div class="card-body p-0">
+      {% if a.derivaciones %}<table class="table tabla-compacta mb-0"><tbody>
+        {% for d in a.derivaciones %}<tr><td><a href="/clinica/cirugias/{{ d.id }}">{{ d.numero }}</a></td><td>{{ d.tipo_cirugia }}</td><td>{{ d.destino.nombre }}</td><td>{{ badge_enum(d.estado) }}</td></tr>{% endfor %}
+      </tbody></table>{% else %}{{ vacio("Sin derivaciones.") }}{% endif %}
+    </div></div>
+  </div>
+</div>
+{% endblock %}

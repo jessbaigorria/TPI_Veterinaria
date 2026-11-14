@@ -1,0 +1,82 @@
+/* VetRed – estilos de los dos portales (sin build) */
+:root {
+  --clinica: #0f766e;        /* verde azulado */
+  --clinica-claro: #ccfbf1;
+  --laboratorio: #6d28d9;    /* violeta */
+  --laboratorio-claro: #ede9fe;
+  --gris: #6c757d; --azul: #2563eb; --naranja: #ea580c; --celeste: #0891b2; --verde: #16a34a;
+  --rojo: #dc2626; --violeta: #7c3aed;
+}
+body { background: #f4f6f9; font-size: .93rem; }
+.topbar { color: #fff; height: 56px; }
+.portal-clinica .topbar { background: var(--clinica); }
+.portal-laboratorio .topbar { background: var(--laboratorio); }
+.topbar .marca { font-weight: 700; letter-spacing: .3px; }
+.sidebar { width: 220px; flex-shrink: 0; white-space: nowrap; min-height: calc(100vh - 56px); background: #fff; border-right: 1px solid #e5e7eb; }
+.sidebar .nav-link { color: #374151; border-radius: .5rem; margin: 2px 8px; padding: .45rem .75rem; }
+.sidebar .nav-link i { width: 1.4rem; display: inline-block; }
+.sidebar .nav-link:hover { background: #f3f4f6; }
+.portal-clinica .sidebar .nav-link.active { background: var(--clinica-claro); color: var(--clinica); font-weight: 600; }
+.portal-laboratorio .sidebar .nav-link.active { background: var(--laboratorio-claro); color: var(--laboratorio); font-weight: 600; }
+.contenido { padding: 1.5rem; max-width: 1400px; }
+.card { border: 0; box-shadow: 0 1px 3px rgba(0,0,0,.08); border-radius: .75rem; }
+.card-header { background: #fff; font-weight: 600; border-bottom: 1px solid #eef0f3; }
+.titulo-seccion { font-weight: 700; margin-bottom: 0; }
+.kpi { border-left: 4px solid var(--gris); transition: transform .1s; }
+.kpi:hover { transform: translateY(-2px); }
+.kpi .valor { font-size: 1.8rem; font-weight: 700; line-height: 1; }
+.kpi .icono { font-size: 1.6rem; opacity: .75; }
+.kpi.c-teal { border-color: var(--clinica); } .kpi.c-teal .icono { color: var(--clinica); }
+.kpi.c-primary { border-color: var(--azul); } .kpi.c-primary .icono { color: var(--azul); }
+.kpi.c-secondary { border-color: var(--gris); } .kpi.c-secondary .icono { color: var(--gris); }
+.kpi.c-warning { border-color: var(--naranja); } .kpi.c-warning .icono { color: var(--naranja); }
+.kpi.c-danger { border-color: var(--rojo); } .kpi.c-danger .icono { color: var(--rojo); }
+.kpi.c-success { border-color: var(--verde); } .kpi.c-success .icono { color: var(--verde); }
+.kpi.c-info { border-color: var(--celeste); } .kpi.c-info .icono { color: var(--celeste); }
+.kpi.c-purple { border-color: var(--violeta); } .kpi.c-purple .icono { color: var(--violeta); }
+.kpi.alerta { background: #fef2f2; }
+/* Badges de estado con colores fijos */
+.badge.estado { font-weight: 600; padding: .38em .65em; border-radius: 999px; }
+.estado-gris { background: #e5e7eb; color: #374151; }
+.estado-azul { background: #dbeafe; color: #1d4ed8; }
+.estado-naranja { background: #ffedd5; color: #c2410c; }
+.estado-celeste { background: #cffafe; color: #0e7490; }
+.estado-verde { background: #dcfce7; color: #15803d; }
+.estado-rojo { background: #fee2e2; color: #b91c1c; }
+.estado-violeta { background: #ede9fe; color: #6d28d9; }
+/* Línea de tiempo del historial */
+.timeline { list-style: none; padding-left: 0; position: relative; margin: 0; }
+.timeline::before { content: ""; position: absolute; left: 11px; top: 4px; bottom: 4px; width: 2px; background: #e5e7eb; }
+.timeline li { position: relative; padding-left: 34px; padding-bottom: .9rem; }
+.timeline li:last-child { padding-bottom: 0; }
+.timeline .punto { position: absolute; left: 4px; top: 3px; width: 16px; height: 16px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 2px #e5e7eb; }
+.punto.estado-gris { background: var(--gris); } .punto.estado-azul { background: var(--azul); }
+.punto.estado-naranja { background: var(--naranja); } .punto.estado-celeste { background: var(--celeste); }
+.punto.estado-verde { background: var(--verde); } .punto.estado-rojo { background: var(--rojo); }
+.timeline .meta { font-size: .8rem; color: #6b7280; }
+.timeline .inmutable { font-size: .75rem; color: #9ca3af; }
+/* Agenda */
+.agenda td, .agenda th { vertical-align: middle; font-size: .85rem; }
+.agenda td.ocupado { background: #f0fdfa; }
+.portal-laboratorio .agenda td.ocupado { background: #f5f3ff; }
+.agenda .franja { width: 70px; color: #6b7280; }
+/* Login */
+.tarjeta-portal { border-top: 6px solid var(--clinica); }
+.tarjeta-portal.lab { border-top-color: var(--laboratorio); }
+.btn-clinica { background: var(--clinica); color: #fff; } .btn-clinica:hover { background: #115e59; color: #fff; }
+.btn-lab { background: var(--laboratorio); color: #fff; } .btn-lab:hover { background: #5b21b6; color: #fff; }
+.portal-clinica .btn-portal { background: var(--clinica); color: #fff; }
+.portal-laboratorio .btn-portal { background: var(--laboratorio); color: #fff; }
+.btn-portal:hover { filter: brightness(.92); color: #fff; }
+.toggle-grande .btn { font-size: 1.15rem; padding: .8rem 1.6rem; }
+.resultado-recepcion { font-size: 2rem; font-weight: 800; letter-spacing: 1px; }
+.tabla-compacta td, .tabla-compacta th { padding: .45rem .6rem; }
+.grafico { position: relative; height: 320px; }
+.text-pre { white-space: pre-line; }
+.nav-tabs .nav-link { color: #374151; }
+.toast-container { z-index: 1080; }
+.table td:first-child, .table td a { white-space: nowrap; }
+.portal-clinica .nav-pills .nav-link.active { background: var(--clinica); }
+.portal-laboratorio .nav-pills .nav-link.active { background: var(--laboratorio); }
+.nav-pills .nav-link { color: #374151; }
+@media (max-width: 768px) { .sidebar { width: 100%; min-height: auto; } }

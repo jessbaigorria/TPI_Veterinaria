@@ -1,6 +1,4 @@
 """Persistencia del State (string + @orm.reconstructor) y del Observer al recargar."""
-from sqlalchemy import select
-
 from app.domain.estados.estado_muestra import EnTransito
 from app.domain.estados.estado_remito import RemitoEnTransito
 from app.domain.laboratorio import MuestraBiologica
@@ -28,7 +26,6 @@ def test_muestra_recargada_sigue_registrando_historial(engine, base):
     m = base.muestra()
     r = base.remito_en_transito([m])
     otra = db_mod.crear_fabrica_sesiones(engine)()
-    from tests.datos_servicios import Base  # noqa: F401
     from app.services.recepcion import RecepcionService
     RecepcionService(otra).recibir(r.id, base.lab.id, True, 4, "lab.otra.sesion")
     m2 = otra.get(MuestraBiologica, m.id)

@@ -305,6 +305,13 @@ class HistoriaClinica(Base):
             return []
         return list(sesion.scalars(select(Vacuna).where(Vacuna.obligatoria.is_(True)).order_by(Vacuna.nombre)))
 
+    def facturas(self) -> list["Factura"]:
+        """Comprobantes de atenciones, órdenes y cirugías de esta historia (más recientes primero)."""
+        fs = [f for a in self.atenciones for f in a.facturas]
+        fs += [f for o in self.ordenes_derivacion() for f in o.facturas]
+        fs += [f for d in self.derivaciones_cirugia() for f in d.facturas]
+        return sorted(fs, key=lambda f: f.fecha_emision, reverse=True)
+
     def ultima_aplicacion(self, v: Vacuna) -> AplicacionVacuna | None:
         apps = [a for a in self.aplicaciones if a.vacuna is v]
         return max(apps, key=lambda a: a.fecha_aplicacion) if apps else None

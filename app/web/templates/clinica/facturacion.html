@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import encabezado, badge_enum, vacio, opciones_enum %}
+{% block contenido %}
+{% call encabezado("Facturación", "Comprobantes de atención, servicios de laboratorio y cirugías") %}{% endcall %}
+<div class="card mb-4"><div class="card-header">Pendiente de facturar ({{ pendientes.total }})</div><div class="card-body p-0">
+{% if pendientes.total %}
+<table class="table tabla-compacta mb-0"><thead><tr><th>Tipo</th><th>Referencia</th><th>Fecha</th><th>Titular</th><th>Detalle</th><th class="text-end">Importe</th><th></th></tr></thead><tbody>
+{% for a in pendientes.atenciones %}<tr><td>Atención clínica</td><td><a href="/clinica/atenciones/{{ a.id }}">{{ a.tipo.etiqueta }}</a></td><td>{{ a.fecha_hora_inicio|fecha }}</td><td>{{ a.titular.nombre_completo() }}</td>
+  <td>{{ a.mascota.nombre }}</td><td class="text-end">{{ a.importe|moneda }}</td>
+  <td><form method="post" action="/clinica/facturacion/atencion/{{ a.id }}"><button class="btn btn-sm btn-success">Emitir</button></form></td></tr>{% endfor %}
+{% for o in pendientes.ordenes %}<tr><td>Servicio de laboratorio</td><td><a href="/clinica/ordenes/{{ o.id }}">{{ o.numero }}</a></td><td>{{ o.fecha_emision|fecha }}</td><td>{{ o.titular.nombre_completo() }}</td>
+  <td>{{ o.resultados()|length }} análisis realizados</td><td class="text-end">{{ o.resultados()|sum(attribute='tipo_analisis.precio')|moneda }}</td>
+  <td><form method="post" action="/clinica/facturacion/orden/{{ o.id }}"><button class="btn btn-sm btn-success">Emitir</button></form></td></tr>{% endfor %}
+{% for d in pendientes.cirugias %}<tr><td>Cirugía</td><td><a href="/clinica/cirugias/{{ d.id }}">{{ d.numero }}</a></td><td>{{ d.fecha_programada|fecha }}</td><td>{{ d.atencion.titular.nombre_completo() }}</td>
+  <td>{{ d.tipo_cirugia }}</td><td></td>
+  <td><form method="post" action="/clinica/facturacion/cirugia/{{ d.id }}" class="d-flex gap-1"><input name="importe" class="form-control form-control-sm" placeholder="$" required style="width:110px"><button class="btn btn-sm btn-success">Emitir</button></form></td></tr>{% endfor %}
+</tbody></table>
+{% else %}{{ vacio("No hay nada pendiente de facturar.") }}{% endif %}
+</div></div>
+<div class="card"><div class="card-header d-flex justify-content-between align-items-center">Comprobantes emitidos
+  <form class="d-flex gap-2"><select class="form-select form-select-sm" name="tipo"><option value="">Tipo</option>{{ opciones_enum(enums.TipoComprobante, query.tipo) }}</select>
+    <select class="form-select form-select-sm" name="estado"><option value="">Estado</option>{{ opciones_enum(enums.EstadoFactura, query.estado) }}</select>
+    <button class="btn btn-sm btn-outline-secondary">Filtrar</button></form></div>
+<div class="card-body p-0">
+{% if facturas %}<table class="table table-hover mb-0"><thead><tr><th>N°</th><th>Fecha</th><th>Tipo</th><th>Titular</th><th class="text-end">Total</th><th>Forma de pago</th><th>Estado</th></tr></thead>
+<tbody>{% for f in facturas %}<tr onclick="location='/clinica/facturacion/{{ f.id }}'" style="cursor:pointer"><td class="fw-semibold">{{ f.numero }}</td><td>{{ f.fecha_emision|fecha }}</td><td>{{ f.tipo.etiqueta }}</td>
+  <td>{{ f.titular.nombre_completo() }}</td><td class="text-end">{{ f.total|moneda }}</td><td>{{ f.forma_pago.etiqueta if f.forma_pago else '–' }}</td><td>{{ badge_enum(f.estado) }}</td></tr>{% endfor %}</tbody></table>
+{% else %}{{ vacio() }}{% endif %}
+</div></div>
+{% endblock %}

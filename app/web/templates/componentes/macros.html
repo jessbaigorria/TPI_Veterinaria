@@ -1,0 +1,94 @@
+{# Componentes reutilizables de ambos portales #}
+
+{# <option> de un enum para los filtros de listados #}
+{% macro opciones_enum(enum_cls, seleccionado) -%}
+{% for e in enum_cls %}<option value="{{ e.value }}" {{ 'selected' if e.value == seleccionado }}>{{ e.etiqueta }}</option>{% endfor %}
+{%- endmacro %}
+
+{% macro badge_muestra(m) -%}
+<span class="badge estado estado-{{ m|color_muestra }}">{{ m.estado_actual() }}</span>
+{%- endmacro %}
+
+{% macro badge_remito(r) -%}
+<span class="badge estado estado-{{ r|color_remito }}">{{ r.estado_actual() }}</span>
+{%- endmacro %}
+
+{% macro badge_enum(valor, texto=None) -%}
+<span class="badge estado estado-{{ valor|color_enum }}">{{ texto or valor|etiqueta }}</span>
+{%- endmacro %}
+
+{% macro badge_nombre(nombre) -%}
+<span class="badge estado estado-{{ nombre|color_nombre }}">{{ nombre }}</span>
+{%- endmacro %}
+
+{# Línea de tiempo del HistorialEstadoMuestra (tupla inmutable) #}
+{% macro linea_tiempo(historial) -%}
+<ul class="timeline">
+  {% for h in historial %}
+  <li>
+    <span class="punto estado-{{ h.estado_nuevo|color_nombre }}"></span>
+    <div><b>{{ h.estado_nuevo }}</b> <span class="meta">desde {{ h.estado_anterior }}</span></div>
+    <div class="meta"><i class="bi bi-clock"></i> {{ h.fecha_hora|fecha_hora }} · <i class="bi bi-person"></i> {{ h.usuario }}</div>
+    {% if h.motivo %}<div class="small">{{ h.motivo }}</div>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+<div class="inmutable mt-2"><i class="bi bi-lock"></i> Historial inmutable: los registros no se pueden editar ni borrar.</div>
+{%- endmacro %}
+
+{% macro kpi(k) -%}
+<a href="{{ k.enlace or '#' }}" class="text-decoration-none text-reset">
+  <div class="card kpi c-{{ k.color }} {{ 'alerta' if k.alerta }} h-100">
+    <div class="card-body d-flex justify-content-between align-items-center">
+      <div><div class="valor {{ 'text-danger' if k.alerta }}">{{ k.valor }}</div><div class="text-muted small mt-1">{{ k.titulo }}</div></div>
+      <i class="bi bi-{{ k.icono }} icono"></i>
+    </div>
+  </div>
+</a>
+{%- endmacro %}
+
+{% macro vacio(texto="No hay registros para mostrar.") -%}
+<div class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block"></i>{{ texto }}</div>
+{%- endmacro %}
+
+{% macro encabezado(titulo, subtitulo=None) -%}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <div><h3 class="titulo-seccion">{{ titulo }}</h3>{% if subtitulo %}<div class="text-muted">{{ subtitulo }}</div>{% endif %}</div>
+  <div class="d-flex gap-2">{{ caller() if caller }}</div>
+</div>
+{%- endmacro %}
+
+{% macro campo(nombre, etiqueta, valor='', tipo='text', requerido=False, ayuda=None, extra='') -%}
+<div class="mb-3">
+  <label class="form-label" for="{{ nombre }}">{{ etiqueta }}{% if requerido %} <span class="text-danger">*</span>{% endif %}</label>
+  <input class="form-control" type="{{ tipo }}" id="{{ nombre }}" name="{{ nombre }}" value="{{ valor if valor is not none }}" {{ 'required' if requerido }} {{ extra|safe }}>
+  {% if ayuda %}<div class="form-text">{{ ayuda }}</div>{% endif %}
+</div>
+{%- endmacro %}
+
+{# Cadena de custodia de una muestra #}
+{% macro custodia(m) -%}
+{% set r = m.remito %}
+<dl class="row small mb-0">
+  <dt class="col-5">Extracción</dt><dd class="col-7">{{ m.historial()[0].usuario }} · {{ m.fecha_hora_extraccion|fecha_hora }}</dd>
+  <dt class="col-5">Clínica / orden</dt><dd class="col-7">{{ m.orden.clinica.nombre }} · {{ m.orden.numero }}</dd>
+  {% if r %}
+  <dt class="col-5">Remito (armó)</dt><dd class="col-7">{{ r.numero }} · {{ r.usuario_armador }}</dd>
+  <dt class="col-5">Contenedor</dt><dd class="col-7">{{ r.contenedor.codigo }} ({{ r.contenedor.rango_texto() }})</dd>
+  {% if r.precinto %}
+  <dt class="col-5">Precinto (colocó)</dt><dd class="col-7">{{ r.precinto.codigo }} · {{ r.precinto.usuario_colocador }} · {{ badge_enum(r.precinto.estado) }}</dd>
+  <dt class="col-5">Temp. despacho</dt><dd class="col-7">{{ r.temperatura_despacho }} °C</dd>
+  {% endif %}
+  {% if r.envio %}
+  <dt class="col-5">Transportista</dt><dd class="col-7">{{ r.envio.transportista }} · {{ r.envio.vehiculo }}</dd>
+  <dt class="col-5">Despacho / llegada</dt><dd class="col-7">{{ r.envio.fecha_hora_despacho|fecha_hora }} → {{ r.envio.fecha_hora_llegada_real|fecha_hora }}</dd>
+  {% endif %}
+  {% if r.recepcion %}
+  <dt class="col-5">Recibió</dt><dd class="col-7">{{ r.recepcion.usuario_receptor }} · {{ r.recepcion.temperatura_recepcion }} °C · {{ badge_enum(r.recepcion.resultado) }}</dd>
+  {% endif %}
+  {% endif %}
+  {% for res in m.resultados %}
+  <dt class="col-5">Analizó</dt><dd class="col-7">{{ res.analista }} · {{ res.tipo_analisis.nombre }} · {{ res.fecha_hora|fecha_hora }}</dd>
+  {% endfor %}
+</dl>
+{%- endmacro %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "componentes/macros.html" import encabezado, vacio %}
+{% block contenido %}
+{% call encabezado("Clientes", "Titulares responsables de las mascotas") %}
+  <a href="/clinica/clientes/nuevo" class="btn btn-portal"><i class="bi bi-person-plus"></i> Nuevo titular</a>
+{% endcall %}
+<div class="card mb-3"><div class="card-body"><form class="d-flex gap-2">
+  <input class="form-control" name="q" value="{{ query.q }}" placeholder="🔎 Buscar por DNI, nombre, apellido o email">
+  <button class="btn btn-outline-secondary">Buscar</button></form></div></div>
+<div class="card"><div class="card-body p-0">
+{% if titulares %}
+<table class="table table-hover mb-0">
+  <thead><tr><th>DNI</th><th>Apellido y nombre</th><th>Teléfono</th><th>Email</th><th>Mascotas</th><th>Alta</th><th>Estado</th></tr></thead>
+  <tbody>{% for t in titulares %}
+  <tr onclick="location='/clinica/clientes/{{ t.id }}'" style="cursor:pointer" class="{{ 'text-muted' if not t.activo }}">
+    <td>{{ t.dni }}</td><td class="fw-semibold">{{ t.nombre_completo() }}</td><td>{{ t.telefono }}</td><td>{{ t.email }}</td>
+    <td>{{ t.mascotas_activas()|map(attribute='nombre')|join(', ') }}</td><td>{{ t.fecha_alta|fecha }}</td>
+    <td>{% if t.activo %}<span class="badge estado estado-verde">Activo</span>{% else %}<span class="badge estado estado-gris">Baja</span>{% endif %}</td>
+  </tr>{% endfor %}</tbody>
+</table>
+{% else %}{{ vacio() }}{% endif %}
+</div></div>
+{% endblock %}
