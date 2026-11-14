@@ -37,3 +37,9 @@ def mundo():
 def mundo_db(sesion):
     """Mismo grafo pero persistido en una SQLite en memoria."""
     return Mundo(sesion)
+
+
+@pytest.fixture
+def base(sesion):
+    from tests.datos_servicios import Base
+    return Base(sesion)

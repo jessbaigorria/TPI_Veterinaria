@@ -2,7 +2,7 @@
 FAC-000001, CIR-000001. Se guarda el último número por prefijo en la tabla ``secuencia``."""
 from __future__ import annotations
 
-from sqlalchemy import Integer, String, select
+from sqlalchemy import Integer, String, select, text
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from app.domain.base import Base
@@ -28,14 +28,15 @@ class Numerador:
         self.sesion = sesion
 
     def siguiente(self, prefijo: str) -> str:
-        sec = self.sesion.get(Secuencia, prefijo)
-        if sec is None:
-            sec = Secuencia(prefijo=prefijo, ultimo=0)
-            self.sesion.add(sec)
-        sec.ultimo += 1
-        return f"{prefijo}-{sec.ultimo:06d}"
+        # Upsert atómico en la misma transacción del caso de uso (se revierte con el rollback).
+        ultimo = self.sesion.execute(
+            text("INSERT INTO secuencia (prefijo, ultimo) VALUES (:p, 1) "
+                 "ON CONFLICT(prefijo) DO UPDATE SET ultimo = ultimo + 1 RETURNING ultimo"),
+            {"p": prefijo},
+        ).scalar_one()
+        return f"{prefijo}-{ultimo:06d}"
 
     def proximo(self, prefijo: str) -> str:
         """Muestra el próximo número sin consumirlo (para precargar formularios)."""
-        sec = self.sesion.get(Secuencia, prefijo)
-        return f"{prefijo}-{(sec.ultimo if sec else 0) + 1:06d}"
+        ultimo = self.sesion.execute(select(Secuencia.ultimo).where(Secuencia.prefijo == prefijo)).scalar()
+        return f"{prefijo}-{(ultimo or 0) + 1:06d}"
