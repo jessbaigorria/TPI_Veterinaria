@@ -12,7 +12,7 @@
 <div class="alert {{ 'alert-danger' if a.bloqueara_por_vacunas() else 'alert-warning' }}">
   <i class="bi bi-shield-exclamation"></i> <b>Vacunas obligatorias pendientes:</b>
   {% for d in pendientes %}{{ d.vacuna.nombre }} ({{ d.motivo|lower }}, {{ d.dias_atraso }} días){{ ', ' if not loop.last }}{% endfor %}.
-  {% if a.bloqueara_por_vacunas() %}Al iniciar esta {{ a.tipo.etiqueta|lower }} se bloqueará (VacunasPendientesError).
+  {% if a.bloqueara_por_vacunas() %}No se podrá iniciar esta {{ a.tipo.etiqueta|lower }} hasta aplicar las vacunas.
   <a href="/clinica/atenciones/nueva?mascota={{ a.mascota.id }}&tipo=VACUNACION" class="alert-link">Atender como VACUNACIÓN</a>{% endif %}
 </div>
 {% endif %}

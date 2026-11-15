@@ -27,7 +27,7 @@ def test_no_se_factura_dos_veces(sesion, base):
     AtencionesService(sesion).finalizar(a.id, "Otitis", importe=8000)
     svc = FacturacionService(sesion)
     f = svc.facturar_atencion(a.id)
-    with pytest.raises(VeterinariaError, match="Ya se facturó"):
+    with pytest.raises(VeterinariaError, match="ya fue facturada"):
         svc.facturar_atencion(a.id)
     svc.anular(f.id)
     f2 = svc.facturar_atencion(a.id)  # con la anterior ANULADA sí se puede

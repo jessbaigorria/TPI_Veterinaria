@@ -36,8 +36,8 @@
     <div class="card mb-3 border-primary"><div class="card-header"><i class="bi bi-truck"></i> Despachar</div><div class="card-body">
       {% if 'registrar_temperatura' in acc and not r.contenedor.temperatura_adecuada(r.temperatura_despacho) %}
       <div class="alert alert-warning small mb-2">La temperatura de despacho ({{ r.temperatura_despacho }} °C) está fuera del rango del
-        contenedor ({{ r.contenedor.rango_texto() }}): el dominio no permitirá despachar. La muestra <b>no se pierde</b>: sigue
-        Empaquetada en la clínica. Acondicioná la conservadora y registrá una nueva medición.</div>
+        contenedor ({{ r.contenedor.rango_texto() }}): todavía no se puede despachar. La muestra sigue
+        empaquetada en la clínica: acondicioná la conservadora y registrá una nueva medición.</div>
       <form method="post" action="/clinica/envios/{{ r.id }}/temperatura" class="d-flex gap-2 mb-3">
         <input class="form-control" name="temperatura_despacho" required placeholder="Nueva medición (°C) · rango {{ r.contenedor.rango_texto() }}">
         <button class="btn btn-outline-primary text-nowrap"><i class="bi bi-thermometer-half"></i> Volver a medir</button></form>

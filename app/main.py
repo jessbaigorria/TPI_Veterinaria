@@ -27,6 +27,14 @@ def crear_app(url_db: str | None = None, motor=None) -> FastAPI:
     app.add_middleware(SessionMiddleware, secret_key=os.environ.get("VETERINARIA_SECRET", "tp-dao-grupo-30"),
                        session_cookie="vetred_sesion", max_age=60 * 60 * 12)
     app.mount("/static", StaticFiles(directory=str(ESTATICOS)), name="static")
+
+    @app.middleware("http")
+    async def sin_cache(request: Request, call_next):
+        # Las pantallas siempre se piden de nuevo (al volver atrás no se ven listados viejos).
+        respuesta = await call_next(request)
+        if respuesta.headers.get("content-type", "").startswith("text/html"):
+            respuesta.headers["Cache-Control"] = "no-store"
+        return respuesta
     app.include_router(comunes.router)
     app.include_router(portal_clinica.router)
     app.include_router(portal_laboratorio.router)
@@ -36,7 +44,7 @@ def crear_app(url_db: str | None = None, motor=None) -> FastAPI:
         extra = {}
         if isinstance(exc, VacunasPendientesError) and exc.mascota_id is not None:
             extra = {"vacunas": exc.nombres_vacunas, "mascota_id": exc.mascota_id, "mascota": exc.mascota_nombre}
-        avisar(request, str(exc), "danger", error=type(exc).__name__, **extra)
+        avisar(request, str(exc), "danger", **extra)
         if request.method == "POST":
             try:
                 guardar_formulario(request, dict(await request.form()))
@@ -44,6 +52,9 @@ def crear_app(url_db: str | None = None, motor=None) -> FastAPI:
                 pass
             destino = request.headers.get("referer") or "/"
             return RedirectResponse(destino, status_code=303)
+        referer = request.headers.get("referer")
+        if referer and referer != str(request.url):
+            return RedirectResponse(referer, status_code=303)
         return render(request, "error.html", status_code=400, titulo="No se pudo completar la operación")
 
     return app

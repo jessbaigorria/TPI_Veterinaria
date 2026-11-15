@@ -188,7 +188,7 @@ class AtencionClinica(Base):
         self._validar_transicion(EstadoAtencion.EN_PROGRESO)
         pendientes = self.verificar_vacunas_obligatorias()
         if pendientes and self.tipo in self._TIPOS_CON_ADVERTENCIA:
-            nota = "⚠ Atendida por urgencia con vacunas pendientes: " + ", ".join(v.nombre for v in pendientes)
+            nota = "Atendida por urgencia con vacunas pendientes: " + ", ".join(v.nombre for v in pendientes)
             self.observaciones = f"{self.observaciones}\n{nota}".strip()
         self.estado = EstadoAtencion.EN_PROGRESO
         return pendientes
@@ -268,7 +268,7 @@ class AtencionClinica(Base):
             raise VeterinariaError("Solo se facturan atenciones finalizadas.")
         if self.importe is None or self.importe <= 0:
             raise VeterinariaError("La atención no tiene importe para facturar.")
-        _validar_sin_factura_vigente(self.facturas, "la atención")
+        _validar_sin_factura_vigente(self.facturas, "Esta atención ya fue facturada")
         factura = Factura(tipo=TipoComprobante.ATENCION_CLINICA, titular=self.titular, clinica=self.clinica,
                           numero=numero, atencion=self)
         factura.agregar_item(f"{self.tipo.etiqueta} – {self.mascota.nombre} "
@@ -451,7 +451,7 @@ class DerivacionCirugia(Base):
         importe = a_decimal(importe)
         if importe <= 0:
             raise VeterinariaError("Hay que ingresar el importe de la cirugía.")
-        _validar_sin_factura_vigente(self.facturas, "la cirugía")
+        _validar_sin_factura_vigente(self.facturas, "Esta cirugía ya fue facturada")
         factura = Factura(tipo=TipoComprobante.CIRUGIA, titular=self.atencion.titular, clinica=self.destino,
                           numero=numero, derivacion=self)
         factura.agregar_item(f"Cirugía: {self.tipo_cirugia} – {self.mascota.nombre}", 1, importe)
@@ -484,7 +484,7 @@ class DerivacionCirugia(Base):
             )
 
 
-def _validar_sin_factura_vigente(facturas: list[Factura], que: str) -> None:
+def _validar_sin_factura_vigente(facturas: list[Factura], mensaje: str) -> None:
     vigentes = [f for f in facturas if f.estado is not EstadoFactura.ANULADA]
     if vigentes:
-        raise VeterinariaError(f"Ya se facturó {que} (comprobante {vigentes[0].numero}).")
+        raise VeterinariaError(f"{mensaje} ({vigentes[0].numero}).")

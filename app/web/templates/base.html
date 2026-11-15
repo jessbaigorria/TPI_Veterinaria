@@ -13,9 +13,9 @@
 <header class="topbar d-flex align-items-center px-3 justify-content-between">
   <div class="d-flex align-items-center gap-2">
     {% if u and u.portal == 'laboratorio' %}
-      <span class="fs-4">🧪</span><span class="marca">VetRed · Laboratorio</span>
+      <i class="bi bi-eyedropper fs-5"></i><span class="marca">VetRed · Laboratorio</span>
     {% else %}
-      <span class="fs-4">🏥</span><span class="marca">VetRed · Clínica</span>
+      <i class="bi bi-hospital fs-5"></i><span class="marca">VetRed · Clínica</span>
     {% endif %}
   </div>
   {% if u %}
@@ -52,13 +52,13 @@
     {% for m in mensajes if m.tipo in ('danger', 'warning') %}
       <div class="alert alert-{{ m.tipo }} alert-dismissible fade show shadow-sm" role="alert">
         <i class="bi bi-{{ 'x-octagon' if m.tipo == 'danger' else 'exclamation-triangle' }}"></i>
-        {% if m.error %}<b>{{ m.error }}:</b>{% endif %} {{ m.texto }}
+        {{ m.texto }}
         {% if m.vacunas %}
           <ul class="mb-1 mt-2">{% for v in m.vacunas %}<li>{{ v }}</li>{% endfor %}</ul>
           <a class="btn btn-sm btn-light border" href="/clinica/agenda/nuevo?mascota={{ m.mascota_id }}&tipo=VACUNACION">
             <i class="bi bi-calendar-plus"></i> Reservar turno de VACUNACIÓN para {{ m.mascota }}</a>
           <a class="btn btn-sm btn-light border" href="/clinica/atenciones/nueva?mascota={{ m.mascota_id }}&tipo=VACUNACION">
-            <i class="bi bi-syringe"></i> Atender ahora como VACUNACIÓN</a>
+            <i class="bi bi-shield-plus"></i> Atender ahora como VACUNACIÓN</a>
         {% endif %}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>
@@ -73,6 +73,14 @@
       <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>
   </div>
   {% endfor %}
+</div>
+<div class="modal fade" id="modal-confirmar" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title">Confirmar</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+    <div class="modal-body"><p class="mb-2" id="modal-confirmar-texto"></p><div class="text-muted" id="modal-confirmar-detalle"></div></div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+      <button type="button" class="btn btn-portal" id="modal-confirmar-aceptar">Aceptar</button></div>
+  </div></div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>

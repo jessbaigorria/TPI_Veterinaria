@@ -105,13 +105,13 @@ def test_escenario_de_demo(demo):
     assert "Turno reservado" in r.text
     r = post(c, "/clinica/agenda/reservar", {**turno, "mascota_id": rocco.id, "hora_inicio": "14:15"},
              "/clinica/agenda/nuevo")
-    assert "TurnoSuperpuestoError" in r.text and "alert-danger" in r.text
+    assert "ya tiene un turno de" in r.text and "alert-danger" in r.text
 
     # 2) Vacunas: CONTROL bloqueado → VACUNACIÓN → CONTROL pasa ----------------------------
     atencion = {"titular_id": rocco.titular_id, "mascota_id": rocco.id, "profesional_id": perez.id,
                 "tipo": "CONTROL", "inicio": f"{HOY}T19:00", "duracion": "30", "asiste_titular": "1"}
     r = post(c, "/clinica/atenciones/registrar", atencion, "/clinica/atenciones/nueva")
-    assert "VacunasPendientesError" in r.text and "Antirrábica" in r.text
+    assert "tiene vacunas obligatorias pendientes" in r.text and "Antirrábica" in r.text
     assert "Reservar turno de VACUNACIÓN" in r.text
     r = post(c, "/clinica/atenciones/registrar", {**atencion, "tipo": "VACUNACION", "inicio": f"{HOY}T19:30"},
              "/clinica/atenciones/nueva")
@@ -129,7 +129,7 @@ def test_escenario_de_demo(demo):
     # 3) Mascota sin titular ---------------------------------------------------------------
     r = post(c, "/clinica/mascotas", {"titular_id": "", "nombre": "Huérfano", "especie": "GATO", "sexo": "MACHO",
                                       "fecha_nacimiento": "2024-05-01"}, "/clinica/mascotas/nueva")
-    assert "MascotaSinTitularError" in r.text
+    assert "sin titular responsable" in r.text
 
     # 4–6) Orden, muestra, remito, recepción OK, resultados → Analizada y orden COMPLETADA ----
     orden_id, muestra_id, remito_id, r = ciclo_laboratorio(c, s, control.id, integro=True, contenedor="CEN-02")
@@ -151,7 +151,7 @@ def test_escenario_de_demo(demo):
     hem = uno(s, TipoAnalisis, codigo="HEM")
     r = post(c, f"/laboratorio/muestras/{muestra2_id}/resultados",
              {"tipo_analisis_id": [hem.id], f"valores_{hem.id}": "x"}, f"/laboratorio/muestras/{muestra2_id}/resultados")
-    assert "MuestraRechazadaError" in r.text
+    assert "fue rechazada" in r.text and "no se pueden registrar resultados" in r.text
 
     # 8) Línea de tiempo de ambas muestras (historial inmutable) --------------------------
     for mid, ultimo in ((muestra_id, "Analizada"), (muestra2_id, "Rechazada")):
@@ -166,7 +166,7 @@ def test_escenario_de_demo(demo):
     sur = uno(s, Clinica, nombre="Hospital Veterinario Sur")
     norte = uno(s, Clinica, nombre="Clínica Norte")
     r = post(c, "/clinica/cirugias", {"atencion_id": control.id, "destino_id": norte.id, "tipo_cirugia": "Biopsia"})
-    assert "DerivacionCirugiaError" in r.text  # destino sin alta complejidad
+    assert "no está habilitada para cirugías de alta complejidad" in r.text
     r = post(c, "/clinica/cirugias", {"atencion_id": control.id, "destino_id": sur.id, "tipo_cirugia": "Nodulectomía",
                                       "riesgo_anestesico": "ASA_II", "prioridad": "NORMAL"})
     d = s.scalars(select(DerivacionCirugia).order_by(DerivacionCirugia.id.desc())).first()
@@ -176,7 +176,7 @@ def test_escenario_de_demo(demo):
     post(c, f"/clinica/cirugias/{d.id}/aceptar", {"cirujano_id": cirujano.id})
     fecha = (datetime.now() + timedelta(days=5)).strftime("%Y-%m-%dT10:00")
     r = post(c, f"/clinica/cirugias/{d.id}/programar", {"fecha": fecha}, f"/clinica/cirugias/{d.id}")
-    assert "consentimiento" in r.text and "DerivacionCirugiaError" in r.text
+    assert "sin el consentimiento firmado" in r.text and "alert-danger" in r.text
     post(c, f"/clinica/cirugias/{d.id}/consentimiento", {})
     r = post(c, f"/clinica/cirugias/{d.id}/programar", {"fecha": fecha})
     assert "programada" in r.text
@@ -191,7 +191,7 @@ def test_escenario_de_demo(demo):
     r = post(c, f"/clinica/facturacion/atencion/{control.id}", {})
     assert "Comprobante FAC-" in r.text
     r = post(c, f"/clinica/facturacion/atencion/{control.id}", {}, f"/clinica/atenciones/{control.id}")
-    assert "Ya se facturó" in r.text  # no se factura dos veces
+    assert "Esta atención ya fue facturada" in r.text  # no se factura dos veces
     r = post(c, f"/clinica/facturacion/orden/{orden_id}", {})
     assert "Comprobante FAC-" in r.text and "Hemograma completo" in r.text
     r = post(c, f"/clinica/facturacion/orden/{orden2_id}", {}, "/clinica/facturacion")

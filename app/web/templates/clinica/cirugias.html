@@ -13,7 +13,7 @@
   <tbody>{% for d in lista %}<tr onclick="location='/clinica/cirugias/{{ d.id }}'" style="cursor:pointer">
     <td class="fw-semibold">{{ d.numero }}</td><td>{{ d.fecha_solicitud|fecha }}</td><td>{{ d.mascota.nombre }}</td><td>{{ d.tipo_cirugia }}</td>
     <td>{{ d.clinica_origen.nombre if tab == 'recibidas' else d.destino.nombre }}</td><td>{{ badge_enum(d.prioridad) }}</td><td>{{ d.riesgo_anestesico.etiqueta }}</td>
-    <td>{{ '✔' if d.consentimiento_firmado else '–' }}</td><td>{{ d.fecha_programada|fecha_hora }}</td><td>{{ badge_enum(d.estado) }}</td></tr>{% endfor %}</tbody>
+    <td>{% if d.consentimiento_firmado %}<i class="bi bi-check-lg text-secondary" title="Firmado"></i>{% else %}–{% endif %}</td><td>{{ d.fecha_programada|fecha_hora }}</td><td>{{ badge_enum(d.estado) }}</td></tr>{% endfor %}</tbody>
 </table>{% else %}{{ vacio("Sin derivaciones. Se crean desde una atención (“Derivar a cirugía”).") }}{% endif %}
 </div></div>
 {% endblock %}

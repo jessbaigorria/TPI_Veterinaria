@@ -49,3 +49,11 @@ class VacunasPendientesError(VeterinariaError):
 
 class DerivacionCirugiaError(VeterinariaError):
     """Validación del proceso opcional de derivación a cirugía de alta complejidad."""
+
+
+class DatosInvalidosError(VeterinariaError):
+    """Datos con formato o valor inválido (DNI, teléfono, email, nombres, fechas, horarios, duraciones)."""
+
+
+class AtencionNoModificableError(VeterinariaError):
+    """Acción sobre una atención que ya no la admite (por ejemplo, emitir una orden con la atención finalizada)."""

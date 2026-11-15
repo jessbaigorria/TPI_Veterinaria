@@ -2,9 +2,26 @@
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".toast").forEach((t) => new bootstrap.Toast(t, { delay: 5000 }).show());
 
-  // Confirmación antes de acciones irreversibles.
+  // Confirmación antes de acciones irreversibles: modal de Bootstrap (Aceptar / Cancelar).
+  const modalEl = document.getElementById("modal-confirmar");
+  const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
+  let formPendiente = null;
   document.querySelectorAll("form[data-confirm]").forEach((f) =>
-    f.addEventListener("submit", (e) => { if (!confirm(f.dataset.confirm)) e.preventDefault(); }));
+    f.addEventListener("submit", (e) => {
+      if (!modal || f.dataset.confirmado === "1") return;
+      if (!f.checkValidity()) return;
+      e.preventDefault();
+      formPendiente = f;
+      document.getElementById("modal-confirmar-texto").textContent = f.dataset.confirm;
+      document.getElementById("modal-confirmar-detalle").textContent = f.dataset.confirmDetalle || "";
+      modal.show();
+    }));
+  document.getElementById("modal-confirmar-aceptar")?.addEventListener("click", () => {
+    if (!formPendiente) return;
+    formPendiente.dataset.confirmado = "1";
+    modal.hide();
+    formPendiente.requestSubmit ? formPendiente.requestSubmit() : formPendiente.submit();
+  });
 
   // Buscador dentro de un <select> (desplegable con buscador).
   document.querySelectorAll("[data-filtra]").forEach((input) => {
@@ -33,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const r = await fetch(`/api/titulares/${selTitular.value}/mascotas`);
       const datos = await r.json();
       datos.forEach((m) => {
-        const o = new Option(`${m.nombre} (${m.especie})` + (m.pendientes.length ? " ⚠ vacunas" : ""), m.id);
+        const o = new Option(`${m.nombre} (${m.especie})` + (m.pendientes.length ? " · vacunas pendientes" : ""), m.id);
         o.dataset.pendientes = m.pendientes.join(", ");
         selMascota.add(o);
       });

@@ -206,7 +206,7 @@ class OrdenDerivacion(Base):
             raise VeterinariaError("Solo se facturan órdenes completadas.")
         if self.tiene_factura_vigente():
             vigente = next(f for f in self.facturas if f.estado is not EstadoFactura.ANULADA)
-            raise VeterinariaError(f"Ya se facturó la orden {self.numero} (comprobante {vigente.numero}).")
+            raise VeterinariaError(f"Esta orden ya fue facturada ({vigente.numero}).")
         resultados = self.resultados()
         if not resultados:
             raise VeterinariaError(

@@ -126,5 +126,6 @@ def test_error_de_negocio_se_muestra_en_aviso_rojo(entorno):
                                                "sexo": "HEMBRA", "fecha_nacimiento": "2024-01-01"},
                     headers={"referer": "http://testserver/clinica/mascotas/nueva"})
     assert r.status_code == 200
-    assert "MascotaSinTitularError" in r.text and "alert-danger" in r.text
+    assert "sin titular responsable" in r.text and "alert-danger" in r.text
+    assert "MascotaSinTitularError" not in r.text  # sin nombres técnicos en la UI
     assert 'value="Sin dueño"' in r.text  # el formulario conserva lo cargado

@@ -12,7 +12,7 @@
       <option value="">— Sin titular —</option>
       {% for t in titulares %}<option value="{{ t.id }}" {{ 'selected' if query.titular == t.id|string or previo.titular_id == t.id|string }}>{{ t.nombre_completo() }} · DNI {{ t.dni }}</option>{% endfor %}
     </select>
-    <div class="form-text">¿No existe? <a href="/clinica/clientes/nuevo?volver=/clinica/mascotas/nueva">Crear titular</a>. (Si lo dejás vacío, el dominio rechaza el alta con <code>MascotaSinTitularError</code>.)</div></div>
+    <div class="form-text">¿No existe? <a href="/clinica/clientes/nuevo?volver=/clinica/mascotas/nueva">Crear titular</a>.</div></div>
   </div>
   {% endif %}
   <div class="row">

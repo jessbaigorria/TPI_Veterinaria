@@ -6,7 +6,7 @@
   <div class="col-lg-8">
     {% if 'cargar_resultado' not in m.acciones() %}
     <div class="alert alert-danger"><i class="bi bi-x-octagon"></i> Esta muestra está <b>{{ m.estado_actual() }}</b>{{ (': ' ~ m.motivo_rechazo()) if m.motivo_rechazo() }}.
-      El estado no admite cargar resultados; si se intenta, el dominio lo rechaza ({{ 'MuestraRechazadaError' if m.motivo_rechazo() else 'TransicionInvalidaError' }}).</div>
+      No admite resultados.</div>
     {% endif %}
     <form method="post" action="/laboratorio/muestras/{{ m.id }}/resultados">
     {% if m.orden.observaciones %}<div class="alert alert-light border small"><b>Indicaciones clínicas:</b> {{ m.orden.observaciones }}</div>{% endif %}
@@ -20,8 +20,7 @@
         <div class="col-md-6"><label class="form-label">Interpretación</label><input class="form-control" name="interpretacion_{{ t.id }}"></div>
       </div></div></div>
     {% endfor %}
-    <button class="btn btn-portal btn-lg {{ 'btn-outline-danger' if 'cargar_resultado' not in m.acciones() }}">
-      <i class="bi bi-save"></i> {{ 'Guardar resultados (→ Analizada)' if 'cargar_resultado' in m.acciones() else 'Intentar registrar resultado igualmente' }}</button>
+    <button class="btn btn-portal btn-lg"><i class="bi bi-save"></i> Guardar resultados</button>
     </form>
   </div>
   <div class="col-lg-4"><div class="card"><div class="card-header">Trazabilidad</div><div class="card-body">{{ linea_tiempo(m.historial()) }}</div></div></div>

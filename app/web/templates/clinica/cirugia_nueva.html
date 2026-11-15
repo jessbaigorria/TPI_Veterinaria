@@ -7,8 +7,8 @@
   <input type="hidden" name="atencion_id" value="{{ a.id }}">
   <div class="row g-3">
     <div class="col-md-6"><label class="form-label">Clínica de destino</label>
-      <select class="form-select" name="destino_id">{% for c in clinicas %}<option value="{{ c.id }}" {{ 'selected' if c.alta_complejidad }}>{{ c.nombre }}{{ ' ★ alta complejidad' if c.alta_complejidad }}</option>{% endfor %}</select>
-      <div class="form-text">Solo las clínicas con alta complejidad aceptan derivaciones (si no, DerivacionCirugiaError).</div></div>
+      <select class="form-select" name="destino_id">{% for c in clinicas %}<option value="{{ c.id }}" {{ 'selected' if c.alta_complejidad }}>{{ c.nombre }}{{ ' (alta complejidad)' if c.alta_complejidad }}</option>{% endfor %}</select>
+      <div class="form-text">Elegí una clínica de alta complejidad.</div></div>
     <div class="col-md-6"><label class="form-label">Tipo de cirugía *</label><input class="form-control" name="tipo_cirugia" required value="{{ previo.tipo_cirugia }}"></div>
     <div class="col-12"><label class="form-label">Diagnóstico presuntivo</label><input class="form-control" name="diagnostico_presuntivo" value="{{ previo.diagnostico_presuntivo or a.diagnostico }}"></div>
     <div class="col-md-6"><label class="form-label">Prioridad</label><select class="form-select" name="prioridad">{% for p in enums.Prioridad %}<option value="{{ p.value }}">{{ p.etiqueta }}</option>{% endfor %}</select></div>
