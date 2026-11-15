@@ -1,47 +1,44 @@
 {% extends "base.html" %}
 {% from "componentes/macros.html" import encabezado, opciones_profesionales %}
 {% block contenido %}
-{% call encabezado("Registrar atención médica", "Sin turno previo (urgencia o espontánea): se crea y se inicia en el momento") %}{% endcall %}
-<form method="post" action="/clinica/atenciones/registrar" data-horario-sin-turno data-duraciones='{{ DURACIONES|tojson }}'>
+{% call encabezado("Registrar atención médica sin turno previo") %}{% endcall %}
+<form method="post" action="/clinica/atenciones/registrar" data-horario-sin-turno data-duraciones='{{ DURACIONES|tojson }}' data-mascota-nueva>
 <div class="row g-3">
   <div class="col-lg-7">
     <div class="card mb-3"><div class="card-header">1 · Paciente</div><div class="card-body">
-      <div class="alert alert-light border small mb-3">
-        <b>Caso 1</b> titular presente: buscá el titular y elegí la mascota ·
-        <b>Caso 2</b> cliente frecuente con mascota nueva: “+ Nueva mascota” ·
-        <b>Caso 3</b> no viene el titular: “¿Asiste el titular? No” e indicá el responsable.
-        ¿Cliente nuevo? <a href="/clinica/clientes/nuevo">Crealo primero</a>.
-      </div>
-      <label class="form-label">Titular <span class="text-danger">*</span></label>
-      <select class="form-select mb-3" id="titular_id" name="titular_id" required data-buscar="Buscá por apellido o DNI">
+      <label class="form-label" for="titular_id">Titular <span class="text-danger">*</span></label>
+      <select class="form-select" id="titular_id" name="titular_id" required data-buscar="Buscá por apellido o DNI">
         <option value="">— Elegí el titular —</option>
-        {% for t in titulares %}<option value="{{ t.id }}" {{ 'selected' if previo.titular_id == t.id|string or (query.mascota and t.mascotas|selectattr('id','equalto',query.mascota|int)|list) }}>{{ t.nombre_completo() }} · DNI {{ t.dni }}</option>{% endfor %}
+        {% for t in titulares %}<option value="{{ t.id }}" {{ 'selected' if query.titular == t.id|string or previo.titular_id == t.id|string or (query.mascota and t.mascotas|selectattr('id','equalto',query.mascota|int)|list) }}>{{ t.nombre_completo() }} · DNI {{ t.dni|dni }}</option>{% endfor %}
       </select>
-      <div class="form-check form-switch mb-2">
-        <input class="form-check-input" type="checkbox" id="nueva_mascota" name="nueva_mascota" value="1" {{ 'checked' if previo.nueva_mascota }}>
-        <label class="form-check-label" for="nueva_mascota"><i class="bi bi-plus-circle"></i> Nueva mascota (cliente frecuente)</label>
+      <div class="form-text mb-3">¿No existe? <a href="/clinica/clientes/nuevo?next=/clinica/atenciones/nueva">Crear titular</a></div>
+
+      <label class="form-label" for="mascota_id">Mascota del titular</label>
+      <select class="form-select" id="mascota_id" name="mascota_id" data-buscar="Buscá la mascota" data-mascotas-de="titular_id" data-aviso="aviso-vacunas"
+              data-seleccionada="{{ query.mascota or previo.mascota_id }}"><option value="">— Elegí la mascota —</option></select>
+      <div id="aviso-vacunas" class="mt-2"></div>
+
+      <div class="border rounded p-3 mt-3 bg-light">
+        <div class="fw-semibold mb-2"><i class="bi bi-plus-circle text-secondary"></i> Nueva mascota (cliente frecuente)</div>
+        <div class="form-text mt-0 mb-2">Completá estos datos solo si la mascota todavía no está registrada; si no, elegila arriba.</div>
+        <div class="row g-2">
+          <div class="col-md-6"><label class="form-label" for="nm_nombre">Nombre</label><input class="form-control" id="nm_nombre" name="nm_nombre" value="{{ previo.nm_nombre }}" data-nueva></div>
+          <div class="col-md-3"><label class="form-label">Especie</label><select class="form-select" name="nm_especie" data-nueva>
+            {% for e in enums.Especie %}<option value="{{ e.value }}" {{ 'selected' if previo.nm_especie == e.value }}>{{ e.etiqueta }}</option>{% endfor %}</select></div>
+          <div class="col-md-3"><label class="form-label">Sexo</label><select class="form-select" name="nm_sexo" data-nueva>
+            {% for e in enums.Sexo %}<option value="{{ e.value }}" {{ 'selected' if previo.nm_sexo == e.value }}>{{ e.etiqueta }}</option>{% endfor %}</select></div>
+          <div class="col-md-4"><label class="form-label">Nacimiento</label><input type="date" class="form-control" name="nm_fecha_nacimiento" max="{{ reloj.hoy() }}" value="{{ previo.nm_fecha_nacimiento }}" data-nueva></div>
+          <div class="col-md-5"><label class="form-label">Raza</label><input class="form-control" name="nm_raza" value="{{ previo.nm_raza }}"></div>
+          <div class="col-md-3"><label class="form-label">Peso (kg)</label><input class="form-control" type="number" min="0" step="0.1" name="nm_peso" value="{{ previo.nm_peso }}"></div>
+        </div>
       </div>
-      <div data-muestra-si="nueva_mascota:0">
-        <label class="form-label">Mascota <span class="text-danger">*</span></label>
-        <select class="form-select" name="mascota_id" data-buscar="Buscá la mascota" data-requerido="1" data-mascotas-de="titular_id" data-aviso="aviso-vacunas"
-                data-seleccionada="{{ query.mascota or previo.mascota_id }}"><option value="">— Elegí la mascota —</option></select>
-        <div id="aviso-vacunas" class="mt-2"></div>
-      </div>
-      <div data-muestra-si="nueva_mascota:1" class="row g-2 border rounded p-2 bg-light">
-        <div class="col-md-6"><label class="form-label">Nombre *</label><input class="form-control" name="nm_nombre" data-requerido="1" value="{{ previo.nm_nombre }}"></div>
-        <div class="col-md-3"><label class="form-label">Especie *</label><select class="form-select" name="nm_especie">
-          {% for e in enums.Especie %}<option value="{{ e.value }}">{{ e.etiqueta }}</option>{% endfor %}</select></div>
-        <div class="col-md-3"><label class="form-label">Sexo *</label><select class="form-select" name="nm_sexo">
-          {% for e in enums.Sexo %}<option value="{{ e.value }}">{{ e.etiqueta }}</option>{% endfor %}</select></div>
-        <div class="col-md-4"><label class="form-label">Nacimiento *</label><input type="date" class="form-control" name="nm_fecha_nacimiento" data-requerido="1" value="{{ previo.nm_fecha_nacimiento }}"></div>
-        <div class="col-md-5"><label class="form-label">Raza</label><input class="form-control" name="nm_raza" value="{{ previo.nm_raza }}"></div>
-        <div class="col-md-3"><label class="form-label">Peso (kg)</label><input class="form-control" name="nm_peso" value="{{ previo.nm_peso }}"></div>
-      </div>
+
       <div class="row g-2 mt-2">
         <div class="col-md-4"><label class="form-label">¿Asiste el titular?</label>
           <select class="form-select" name="asiste_titular" id="asiste"><option value="1">Sí</option><option value="0" {{ 'selected' if previo.asiste_titular == '0' }}>No</option></select></div>
-        <div class="col-md-8" data-muestra-si="asiste:0"><label class="form-label">Responsable presente <span class="text-danger">*</span></label>
-          <input class="form-control" name="responsable_presente" data-requerido="1" placeholder="Nombre y vínculo con el titular" value="{{ previo.responsable_presente }}"></div>
+        <div class="col-md-8" data-muestra-si="asiste:0"><label class="form-label" for="responsable_presente">Responsable presente <span class="text-danger">*</span></label>
+          <input class="form-control" id="responsable_presente" name="responsable_presente" data-requerido="1" minlength="3" pattern="{{ PATRON_LETRAS }}"
+                 title="Solo letras y espacios (al menos 3)" placeholder="Nombre y apellido" value="{{ previo.responsable_presente }}"></div>
       </div>
     </div></div>
   </div>
@@ -51,7 +48,7 @@
       <select class="form-select mb-3" name="profesional_id" required>
         {{ opciones_profesionales(profesionales, previo.profesional_id) }}
       </select>
-      <label class="form-label">Tipo</label>
+      <label class="form-label">Tipo <span class="text-danger">*</span></label>
       <select class="form-select mb-3" name="tipo" required>
         {% for t in enums.TipoAtencion %}<option value="{{ t.value }}" {{ 'selected' if (query.tipo or previo.tipo or 'URGENCIA') == t.value }}>{{ t.etiqueta }}</option>{% endfor %}
       </select>
@@ -65,7 +62,6 @@
       </div>
       <label class="form-label">Motivo / anamnesis (lo que cuenta el cliente)</label>
       <textarea class="form-control" name="motivo" rows="3">{{ previo.motivo }}</textarea>
-      <div class="form-text">Al registrar se controla el esquema de vacunas: CONSULTA/CONTROL con pendientes se bloquea; URGENCIA se permite con advertencia.</div>
     </div></div>
     <button class="btn btn-portal btn-lg w-100"><i class="bi bi-play-circle"></i> Registrar e iniciar atención</button>
   </div>

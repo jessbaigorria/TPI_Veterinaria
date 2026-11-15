@@ -139,7 +139,7 @@ def atencion_nueva(request: Request, u: UsuarioSesion = Usr, s: Session = Db):
 async def atencion_registrar(request: Request, u: UsuarioSesion = Usr, s: Session = Db):
     f = await formulario(request)
     nueva = None
-    if f.get("nueva_mascota") == "1":
+    if (f.get("nm_nombre") or "").strip():   # se completó la mascota nueva: se crea y se usa esa
         nueva = {"titular_id": f.get("titular_id"), "nombre": f.get("nm_nombre"), "especie": f.get("nm_especie"),
                  "sexo": f.get("nm_sexo"), "fecha_nacimiento": f.get("nm_fecha_nacimiento"),
                  "raza": f.get("nm_raza", ""), "peso": f.get("nm_peso")}
@@ -190,7 +190,10 @@ async def cliente_crear(request: Request, u: UsuarioSesion = Usr, s: Session = D
     t = ClientesService(s).crear_titular(f.get("dni"), f.get("nombre"), f.get("apellido"), f.get("direccion", ""),
                                          f.get("telefono", ""), f.get("email", ""))
     avisar(request, f"Titular {t.nombre_completo()} creado.")
-    return ir(f.get("volver") or f"/clinica/clientes/{t.id}")
+    destino = f.get("next") or ""
+    if destino.startswith("/clinica/"):   # volver al formulario de origen con el titular elegido
+        return ir(f"{destino}{'&' if '?' in destino else '?'}titular={t.id}")
+    return ir(f"/clinica/clientes/{t.id}")
 
 
 @router.get("/clientes/{titular_id}")

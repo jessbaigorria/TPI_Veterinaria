@@ -51,6 +51,12 @@ def hora(valor) -> str:
     return valor.strftime("%H:%M") if valor else "–"
 
 
+def dni(valor) -> str:
+    """DNI con el formato de la máscara: ## ### ### (o # ### ### si tiene 7 dígitos)."""
+    d = "".join(ch for ch in str(valor or "") if ch.isdigit())
+    return f"{d[:-6]} {d[-6:-3]} {d[-3:]}" if len(d) >= 7 else (d or "–")
+
+
 def moneda(valor) -> str:
     if valor is None or valor == "":
         return "–"

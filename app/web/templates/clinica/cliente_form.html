@@ -12,7 +12,7 @@
     <div class="col-md-6">{{ campo('telefono', 'Teléfono', previo.telefono or (t.telefono if t)) }}</div>
     <div class="col-md-6">{{ campo('email', 'Email', previo.email or (t.email if t), tipo='email') }}</div>
   </div>
-  <input type="hidden" name="volver" value="{{ query.volver }}">
+  <input type="hidden" name="next" value="{{ query.next or previo.next }}">
   <button class="btn btn-portal"><i class="bi bi-check-lg"></i> Guardar</button>
   <a href="{{ '/clinica/clientes/' ~ t.id if t else '/clinica/clientes' }}" class="btn btn-outline-secondary">Cancelar</a>
 </form></div></div>

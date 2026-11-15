@@ -338,7 +338,7 @@ class Sembrador:
                      diagnostico="Herida cortante en almohadilla")
         self.atender(-22, 18, self.norte, m["Mía"], TipoAtencion.URGENCIA, prof=self.medina,
                      diagnostico="Vómitos por ingesta de cuerpo extraño", asiste_titular=False,
-                     responsable="Vecina (autorizada por la titular)")
+                     responsable="Vecina autorizada por la titular")
         # Un turno cancelado.
         reloj.fijar(datetime.combine(self.hoy + timedelta(days=-30), time(8, 0)))
         t = self.ate.reservar_turno(m["Nina"].id, self.diaz.id, self.centro.id,

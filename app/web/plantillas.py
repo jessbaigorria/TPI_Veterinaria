@@ -16,7 +16,7 @@ DIRECTORIO = Path(__file__).resolve().parent / "templates"
 templates = Jinja2Templates(directory=str(DIRECTORIO))
 env = templates.env
 env.filters.update(
-    fecha=formato.fecha, fecha_hora=formato.fecha_hora, hora=formato.hora, moneda=formato.moneda,
+    fecha=formato.fecha, fecha_hora=formato.fecha_hora, dni=formato.dni, hora=formato.hora, moneda=formato.moneda,
     numero=formato.numero, celda=formato.valor_celda, color_muestra=formato.color_muestra,
     color_remito=formato.color_remito, color_enum=formato.color_enum, color_nombre=formato.color_nombre_estado,
     etiqueta=formato.etiqueta,

@@ -71,6 +71,8 @@ class AtencionesService(ServicioBase):
             mascota = MascotasService(self.s).crear_mascota(**nueva_mascota)
             self.s.flush()
             mascota_id = mascota.id
+        elif not mascota_id:
+            raise DatosInvalidosError("Elegí una mascota del titular o completá los datos de la mascota nueva.")
         inicio = a_fecha_hora(inicio) or reloj.ahora().replace(second=0)
         try:
             minutos = int(duracion_minutos) if duracion_minutos not in (None, "") else None

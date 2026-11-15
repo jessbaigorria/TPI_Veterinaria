@@ -192,3 +192,12 @@ Prioridad aplicada cuando algo chocaba: consigna → diagrama de clases → docu
 | C.4 | En el formulario: el fin se autocompleta con inicio + duración máxima del tipo y su `max` impide alargarlo; `step="300"` (5 min) en los campos de hora; `min`/`max` de 08:00–19:00; la fecha del turno tiene `min` = hoy y, si es hoy, el inicio mínimo es la hora actual. En la atención sin turno, `max` del inicio = ahora y la duración se autocompleta con el máximo del tipo. |
 | C.5 | Filtros con rango de fechas (listado de atenciones y reportes): el `min` de «Hasta» sigue a «Desde» y el servicio rechaza un rango invertido (`validar_rango_fechas`). En los reportes las dos fechas son obligatorias y se proponen los **últimos 30 días**; en **Vacunas pendientes** se proponen los **últimos 12 meses**, porque ahí el rango filtra por fecha de vencimiento y con 30 días quedarían afuera los atrasos de meses. |
 | C.6 | Agenda: franjas de 08:00 a 18:30. El seed respeta horarios y duraciones (hay un test que lo verifica). |
+
+## Bloque D — Pantalla “Registrar atención médica sin turno previo”
+
+| # | Decisión |
+|---|---|
+| D.1 | “¿No existe? Crear titular” va debajo del combobox de titular y abre el alta con `?next=<pantalla de origen>`; al guardar, el sistema vuelve a esa pantalla con `?titular=<id>` y el titular queda elegido. Solo se aceptan destinos internos (`/clinica/...`). Mismo comportamiento desde “Nueva mascota”. |
+| D.2 | La sección “Nueva mascota” está siempre visible. Si se completa el nombre de la mascota nueva se crea y se usa esa (y especie, sexo y nacimiento pasan a ser obligatorios); si no, se usa la elegida en el combobox. Si no hay ni una ni otra, `AtencionesService.registrar_sin_turno` lanza `DatosInvalidosError`. |
+| D.3 | “Responsable presente” (si no asiste el titular): obligatorio, solo letras y espacios, mínimo 3 caracteres; lo valida `AtencionClinica.__init__` con `validaciones.nombre_persona`. |
+| D.4 | Los DNI se muestran con el formato de la máscara (`## ### ###`) mediante el filtro `dni`. |

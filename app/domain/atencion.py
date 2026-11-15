@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Optional
 from sqlalchemy import Boolean, DateTime, Float, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.domain import reloj
+from app.domain import reloj, validaciones
 from app.domain.base import Base, Dinero, EnumCol, a_decimal
 from app.domain.enums import (
     EstadoAtencion, EstadoDerivacionCirugia, EstadoFactura, Prioridad, RiesgoAnestesico,
@@ -157,8 +157,10 @@ class AtencionClinica(Base):
         tipo = TipoAtencion(tipo)
         fecha_hora_fin = fecha_hora_fin or self.fin_sugerido(fecha_hora_inicio, tipo)
         self._validar_horario(fecha_hora_inicio, fecha_hora_fin, tipo)
-        if not asiste_titular and not (responsable_presente or "").strip():
-            raise VeterinariaError("Si no asiste el titular hay que indicar quién es el responsable presente.")
+        if not asiste_titular:
+            if not (responsable_presente or "").strip():
+                raise DatosInvalidosError("Si no asiste el titular hay que indicar quién es el responsable presente.")
+            responsable_presente = validaciones.nombre_persona(responsable_presente, "Responsable presente")
         # Validación 4: sin superposición de turnos del profesional.
         if not profesional.esta_disponible(fecha_hora_inicio, fecha_hora_fin):
             choque = next(a for a in profesional.atenciones

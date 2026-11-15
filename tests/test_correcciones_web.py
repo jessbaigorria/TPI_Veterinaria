@@ -189,3 +189,72 @@ def test_c7_turno_en_el_pasado_rechazado(entorno):
                                                 "tipo": "CONSULTA", "fecha": ayer, "hora_inicio": "10:00",
                                                 "hora_fin": "10:30"}, "/clinica/agenda/nuevo").text
     assert "posterior al actual" in aviso_rojo(html)
+
+
+# ---------------------------------------------------------------- Bloque D: Registrar atención médica
+def _datos_atencion(s, mascota="Michi", **extra):
+    from app.domain.atencion import Profesional
+    from app.domain.personas import Mascota
+    m = uno(s, Mascota, nombre=mascota)
+    perez = uno(s, Profesional, apellido="Pérez")
+    inicio = (reloj.ahora() - __import__("datetime").timedelta(days=3)).replace(hour=11, minute=0)
+    datos = {"titular_id": m.titular_id, "mascota_id": m.id, "profesional_id": perez.id, "tipo": "URGENCIA",
+             "inicio": inicio.strftime("%Y-%m-%dT%H:%M"), "duracion": "30", "asiste_titular": "1"}
+    datos.update(extra)
+    return datos
+
+
+def test_d1_d2_d6_titulo_sin_recuadros_tecnicos(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    html = c.get("/clinica/atenciones/nueva").text
+    assert "Registrar atención médica sin turno previo" in html
+    assert "Caso 1" not in html and "Caso 2" not in html and "Caso 3" not in html
+    assert "Al registrar se controla" not in html
+
+
+def test_d3_crear_titular_y_volver_con_el_titular_elegido(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    html = c.get("/clinica/atenciones/nueva").text
+    titular, resto = html.split('name="titular_id"', 1)[1].split("</select>", 1)
+    assert 'href="/clinica/clientes/nuevo?next=/clinica/atenciones/nueva"' in resto.split('name="mascota_id"')[0]
+    assert 'name="next" value="/clinica/atenciones/nueva"' in c.get("/clinica/clientes/nuevo?next=/clinica/atenciones/nueva").text
+    r = c.post("/clinica/clientes", data={"dni": "40111222", "nombre": "Delfina", "apellido": "Paz",
+                                          "direccion": "San Martín 100", "telefono": "3514000000",
+                                          "email": "delfina@mail.com", "next": "/clinica/atenciones/nueva"},
+               follow_redirects=False)
+    from app.domain.personas import Titular
+    t = uno(s, Titular, dni="40111222")
+    assert r.headers["location"] == f"/clinica/atenciones/nueva?titular={t.id}"
+    html = c.get(r.headers["location"]).text
+    assert f'<option value="{t.id}" selected>' in html
+
+
+def test_d4_nueva_mascota_desplegada_y_validada(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    html = c.get("/clinica/atenciones/nueva").text
+    assert 'name="nm_nombre"' in html and 'id="nueva_mascota"' not in html     # sin interruptor: ya desplegada
+    datos = _datos_atencion(s, mascota_id="")
+    datos["mascota_id"] = ""
+    html = post(c, "/clinica/atenciones/registrar", datos, "/clinica/atenciones/nueva").text
+    assert "Elegí una mascota del titular o completá los datos de la mascota nueva" in aviso_rojo(html)
+    datos.update({"nm_nombre": "Pelusa", "nm_especie": "GATO", "nm_sexo": "HEMBRA",
+                  "nm_fecha_nacimiento": "2025-01-10"})
+    post(c, "/clinica/atenciones/registrar", datos, "/clinica/atenciones/nueva")
+    from app.domain.personas import Mascota
+    assert uno(s, Mascota, nombre="Pelusa").historia_clinica.atenciones
+
+
+def test_d5_responsable_presente_solo_letras(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    html = c.get("/clinica/atenciones/nueva").text
+    assert 'name="responsable_presente"' in html and 'minlength="3"' in html and "pattern=" in html
+    datos = _datos_atencion(s, asiste_titular="0", responsable_presente="5")
+    html = post(c, "/clinica/atenciones/registrar", datos, "/clinica/atenciones/nueva").text
+    assert "solo admite letras" in aviso_rojo(html)
+    datos = _datos_atencion(s, asiste_titular="0", responsable_presente="Lu")
+    html = post(c, "/clinica/atenciones/registrar", datos, "/clinica/atenciones/nueva").text
+    assert "al menos 3" in aviso_rojo(html)

@@ -149,6 +149,19 @@ document.addEventListener("DOMContentLoaded", () => {
     recalcular(!duracion.value);
   }
 
+  // Registrar atención: se usa la mascota elegida o, si se completa el nombre, la mascota nueva.
+  const fNueva = document.querySelector("form[data-mascota-nueva]");
+  if (fNueva) {
+    const nombre = fNueva.querySelector("[name=nm_nombre]"), mascota = fNueva.querySelector("[name=mascota_id]");
+    const requeridosNueva = fNueva.querySelectorAll("input[data-nueva], select[data-nueva]");
+    const ajustar = () => {
+      const nueva = nombre.value.trim() !== "";
+      mascota.required = !nueva;
+      requeridosNueva.forEach((el) => { el.required = nueva; });
+    };
+    nombre.addEventListener("input", ajustar); ajustar();
+  }
+
   // Gráficos de reportes (Chart.js).
   document.querySelectorAll("canvas[data-grafico]").forEach((c) => {
     try { new Chart(c, JSON.parse(c.dataset.grafico)); } catch (e) { console.error(e); }

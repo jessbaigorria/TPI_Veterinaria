@@ -10,7 +10,7 @@
       <label class="form-label">Titular <span class="text-danger">*</span></label>
       <select class="form-select" id="titular_id" name="titular_id" required data-buscar="Buscá por apellido o DNI">
         <option value="">— Elegí el titular —</option>
-        {% for t in titulares %}<option value="{{ t.id }}" {{ 'selected' if (mascota and mascota.titular.id == t.id) or previo.titular_id == t.id|string }}>{{ t.nombre_completo() }} · DNI {{ t.dni }}</option>{% endfor %}
+        {% for t in titulares %}<option value="{{ t.id }}" {{ 'selected' if (mascota and mascota.titular.id == t.id) or previo.titular_id == t.id|string }}>{{ t.nombre_completo() }} · DNI {{ t.dni|dni }}</option>{% endfor %}
       </select>
     </div>
     <div class="col-md-6">
@@ -44,7 +44,8 @@
     <div class="col-md-4"><label class="form-label">¿Asiste el titular?</label>
       <select class="form-select" name="asiste_titular" id="asiste"><option value="1">Sí</option><option value="0">No</option></select></div>
     <div class="col-md-8" data-muestra-si="asiste:0"><label class="form-label">Responsable presente <span class="text-danger">*</span></label>
-      <input class="form-control" name="responsable_presente" data-requerido="1" placeholder="Nombre y vínculo"></div>
+      <input class="form-control" name="responsable_presente" data-requerido="1" minlength="3" pattern="{{ PATRON_LETRAS }}"
+             title="Solo letras y espacios (al menos 3)" placeholder="Nombre y apellido" value="{{ previo.responsable_presente }}"></div>
   </div>
   <div class="mt-4 d-flex gap-2"><button class="btn btn-portal"><i class="bi bi-check-lg"></i> Reservar</button>
     <a href="/clinica/agenda" class="btn btn-outline-secondary">Volver</a></div>
