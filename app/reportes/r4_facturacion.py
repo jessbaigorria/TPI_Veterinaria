@@ -1,4 +1,4 @@
-"""R4 – Facturación desglosada por clínica y por servicios de laboratorio."""
+"""Reporte: Facturación desglosada por clínica y por servicios de laboratorio."""
 from __future__ import annotations
 
 from decimal import Decimal
@@ -71,7 +71,7 @@ def generar(s: Session, filtro: Filtro) -> Reporte:
     tot = t_clinica.totales or ["", CERO, CERO, CERO, CERO, CERO, CERO, 0]
     indicadores = [("Total facturado", _pesos(tot[4])), ("Cobrado", _pesos(tot[5])), ("Pendiente de cobro", _pesos(tot[6])),
                    ("Servicios de laboratorio", _pesos(tot[2]))]
-    return Reporte("R4", "Facturación por clínica y servicios de laboratorio",
+    return Reporte("facturacion", "Facturación por clínica y laboratorio",
                    "Comprobantes emitidos en el período (sin anuladas) por clínica emisora y tipo; ranking de "
                    "análisis facturados; cobrado (pagadas) vs pendiente (emitidas).",
                    filtro, [t_clinica, t_ranking], graficos, indicadores)

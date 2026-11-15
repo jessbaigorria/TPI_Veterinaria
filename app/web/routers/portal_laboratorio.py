@@ -23,7 +23,7 @@ from app.web.sesion import UsuarioSesion, avisar, usuario_laboratorio
 router = APIRouter(prefix="/laboratorio")
 Usr = Depends(usuario_laboratorio)
 Db = Depends(obtener_sesion)
-REPORTES_LAB = {"r2": "Muestras rechazadas por transporte", "r3": "Tiempos de tránsito y procesamiento"}
+REPORTES_LAB = {"rechazos": "Muestras rechazadas", "tiempos": "Tiempos de tránsito"}
 
 
 def ir(url: str) -> RedirectResponse:
@@ -138,7 +138,8 @@ def reportes_inicio(request: Request, u: UsuarioSesion = Usr):
 @router.get("/reportes/{codigo}")
 def reporte(request: Request, codigo: str, u: UsuarioSesion = Usr, s: Session = Db):
     if codigo not in REPORTES_LAB:
-        raise VeterinariaError("El portal del laboratorio muestra los reportes R2 y R3.")
+        raise VeterinariaError("El laboratorio tiene disponibles los reportes de muestras rechazadas y de tiempos de tránsito.")
     filtro = reportes_web.filtro_desde_query(request, codigo, laboratorio_id=u.laboratorio_id)
     return reportes_web.mostrar(request, s, codigo, "base.html", filtro, clinicas=CatalogosService(s).clinicas(),
-                                laboratorios=[], portal="laboratorio", disponibles=list(REPORTES_LAB))
+                                laboratorios=CatalogosService(s).laboratorios(), mostrar_laboratorio=False,
+                                portal="laboratorio", disponibles=list(REPORTES_LAB))

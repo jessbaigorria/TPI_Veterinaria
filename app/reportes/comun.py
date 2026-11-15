@@ -97,8 +97,8 @@ def a_csv(reporte: Reporte) -> str:
     salida = io.StringIO()
     salida.write("﻿")
     w = csv.writer(salida, delimiter=";", lineterminator="\n")
-    w.writerow([f"{reporte.codigo} – {reporte.titulo}"])
-    w.writerow([f"Desde: {reporte.filtro.desde or '-'}", f"Hasta: {reporte.filtro.hasta or '-'}"])
+    w.writerow([reporte.titulo])
+    w.writerow([f"Desde: {_csv_valor(reporte.filtro.desde) or '-'}", f"Hasta: {_csv_valor(reporte.filtro.hasta) or '-'}"])
     for tabla in reporte.tablas:
         w.writerow([])
         w.writerow([tabla.titulo])

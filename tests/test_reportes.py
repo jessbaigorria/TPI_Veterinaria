@@ -63,7 +63,7 @@ def _filtro(**kw):
 
 
 def test_r1_atenciones_y_derivaciones(sesion, escenario):
-    r = reportes.generar("r1", sesion, _filtro())
+    r = reportes.generar("atenciones", sesion, _filtro())
     filas = r.tablas[0].filas
     assert len(filas) == 1
     clinica, mes, consulta, control, urgencia, vacunacion, cirugia, otro, total, con_orden, con_cirugia, pct = filas[0]
@@ -77,11 +77,11 @@ def test_r1_atenciones_y_derivaciones(sesion, escenario):
 
 
 def test_r1_filtra_por_clinica(sesion, escenario):
-    assert reportes.generar("r1", sesion, _filtro(clinica_id=escenario.norte.id)).tablas[0].filas == []
+    assert reportes.generar("atenciones", sesion, _filtro(clinica_id=escenario.norte.id)).tablas[0].filas == []
 
 
 def test_r2_rechazos_por_transporte(sesion, escenario):
-    r = reportes.generar("r2", sesion, _filtro(laboratorio_id=escenario.lab.id))
+    r = reportes.generar("rechazos", sesion, _filtro(laboratorio_id=escenario.lab.id))
     por_clinica, por_motivo, por_transportista = r.tablas
     assert por_clinica.filas == [["Clínica Centro", 4, 2, 50.0]]
     assert por_motivo.filas == [["Precinto roto", 1, 1, 50.0], ["Temperatura fuera de rango", 1, 1, 50.0]]
@@ -89,7 +89,7 @@ def test_r2_rechazos_por_transporte(sesion, escenario):
 
 
 def test_r3_tiempos(sesion, escenario):
-    r = reportes.generar("r3", sesion, _filtro())
+    r = reportes.generar("tiempos", sesion, _filtro())
     transito, proceso = r.tablas
     assert transito.filas == [["Clínica Centro", 3, 3.0, 1.0, 5.0]]
     proc = {f[0]: f for f in proceso.filas}
@@ -99,7 +99,7 @@ def test_r3_tiempos(sesion, escenario):
 
 
 def test_r4_facturacion(sesion, escenario):
-    r = reportes.generar("r4", sesion, _filtro())
+    r = reportes.generar("facturacion", sesion, _filtro())
     por_clinica, ranking = r.tablas
     fila = por_clinica.filas[0]
     assert fila[0] == "Clínica Centro"
@@ -111,7 +111,7 @@ def test_r4_facturacion(sesion, escenario):
 
 def test_r5_vacunas_pendientes(sesion, escenario):
     # La atención de VACUNACION del escenario se finalizó sin registrar vacunas: siguen pendientes.
-    r = reportes.generar("r5", sesion, Filtro(hasta=reloj.hoy()))
+    r = reportes.generar("vacunas", sesion, Filtro(hasta=reloj.hoy()))
     filas = r.tablas[0].filas
     assert {(f[0], f[6], f[7]) for f in filas} == {("Rocco", "Antirrábica", "Vencida"),
                                                    ("Rocco", "Séxtuple", "Nunca aplicada")}
@@ -120,12 +120,12 @@ def test_r5_vacunas_pendientes(sesion, escenario):
     assert antirrabica[8] == AHORA.date() - timedelta(days=500) + timedelta(days=365)
     assert antirrabica[9] == (reloj.hoy() - antirrabica[8]).days
     assert antirrabica[10] == "Clínica Centro"
-    assert reportes.generar("r5", sesion, Filtro(hasta=reloj.hoy(), especie="GATO")).tablas[0].filas == []
+    assert reportes.generar("vacunas", sesion, Filtro(hasta=reloj.hoy(), especie="GATO")).tablas[0].filas == []
 
 
 def test_csv(sesion, escenario):
-    texto = a_csv(reportes.generar("r4", sesion, _filtro()))
-    assert texto.startswith("﻿R4")
+    texto = a_csv(reportes.generar("facturacion", sesion, _filtro()))
+    assert texto.startswith("\ufeffFacturación por clínica y laboratorio")
     assert "Clínica Centro;10000,00;23500,00" in texto
 
 

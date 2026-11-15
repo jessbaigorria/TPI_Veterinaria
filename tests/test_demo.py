@@ -203,6 +203,6 @@ def test_escenario_de_demo(demo):
     assert "Comprobante FAC-" in r.text and "Hemograma completo" in r.text
     r = post(c, f"/clinica/facturacion/orden/{orden2_id}", {}, "/clinica/facturacion")
     assert "nada para facturar" in r.text  # no se cobran muestras rechazadas
-    for i in range(1, 6):
-        r = c.get(f"/clinica/reportes/r{i}")
+    for slug in ("atenciones", "rechazos", "tiempos", "facturacion", "vacunas"):
+        r = c.get(f"/clinica/reportes/{slug}")
         assert r.status_code == 200 and "data-grafico" in r.text

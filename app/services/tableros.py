@@ -101,5 +101,5 @@ class TablerosService(ServicioBase):
             Kpi("Rechazadas (7 días)", rechazadas, "exclamation-octagon", "danger", "/laboratorio/recepciones",
                 alerta=bool(rechazadas)),
             Kpi("Tránsito promedio (mes)", f"{promedio:.1f} h" if promedio is not None else "–", "stopwatch",
-                "purple", "/laboratorio/reportes/r3"),
+                "purple", "/laboratorio/reportes/tiempos"),
         ]

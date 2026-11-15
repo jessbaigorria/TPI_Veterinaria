@@ -1,4 +1,4 @@
-"""R5 – Vacunas pendientes por mascota (faltantes o vencidas)."""
+"""Reporte: Vacunas pendientes por mascota (faltantes o vencidas)."""
 from __future__ import annotations
 
 from sqlalchemy import func, select
@@ -57,7 +57,7 @@ def generar(s: Session, filtro: Filtro) -> Reporte:
     indicadores = [("Mascotas con pendientes", str(len(mascotas_con_pendientes))),
                    ("Vacunas pendientes", str(len(tabla.filas))),
                    ("Atraso máximo", f"{max((f[9] for f in tabla.filas), default=0)} días")]
-    return Reporte("R5", "Vacunas pendientes por mascota",
+    return Reporte("vacunas", "Vacunas pendientes",
                    "Mascotas activas con vacunas obligatorias (según especie y edad) sin aplicación vigente a la "
                    "fecha de corte («Hasta»). «Desde» filtra por fecha de vencimiento.",
                    filtro, [tabla], [grafico], indicadores)

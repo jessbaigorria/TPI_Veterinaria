@@ -1,4 +1,4 @@
-"""R1 – Atenciones clínicas y derivaciones realizadas (por clínica y mes)."""
+"""Reporte: Atenciones clínicas y derivaciones realizadas (por clínica y mes)."""
 from __future__ import annotations
 
 from sqlalchemy import case, exists, func, select
@@ -56,7 +56,7 @@ def generar(s: Session, filtro: Filtro) -> Reporte:
                    ("Con orden de laboratorio", str(totales[N + 1])),
                    ("Derivadas a cirugía", str(totales[N + 2])),
                    ("% derivación", f"{porcentaje(totales[N + 3], total)} %")]
-    return Reporte("R1", "Atenciones clínicas y derivaciones realizadas",
+    return Reporte("atenciones", "Atenciones y derivaciones",
                    "Atenciones realizadas (en progreso o finalizadas) por clínica y mes, según tipo, y cuántas "
                    "generaron una orden de laboratorio o una derivación a cirugía.",
                    filtro, [tabla], [grafico, derivaciones], indicadores)

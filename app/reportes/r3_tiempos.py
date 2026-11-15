@@ -1,4 +1,4 @@
-"""R3 – Tiempo promedio de tránsito y de procesamiento de muestras (en horas)."""
+"""Reporte: Tiempo promedio de tránsito y de procesamiento de muestras (en horas)."""
 from __future__ import annotations
 
 from sqlalchemy import and_, func, select
@@ -81,7 +81,7 @@ def generar(s: Session, filtro: Filtro) -> Reporte:
     indicadores = [("Envíos recibidos", str(total_envios)),
                    ("Tránsito promedio", f"{_r(prom_transito) if prom_transito is not None else '-'} h"),
                    ("Procesamiento promedio", f"{_r(prom_proc) if prom_proc is not None else '-'} h")]
-    return Reporte("R3", "Tiempo promedio de tránsito y procesamiento",
+    return Reporte("tiempos", "Tiempos de tránsito",
                    "Tránsito = llegada real − despacho del envío. Procesamiento = momento en que la muestra quedó "
                    "Analizada − momento en que quedó Recibida (tomado del historial inmutable).",
                    filtro, [t_transito, t_proceso], graficos, indicadores)

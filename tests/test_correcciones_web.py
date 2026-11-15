@@ -406,3 +406,78 @@ def test_g2_badges_alineados_en_encabezados(entorno):
     css = c.get("/static/estilos.css").text
     regla = css.split(".badge.estado {", 1)[1].split("}", 1)[0]
     assert "align-items: center" in regla and "height: auto" in regla
+
+
+# ---------------------------------------------------------------- Bloque H: reportes
+REPORTES = ("atenciones", "rechazos", "tiempos", "facturacion", "vacunas")
+
+
+def test_h1_h2_sin_siglas_r1_r5(entorno):
+    import re
+    c, s = entorno
+    login_clinica(c, s)
+    paginas = ["/clinica/reportes"] + [f"/clinica/reportes/{r}" for r in REPORTES]
+    for url in paginas:
+        visible = texto_visible(c.get(url).text)
+        assert not re.search(r"\bR[1-5]\b", visible), url
+    indice = c.get("/clinica/reportes").text
+    for nombre in ("Atenciones y derivaciones", "Muestras rechazadas", "Tiempos de tránsito",
+                   "Facturación por clínica y laboratorio", "Vacunas pendientes"):
+        assert nombre in indice
+    login_lab(c, s)
+    for url in ("/laboratorio/reportes", "/laboratorio/reportes/rechazos", "/laboratorio/reportes/tiempos"):
+        visible = texto_visible(c.get(url).text)
+        assert not re.search(r"\bR[1-5]\b", visible), url
+    html = c.get("/laboratorio/reportes/rechazos").text
+    assert ">Muestras rechazadas</a>" in html and ">Tiempos de tránsito</a>" in html
+
+
+def test_h3_fechas_obligatorias_y_rango(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    html = c.get("/clinica/reportes/atenciones").text
+    assert html.count('type="date"') == 2 and html.count(" required") >= 2
+    desde = html.split('name="desde" required value="')[1][:10]
+    hasta = html.split('name="hasta" required')[1].split('value="')[1][:10]
+    from datetime import date
+    assert (date.fromisoformat(hasta) - date.fromisoformat(desde)).days == 30
+    ref = {"referer": "http://testserver/clinica/reportes"}
+    html = c.get("/clinica/reportes/atenciones?desde=2026-05-10&hasta=2026-05-01", headers=ref).text
+    assert "no puede ser anterior" in aviso_rojo(html)
+    html = c.get("/clinica/reportes/atenciones?desde=&hasta=2026-05-01", headers=ref).text
+    assert "obligatorias" in aviso_rojo(html)
+
+
+def test_h4_exportar_pdf(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    assert "Exportar PDF" in c.get("/clinica/reportes/facturacion").text
+    for r in REPORTES:
+        resp = c.get(f"/clinica/reportes/{r}?formato=pdf")
+        assert resp.status_code == 200 and resp.headers["content-type"] == "application/pdf", r
+        assert resp.content.startswith(b"%PDF") and len(resp.content) > 2000, r
+        assert f'filename="{r}_' in resp.headers["content-disposition"]
+    login_lab(c, s)
+    resp = c.get("/laboratorio/reportes/tiempos?formato=pdf")
+    assert resp.content.startswith(b"%PDF")
+
+
+def test_h4_pdf_contenido():
+    """El PDF lleva nombre del reporte, sede, filtros, montos en pesos y fechas dd/mm/aaaa."""
+    from datetime import date
+    from decimal import Decimal
+    from app.reportes.comun import Filtro, Grafico, Reporte, Tabla
+    from app.reportes.pdf import a_pdf
+    rep = Reporte("facturacion", "Facturación por clínica y laboratorio", "desc", Filtro(date(2026, 1, 1), date(2026, 1, 31)),
+                  [Tabla("Totales", ["Clínica", "Fecha", "Total"], [["Clínica Centro", date(2026, 1, 5), Decimal("12500")]],
+                         ["Total", "", Decimal("12500")])],
+                  [Grafico("Facturación", "bar", ["Clínica Centro"], [{"label": "Total", "data": [Decimal("12500")]}])],
+                  [("Total facturado", "$ 12.500,00")])
+    from reportlab import rl_config
+    anterior, rl_config.pageCompression = rl_config.pageCompression, 0   # PDF sin comprimir para leer el texto
+    try:
+        texto = a_pdf(rep, "Clínica Centro", [("Desde", "01/01/2026"), ("Hasta", "31/01/2026")])
+    finally:
+        rl_config.pageCompression = anterior
+    for esperado in (b"Facturaci", b"Cl\\355nica Centro", b"01/01/2026", b"31/01/2026", b"$ 12.500,00", b"05/01/2026"):
+        assert esperado in texto, esperado

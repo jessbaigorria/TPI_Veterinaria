@@ -1,4 +1,4 @@
-"""R2 – Muestras rechazadas por fallas en el transporte."""
+"""Reporte: Muestras rechazadas por fallas en el transporte."""
 from __future__ import annotations
 
 from sqlalchemy import case, func, select
@@ -67,7 +67,7 @@ def generar(s: Session, filtro: Filtro) -> Reporte:
     ]
     indicadores = [("Muestras enviadas", str(tot_env)), ("Rechazadas", str(tot_rech)),
                    ("% rechazo", f"{porcentaje(tot_rech, tot_env)} %")]
-    return Reporte("R2", "Muestras rechazadas por fallas en el transporte",
+    return Reporte("rechazos", "Muestras rechazadas",
                    "Muestras despachadas en el período y cuántas fueron rechazadas en la recepción del laboratorio "
                    "por precinto roto o temperatura fuera de rango.",
                    filtro, [t_clinica, t_motivo, t_transp], graficos, indicadores)

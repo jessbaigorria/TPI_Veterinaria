@@ -226,3 +226,11 @@ Prioridad aplicada cuando algo chocaba: consigna → diagrama de clases → docu
 |---|---|
 | G.1 | El botón de la orden dice “Registrar muestra”. |
 | G.2 | Badges de estado: píldora `inline-flex` de tamaño normal, centrada (`align-self: center`, sin altura fija) en toda la app; el contenedor de acciones de los encabezados es `d-flex align-items-center gap-2` y los encabezados de tarjeta con badge también alinean al centro. |
+
+## Bloque H — Reportes
+
+| # | Decisión |
+|---|---|
+| H.1 | Sin siglas R1–R5 en la interfaz: los reportes se llaman “Atenciones y derivaciones”, “Muestras rechazadas”, “Tiempos de tránsito”, “Facturación por clínica y laboratorio” y “Vacunas pendientes”. También las rutas usan el nombre: `/reportes/atenciones`, `/rechazos`, `/tiempos`, `/facturacion`, `/vacunas`. Los módulos internos conservan su nombre (`r1_atenciones.py`, …). |
+| H.2 | Fechas: ver C.5 (obligatorias, «Hasta» ≥ «Desde», últimos 30 días por defecto; 12 meses en Vacunas pendientes). |
+| H.3 | **Exportar PDF** con ReportLab 4.2.5 (wheel de Python puro, agregado a `requirements.txt`): `app/reportes/pdf.py::a_pdf`. A4 apaisada con encabezado (nombre del reporte, sede de la sesión y fecha de emisión), filtros aplicados, indicadores, hasta dos gráficos dibujados con `reportlab.graphics` (barras, barras apiladas o torta), tablas con montos `$ 12.500,00`, fechas `dd/mm/aaaa`, porcentajes y fila de totales, y pie con número de página. Se mantiene el CSV (`;` + UTF‑8 con BOM; ahora también las fechas del encabezado en `dd/mm/aaaa`). |

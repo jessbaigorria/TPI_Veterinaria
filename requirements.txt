@@ -7,3 +7,4 @@ python-multipart==0.0.33
 itsdangerous==2.2.0
 httpx==0.28.1
 pytest==9.2.0
+reportlab==4.2.5

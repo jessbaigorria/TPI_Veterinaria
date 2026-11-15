@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% from "componentes/macros.html" import encabezado %}
 {% block contenido %}
-{% call encabezado("Reportes", "Filtros por fecha y clínica/laboratorio, gráfico, tabla y exportación a CSV") %}{% endcall %}
-{% set iconos = {'r1': 'clipboard2-data', 'r2': 'exclamation-octagon', 'r3': 'stopwatch', 'r4': 'cash-coin', 'r5': 'shield-exclamation'} %}
+{% call encabezado("Reportes") %}{% endcall %}
+{% set iconos = {'atenciones': 'clipboard2-data', 'rechazos': 'exclamation-octagon', 'tiempos': 'stopwatch', 'facturacion': 'cash-coin', 'vacunas': 'shield-exclamation'} %}
 <div class="row g-3">
 {% for codigo, titulo in titulos.items() %}
   <div class="col-md-6 col-lg-4"><a href="{{ request.url.path }}/{{ codigo }}" class="text-decoration-none text-reset">
     <div class="card h-100 kpi c-{{ 'teal' if u.portal == 'clinica' else 'purple' }}"><div class="card-body">
-      <i class="bi bi-{{ iconos[codigo] }} fs-2 icono"></i><h5 class="mt-2">{{ codigo|upper }} · {{ titulo }}</h5></div></div></a></div>
+      <i class="bi bi-{{ iconos[codigo] }} fs-2 icono"></i><h5 class="mt-2">{{ titulo }}</h5></div></div></a></div>
 {% endfor %}
 </div>
 {% endblock %}

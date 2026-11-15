@@ -59,7 +59,7 @@ def test_toda_muestra_tiene_historial_consistente(sesion_seed):
 def test_los_cinco_reportes_tienen_datos(sesion_seed):
     filtro = Filtro(desde=date(2026, 4, 1), hasta=date(2026, 6, 15))
     for codigo in reportes.REPORTES:
-        rep = reportes.generar(codigo, sesion_seed, filtro if codigo != "r5" else Filtro(hasta=date(2026, 6, 15)))
+        rep = reportes.generar(codigo, sesion_seed, filtro if codigo != "vacunas" else Filtro(hasta=date(2026, 6, 15)))
         assert not rep.vacio, codigo
 
 

@@ -65,7 +65,7 @@ def test_paginas_portal_clinica(entorno):
                "/clinica/clientes", "/clinica/clientes/nuevo", "/clinica/mascotas", "/clinica/mascotas/nueva",
                "/clinica/ordenes", "/clinica/envios", "/clinica/envios/nuevo", "/clinica/cirugias",
                "/clinica/cirugias?tab=recibidas", "/clinica/facturacion", "/clinica/reportes", "/clinica/catalogos"]
-    paginas += [f"/clinica/reportes/r{i}" for i in range(1, 6)]
+    paginas += [f"/clinica/reportes/{slug}" for slug in ("atenciones", "rechazos", "tiempos", "facturacion", "vacunas")]
     paginas += [f"/clinica/catalogos?tab={t}" for t in ("clinicas", "profesionales", "laboratorios", "analisis",
                                                          "vacunas", "contenedores")]
     paginas += [f"/clinica/catalogos/{t}/nuevo" for t in ("clinicas", "profesionales", "analisis", "contenedores")]
@@ -96,7 +96,7 @@ def test_paginas_portal_laboratorio(entorno):
     client = TestClient(app)
     _login_lab(client, s)
     paginas = ["/laboratorio", "/laboratorio/recepcion", "/laboratorio/muestras", "/laboratorio/trazabilidad",
-               "/laboratorio/recepciones", "/laboratorio/reportes", "/laboratorio/reportes/r2", "/laboratorio/reportes/r3",
+               "/laboratorio/recepciones", "/laboratorio/reportes", "/laboratorio/reportes/rechazos", "/laboratorio/reportes/tiempos",
                "/laboratorio/trazabilidad?codigo=M-000001", "/laboratorio/trazabilidad?codigo=REM-000001",
                "/laboratorio/trazabilidad?codigo=NOEXISTE"]
     paginas += [f"/laboratorio/recepciones/{r.id}" for r in s.scalars(select(RecepcionRemito))]
@@ -107,17 +107,17 @@ def test_paginas_portal_laboratorio(entorno):
         assert client.get(url).status_code == 200, url
     assert "VetRed · Laboratorio" in client.get("/laboratorio").text
     # el laboratorio no ve los reportes de la clínica
-    assert client.get("/laboratorio/reportes/r4").status_code == 400
+    assert client.get("/laboratorio/reportes/facturacion").status_code == 400
 
 
 def test_csv_de_reportes(entorno):
     app, s = entorno
     client = TestClient(app)
     _login_clinica(client, s)
-    for i in range(1, 6):
-        r = client.get(f"/clinica/reportes/r{i}?formato=csv")
+    for slug in ("atenciones", "rechazos", "tiempos", "facturacion", "vacunas"):
+        r = client.get(f"/clinica/reportes/{slug}?formato=csv")
         assert r.status_code == 200 and r.headers["content-type"].startswith("text/csv")
-        assert r.text.startswith("﻿R")
+        assert r.text.startswith("\ufeff") and not r.text.startswith("\ufeffR")
 
 
 def test_error_de_negocio_se_muestra_en_aviso_rojo(entorno):
