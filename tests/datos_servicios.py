@@ -90,9 +90,9 @@ class Base:
         return r
 
     def recibir(self, remito, integro=True, temp=5):
-        return RecepcionService(self.s).recibir(remito.id, self.lab.id, integro, temp, "lab.gomez")
+        return RecepcionService(self.s).recibir(remito.id, self.lab.id, integro, temp, "Lucas Gomez")
 
     def analizar(self, muestra):
         return ResultadosService(self.s).cargar_resultados(
             muestra.id, [{"tipo_analisis_id": t.id, "valores": "OK"} for t in muestra.analisis_pendientes()],
-            "lab.gomez")
+            "Lucas Gomez")

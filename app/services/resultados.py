@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from sqlalchemy import case, select
 
+from app.domain import validaciones
 from app.domain.atencion import AtencionClinica
 from app.domain.estados.estado_muestra import Recibida
 from app.domain.excepciones import VeterinariaError
@@ -12,9 +13,11 @@ from app.services.base import ServicioBase, texto, transaccional
 
 class ResultadosService(ServicioBase):
     @transaccional
-    def cargar_resultados(self, muestra_id, resultados: list[dict], usuario) -> MuestraBiologica:
+    def cargar_resultados(self, muestra_id, resultados: list[dict], analista) -> MuestraBiologica:
         """Un bloque por análisis compatible con el tipo de muestra; al completar todos → Analizada.
-        Si la muestra está Rechazada, el dominio lanza MuestraRechazadaError."""
+        Si la muestra está Rechazada, el dominio lanza MuestraRechazadaError.
+        ``analista``: persona que carga los resultados (solo letras)."""
+        usuario = validaciones.nombre_persona(analista, "Analista")
         muestra = self.obtener(MuestraBiologica, muestra_id)
         cargados = [d for d in resultados if texto(d.get("valores"))]
         if not cargados:

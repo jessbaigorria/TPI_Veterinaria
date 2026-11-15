@@ -27,9 +27,9 @@ def test_muestra_recargada_sigue_registrando_historial(engine, base):
     r = base.remito_en_transito([m])
     otra = db_mod.crear_fabrica_sesiones(engine)()
     from app.services.recepcion import RecepcionService
-    RecepcionService(otra).recibir(r.id, base.lab.id, True, 4, "lab.otra.sesion")
+    RecepcionService(otra).recibir(r.id, base.lab.id, True, 4, "Otra Persona")
     m2 = otra.get(MuestraBiologica, m.id)
-    assert m2.historial()[-1].usuario == "lab.otra.sesion"
+    assert m2.historial()[-1].usuario == "Otra Persona"
     assert len(m2.historial()) == 4
     otra.close()
 

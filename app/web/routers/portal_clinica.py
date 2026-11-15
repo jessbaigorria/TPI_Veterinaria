@@ -338,8 +338,8 @@ def orden_detalle(request: Request, orden_id: int, u: UsuarioSesion = Usr, s: Se
 @router.post("/ordenes/{orden_id}/muestras")
 async def orden_muestra(request: Request, orden_id: int, u: UsuarioSesion = Usr, s: Session = Db):
     f = await formulario(request)
-    m = DerivacionesService(s).registrar_muestra(orden_id, f.get("tipo"), f.get("volumen"), u.usuario,
-                                                 f.get("observaciones", ""))
+    m = DerivacionesService(s).registrar_muestra(orden_id, f.get("tipo"), f.get("volumen"),
+                                                 observaciones=f.get("observaciones", ""))
     avisar(request, f"Muestra {m.codigo} registrada: {m.estado_actual()}.")
     return ir(f"/clinica/ordenes/{orden_id}")
 
@@ -407,7 +407,7 @@ async def remito_muestras(request: Request, remito_id: int, u: UsuarioSesion = U
 async def remito_cerrar(request: Request, remito_id: int, u: UsuarioSesion = Usr, s: Session = Db):
     f = await formulario(request)
     r = EmpaquetadoService(s).cerrar_remito(remito_id, f.get("codigo_precinto", ""), f.get("temperatura_despacho"),
-                                            u.usuario)
+                                            f.get("colocado_por", ""))
     avisar(request, f"Remito cerrado con el precinto {r.precinto.codigo}.")
     if not r.contenedor.temperatura_adecuada(r.temperatura_despacho):
         avisar(request, f"La temperatura de despacho ({r.temperatura_despacho} °C) está fuera del rango del "

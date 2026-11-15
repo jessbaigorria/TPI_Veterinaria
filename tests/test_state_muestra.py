@@ -10,7 +10,7 @@ from app.domain.laboratorio import ResultadoAnalisis
 
 def _resultados(m, mundo):
     for t in m.analisis_pendientes():
-        m.registrar_resultado(ResultadoAnalisis(t, "OK"), "lab.gomez")
+        m.registrar_resultado(ResultadoAnalisis(t, "OK"), "Lucas Gomez")
 
 
 def test_muestra_nace_extraida(mundo):

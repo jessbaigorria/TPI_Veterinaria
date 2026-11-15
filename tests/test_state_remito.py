@@ -27,7 +27,7 @@ def test_flujo_completo(mundo):
     assert m.estado_codigo == "EnTransito"
     r.iniciar_transito()
     assert isinstance(r.estado, RemitoEnTransito)
-    rec = mundo.lab.recibir_remito(r, True, 5.0, "lab.gomez")
+    rec = mundo.lab.recibir_remito(r, True, 5.0, "Lucas Gomez")
     assert rec.resultado is ResultadoRecepcion.ACEPTADA
     assert isinstance(r.estado, RemitoRecibido) and r.estado.es_final()
     assert m.estado_codigo == "Recibida"
@@ -123,7 +123,7 @@ def test_precinto_roto_rechaza_todas_las_muestras(mundo):
     orden = mundo.orden([mundo.hemograma, mundo.orina])
     ms = [mundo.muestra(orden), mundo.muestra(orden, tipo="ORINA")]
     r = mundo.remito_en_transito(ms)
-    rec = mundo.lab.recibir_remito(r, False, 5.0, "lab.gomez")
+    rec = mundo.lab.recibir_remito(r, False, 5.0, "Lucas Gomez")
     assert rec.resultado is ResultadoRecepcion.RECHAZADA
     assert rec.motivo_rechazo == "Precinto roto"
     assert isinstance(r.estado, RemitoRecibidoConObservaciones)

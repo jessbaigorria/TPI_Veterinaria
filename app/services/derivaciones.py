@@ -24,8 +24,10 @@ class DerivacionesService(ServicioBase):
         return orden
 
     @transaccional
-    def registrar_muestra(self, orden_id, tipo, volumen, usuario, observaciones="") -> MuestraBiologica:
+    def registrar_muestra(self, orden_id, tipo, volumen, usuario=None, observaciones="") -> MuestraBiologica:
+        """La extracción la registra el profesional de la atención (salvo que se indique otro usuario)."""
         orden = self.obtener(OrdenDerivacion, orden_id)
+        usuario = usuario or orden.atencion.profesional.nombre_completo()
         muestra = orden.registrar_muestra(TipoMuestra(tipo), a_float(volumen, "volumen"), usuario,
                                           codigo=self.numerador.siguiente(Numerador.MUESTRA),
                                           observaciones=texto(observaciones))

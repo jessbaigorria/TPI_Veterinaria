@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from sqlalchemy import select
 
+from app.domain import validaciones
 from app.domain.atencion import AtencionClinica, Clinica
 from app.domain.enums import EstadoContenedor
 from app.domain.estados.estado_muestra import Extraida
@@ -37,7 +38,9 @@ class EmpaquetadoService(ServicioBase):
         return remito
 
     @transaccional
-    def cerrar_remito(self, remito_id, codigo_precinto, temperatura_despacho, usuario) -> RemitoBiologico:
+    def cerrar_remito(self, remito_id, codigo_precinto, temperatura_despacho, colocado_por) -> RemitoBiologico:
+        """``colocado_por``: persona que coloca el precinto (solo letras)."""
+        usuario = validaciones.nombre_persona(colocado_por, "Colocado por")
         remito = self.obtener(RemitoBiologico, remito_id)
         codigo = texto(codigo_precinto) or self.numerador.siguiente(Numerador.PRECINTO)
         if codigo == self.numerador.proximo(Numerador.PRECINTO):

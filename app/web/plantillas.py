@@ -7,6 +7,7 @@ from fastapi import Request
 from fastapi.templating import Jinja2Templates
 
 from app.domain import enums, reloj
+from app.domain.validaciones import PATRON_HTML_LETRAS
 from app.web import formato
 from app.web.sesion import tomar_formulario, tomar_mensajes, usuario_actual
 
@@ -19,7 +20,7 @@ env.filters.update(
     color_remito=formato.color_remito, color_enum=formato.color_enum, color_nombre=formato.color_nombre_estado,
     etiqueta=formato.etiqueta,
 )
-env.globals.update(enums=enums, reloj=reloj, NOMBRES_REMITO=formato.NOMBRES_REMITO,
+env.globals.update(enums=enums, reloj=reloj, PATRON_LETRAS=PATRON_HTML_LETRAS, NOMBRES_REMITO=formato.NOMBRES_REMITO,
                    NOMBRES_MUESTRA=formato.NOMBRES_MUESTRA)
 
 

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "componentes/macros.html" import encabezado, badge_muestra, linea_tiempo %}
+{% from "componentes/macros.html" import encabezado, badge_muestra, linea_tiempo, campo_persona %}
 {% block contenido %}
 {% call encabezado("Cargar resultados · " ~ m.codigo, m.tipo.etiqueta ~ " · " ~ m.orden.mascota.nombre ~ " · orden " ~ m.orden.numero) %}{{ badge_muestra(m) }}{% endcall %}
 <div class="row g-3">
@@ -20,6 +20,7 @@
         <div class="col-md-6"><label class="form-label">Interpretación</label><input class="form-control" name="interpretacion_{{ t.id }}"></div>
       </div></div></div>
     {% endfor %}
+    <div class="card mb-3"><div class="card-body">{{ campo_persona('analista', 'Analista', previo.analista, 'mb-0') }}</div></div>
     <button class="btn btn-portal btn-lg"><i class="bi bi-save"></i> Guardar resultados</button>
     </form>
   </div>

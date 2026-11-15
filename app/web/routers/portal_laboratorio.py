@@ -62,7 +62,7 @@ def recibir_form(request: Request, remito_id: int, u: UsuarioSesion = Usr, s: Se
 async def recibir(request: Request, remito_id: int, u: UsuarioSesion = Usr, s: Session = Db):
     f = dict(await request.form())
     rec = RecepcionService(s).recibir(remito_id, u.laboratorio_id, f.get("precinto_integro", "0"),
-                                      f.get("temperatura"), u.usuario, f.get("codigo_precinto", ""),
+                                      f.get("temperatura"), f.get("recibido_por", ""), f.get("codigo_precinto", ""),
                                       f.get("observaciones", ""))
     tipo = "success" if rec.es_aceptada() else "danger"
     avisar(request, f"Remito {rec.remito.numero}: recepción {rec.resultado.etiqueta.upper()}"
@@ -109,7 +109,7 @@ async def resultados_guardar(request: Request, muestra_id: int, u: UsuarioSesion
               "valores_referencia": form.get(f"referencia_{tid}", ""),
               "interpretacion": form.get(f"interpretacion_{tid}", "")}
              for tid in form.getlist("tipo_analisis_id")]
-    m = ResultadosService(s).cargar_resultados(muestra_id, datos, u.usuario)
+    m = ResultadosService(s).cargar_resultados(muestra_id, datos, form.get("analista", ""))
     avisar(request, f"Resultados cargados para {m.codigo}. Estado: {m.estado_actual()}"
                     + (f" (orden {m.orden.numero}: {m.orden.estado.etiqueta.lower()})."))
     return ir("/laboratorio/muestras" if m.estado.es_final() else f"/laboratorio/muestras/{muestra_id}/resultados")

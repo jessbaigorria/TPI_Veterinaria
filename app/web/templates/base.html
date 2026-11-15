@@ -21,7 +21,6 @@
   {% if u %}
   <div class="d-flex align-items-center gap-3">
     <span><i class="bi bi-building"></i> {{ u.sede_nombre }}</span>
-    <span><i class="bi bi-person-circle"></i> {{ 'Operador: ' if u.portal == 'laboratorio' }}{{ u.usuario }}</span>
     <a href="/" class="btn btn-sm btn-outline-light">Cambiar</a>
   </div>
   {% endif %}

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "componentes/macros.html" import encabezado, badge_remito, badge_muestra %}
+{% from "componentes/macros.html" import encabezado, badge_remito, badge_muestra, campo_persona %}
 {% block contenido %}
 {% call encabezado("Recibir remito " ~ r.numero, r.clinica_origen.nombre ~ " · " ~ r.muestras|length ~ " muestra(s)") %}{{ badge_remito(r) }}{% endcall %}
 <div class="row g-3">
@@ -16,6 +16,7 @@
     <div class="mb-3"><label class="form-label">Temperatura medida (°C) <span class="text-danger">*</span></label>
       <input class="form-control form-control-lg" name="temperatura" required placeholder="Rango admitido: {{ r.contenedor.rango_texto() }}">
       <div class="form-text">Fuera de {{ r.contenedor.rango_texto() }} el remito queda “Recibido con observaciones” y sus muestras Rechazadas.</div></div>
+    {{ campo_persona('recibido_por', 'Recibido por', previo.recibido_por) }}
     <div class="mb-3"><label class="form-label">Observaciones</label><textarea class="form-control" name="observaciones" rows="2"></textarea></div>
     <button class="btn btn-portal btn-lg w-100"><i class="bi bi-check2-circle"></i> Confirmar recepción</button>
   </form></div></div></div>

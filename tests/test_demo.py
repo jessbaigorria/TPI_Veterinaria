@@ -74,7 +74,7 @@ def ciclo_laboratorio(c, s, atencion_id, integro: bool, contenedor: str):
     remito = s.scalars(select(RemitoBiologico).order_by(RemitoBiologico.id.desc())).first()
     r = post(c, f"/clinica/envios/{remito.id}/muestras", {"muestra_id": [muestra.id]})
     assert "Empaquetada" in r.text
-    r = post(c, f"/clinica/envios/{remito.id}/cerrar", {"codigo_precinto": "", "temperatura_despacho": "4"})
+    r = post(c, f"/clinica/envios/{remito.id}/cerrar", {"codigo_precinto": "", "temperatura_despacho": "4", "colocado_por": "Marta Suarez"})
     assert "cerrado con el precinto PRE-" in r.text
     r = post(c, f"/clinica/envios/{remito.id}/despachar", {
         "transportista": "Logística Fría SRL", "vehiculo": "AE123KD",
@@ -88,7 +88,8 @@ def ciclo_laboratorio(c, s, atencion_id, integro: bool, contenedor: str):
     precinto = uno(s, RemitoBiologico, id=remito.id).precinto.codigo
     r = post(c, f"/laboratorio/recepcion/{remito.id}", {"codigo_precinto": precinto,
                                                        "precinto_integro": "1" if integro else "0",
-                                                       "temperatura": "5"}, "/laboratorio/recepcion")
+                                                       "temperatura": "5", "recibido_por": "Andrea Gomez"},
+             "/laboratorio/recepcion")
     return orden.id, muestra.id, remito.id, r
 
 
@@ -135,7 +136,7 @@ def test_escenario_de_demo(demo):
     orden_id, muestra_id, remito_id, r = ciclo_laboratorio(c, s, control.id, integro=True, contenedor="CEN-02")
     assert "ACEPTADA" in r.text and "Recibida" in r.text
     m = uno(s, MuestraBiologica, id=muestra_id)
-    datos = {"tipo_analisis_id": [t.id for t in m.analisis_pendientes()]}
+    datos = {"tipo_analisis_id": [t.id for t in m.analisis_pendientes()], "analista": "Andrea Gomez"}
     for t in m.analisis_pendientes():
         datos.update({f"valores_{t.id}": "Dentro de valores normales", f"unidad_{t.id}": "-"})
     r = post(c, f"/laboratorio/muestras/{muestra_id}/resultados", datos, "/laboratorio/muestras")
@@ -150,7 +151,7 @@ def test_escenario_de_demo(demo):
     assert uno(s, MuestraBiologica, id=muestra2_id).estado_actual() == "Rechazada"
     hem = uno(s, TipoAnalisis, codigo="HEM")
     r = post(c, f"/laboratorio/muestras/{muestra2_id}/resultados",
-             {"tipo_analisis_id": [hem.id], f"valores_{hem.id}": "x"}, f"/laboratorio/muestras/{muestra2_id}/resultados")
+             {"tipo_analisis_id": [hem.id], f"valores_{hem.id}": "x", "analista": "Andrea Gomez"}, f"/laboratorio/muestras/{muestra2_id}/resultados")
     assert "fue rechazada" in r.text and "no se pueden registrar resultados" in r.text
 
     # 8) Línea de tiempo de ambas muestras (historial inmutable) --------------------------

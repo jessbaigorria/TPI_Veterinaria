@@ -22,28 +22,25 @@ router = APIRouter()
 @router.get("/")
 def ingreso(request: Request, s: Session = Depends(obtener_sesion)):
     cat = CatalogosService(s)
-    clinicas = [c for c in cat.clinicas() if c.activa]
-    usuarios = {c.id: ["Recepción"] + [f"{p.nombre} {p.apellido}" for p in c.profesionales] for c in clinicas}
-    return render(request, "login.html", clinicas=clinicas, laboratorios=[l for l in cat.laboratorios() if l.activo],
-                  usuarios=usuarios, actual=usuario_actual(request))
+    return render(request, "login.html", clinicas=[c for c in cat.clinicas() if c.activa],
+                  laboratorios=[l for l in cat.laboratorios() if l.activo], actual=usuario_actual(request))
 
 
 @router.post("/ingresar")
 async def ingresar(request: Request, s: Session = Depends(obtener_sesion)):
+    # Sin usuarios: la sede es el usuario de la sesión (se registra en la auditoría). Las personas que
+    # importan (quién recibe, analiza o coloca el precinto) se piden en cada formulario.
     form = await request.form()
     portal = form.get("portal")
-    usuario = (form.get("usuario") or "").strip()
-    if not usuario:
-        raise VeterinariaError("Elegí o escribí el nombre de usuario.")
     if portal == PORTAL_CLINICA:
         sede = CatalogosService(s).obtener(Clinica, form.get("clinica_id"))
-        iniciar(request, UsuarioSesion(PORTAL_CLINICA, sede.id, sede.nombre, usuario, sede.alta_complejidad))
-        avisar(request, f"Bienvenido/a, {usuario}.")
+        iniciar(request, UsuarioSesion(PORTAL_CLINICA, sede.id, sede.nombre, sede.nombre, sede.alta_complejidad))
+        avisar(request, f"Ingresaste a {sede.nombre}.")
         return RedirectResponse("/clinica", status_code=303)
     if portal == PORTAL_LABORATORIO:
         sede = CatalogosService(s).obtener(Laboratorio, form.get("laboratorio_id"))
-        iniciar(request, UsuarioSesion(PORTAL_LABORATORIO, sede.id, sede.nombre, usuario))
-        avisar(request, f"Bienvenido/a, {usuario}.")
+        iniciar(request, UsuarioSesion(PORTAL_LABORATORIO, sede.id, sede.nombre, sede.nombre))
+        avisar(request, f"Ingresaste a {sede.nombre}.")
         return RedirectResponse("/laboratorio", status_code=303)
     raise VeterinariaError("Elegí un portal.")
 

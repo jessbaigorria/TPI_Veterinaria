@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from sqlalchemy import select
 
+from app.domain import validaciones
 from app.domain.laboratorio import Laboratorio
 from app.domain.transporte import RecepcionRemito, RemitoBiologico
 from app.services.base import ServicioBase, a_bool, a_float, texto, transaccional
@@ -10,8 +11,10 @@ from app.services.base import ServicioBase, a_bool, a_float, texto, transacciona
 
 class RecepcionService(ServicioBase):
     @transaccional
-    def recibir(self, remito_id, laboratorio_id, precinto_integro, temperatura, usuario,
+    def recibir(self, remito_id, laboratorio_id, precinto_integro, temperatura, recibido_por,
                 codigo_precinto_leido: str = "", observaciones: str = "") -> RecepcionRemito:
+        """``recibido_por``: persona que recibe (solo letras); queda en la recepción y en el historial."""
+        usuario = validaciones.nombre_persona(recibido_por, "Recibido por")
         remito = self.obtener(RemitoBiologico, remito_id)
         lab = self.obtener(Laboratorio, laboratorio_id)
         integro = a_bool(precinto_integro)

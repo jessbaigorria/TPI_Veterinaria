@@ -32,7 +32,7 @@ from app.services.recepcion import RecepcionService
 from app.services.resultados import ResultadosService
 
 LAB_NOMBRE = "Laboratorio Central de Diagnóstico Veterinario"
-OPERADORES_LAB = ["Gómez (bioquímico)", "Ibarra (técnica)"]
+OPERADORES_LAB = ["Andrea Gómez", "Lucía Ibarra"]
 TRANSPORTISTAS = [("Logística Fría SRL", "Furgón refrigerado AE 123 KD"),
                   ("BioExpress Córdoba", "Utilitario AF 456 GT")]
 

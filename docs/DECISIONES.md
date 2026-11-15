@@ -149,3 +149,26 @@ Prioridad aplicada cuando algo chocaba: consigna → diagrama de clases → docu
 - ~80 atenciones (más que las ~40 sugeridas porque incluye la agenda de hoy y las atenciones que originan órdenes y cirugías), 14 órdenes, 12 remitos en todos los estados (1 con precinto roto con 2 muestras y 1 con temperatura fuera de rango), cirugías en los 6 estados y facturas pagadas/emitidas/1 anulada.
 - La histopatología viaja en un contenedor de 15–25 °C (`SUR-02`), porque las biopsias en formol no van refrigeradas (el tipo de análisis tiene ese rango).
 - Mascotas pensadas para la demo: **Rocco** (García, vacunas vencidas), **Mía** (Fernández, falta triple felina), **Toby** (Herrera, cachorro sin vacunar).
+
+---
+
+# Ronda de correcciones (documento “Errores y cosas a mejorar”)
+
+## Reglas generales
+
+| # | Decisión |
+|---|---|
+| RG.1 | Excepciones **nuevas** (heredan de `VeterinariaError`, agregar al diagrama): `DatosInvalidosError` (formato o valor inválido: DNI, teléfono, email, nombres, fechas, horarios, duraciones) y `AtencionNoModificableError` (acciones sobre atenciones que ya no las admiten). |
+| RG.2 | Los avisos muestran solo el mensaje en español; el nombre de la excepción ya no se ve. Los mensajes del dominio se redactaron para el usuario (por ejemplo “Esta atención ya fue facturada (FAC-000062).”). |
+| RG.3 | Confirmaciones con un **modal de Bootstrap** (Aceptar / Cancelar) declarado una vez en `base.html`; cualquier `<form data-confirm="…">` lo usa. No queda `confirm()` ni `alert()`. |
+| RG.4 | Sin emojis: íconos de Bootstrap Icons. |
+| RG.5 | Las respuestas HTML llevan `Cache-Control: no-store` para que al volver atrás no se vean listados viejos. Un error en una pantalla GET vuelve a la pantalla anterior con el aviso. |
+| RG.6 | Validaciones de formato centralizadas en `app/domain/validaciones.py` (`nombre_persona`, `dni`, `telefono`, `email`, `obligatorio`); los formularios repiten la regla con atributos HTML (`required`, `pattern`, `minlength`, `min`, `max`). |
+
+## Bloque A — Inicio de sesión y auditoría
+
+| # | Decisión |
+|---|---|
+| A.1 | Se ingresa eligiendo solo la sede (clínica o laboratorio). El **usuario de la sesión es el nombre de la sede** y es lo que queda en la auditoría por defecto (remito armado, despacho, consentimiento). |
+| A.2 | Donde importa la persona se pide en el formulario, obligatoria y solo letras (mín. 3): **Recibido por** (recepción → `RecepcionRemito.usuario_receptor` y el historial de las muestras), **Analista** (resultados → `ResultadoAnalisis.analista` y el historial) y **Colocado por** (cierre del remito → `Precinto.usuario_colocador`). Los servicios reciben ese dato en lugar del usuario de la sesión: `RecepcionService.recibir(…, recibido_por)`, `ResultadosService.cargar_resultados(…, analista)`, `EmpaquetadoService.cerrar_remito(…, colocado_por)`. |
+| A.3 | La extracción de una muestra queda registrada a nombre del **profesional de la atención** (`DerivacionesService.registrar_muestra`, parámetro `usuario` opcional). |

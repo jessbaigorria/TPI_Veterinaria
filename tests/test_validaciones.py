@@ -53,7 +53,7 @@ def test_codigo_de_precinto_distinto_se_trata_como_roto(sesion, base):
     from app.services.recepcion import RecepcionService
     m = base.muestra()
     r = base.remito_en_transito([m])
-    rec = RecepcionService(sesion).recibir(r.id, base.lab.id, True, 5, "lab", codigo_precinto_leido="PRE-999999")
+    rec = RecepcionService(sesion).recibir(r.id, base.lab.id, True, 5, "Lucas Gomez", codigo_precinto_leido="PRE-999999")
     assert rec.motivo_rechazo == "Precinto roto"
     assert m.estado_actual() == "Rechazada"
 

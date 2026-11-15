@@ -62,6 +62,7 @@ body { background: #f4f6f9; font-size: .93rem; }
 .agenda .franja { width: 70px; color: #6b7280; }
 /* Login */
 .tarjeta-portal { border-top: 6px solid var(--clinica); }
+.login-centro { min-height: calc(100vh - 56px - 3rem); display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .tarjeta-portal.lab { border-top-color: var(--laboratorio); }
 .btn-clinica { background: var(--clinica); color: #fff; } .btn-clinica:hover { background: #115e59; color: #fff; }
 .btn-lab { background: var(--laboratorio); color: #fff; } .btn-lab:hover { background: #5b21b6; color: #fff; }

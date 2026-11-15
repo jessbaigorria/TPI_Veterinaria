@@ -1,5 +1,14 @@
 {# Componentes reutilizables de ambos portales #}
 
+{# Nombre de una persona: obligatorio, solo letras y espacios, mínimo 3 (la regla real está en app/domain/validaciones.py) #}
+{% macro campo_persona(nombre, etiqueta, valor='', clase='mb-3') -%}
+<div class="{{ clase }}">
+  <label class="form-label" for="{{ nombre }}">{{ etiqueta }} <span class="text-danger">*</span></label>
+  <input class="form-control" id="{{ nombre }}" name="{{ nombre }}" value="{{ valor or '' }}" required minlength="3"
+         pattern="{{ PATRON_LETRAS }}" title="Solo letras y espacios (al menos 3)" autocomplete="name">
+</div>
+{%- endmacro %}
+
 {# <option> de un enum para los filtros de listados #}
 {% macro opciones_enum(enum_cls, seleccionado) -%}
 {% for e in enum_cls %}<option value="{{ e.value }}" {{ 'selected' if e.value == seleccionado }}>{{ e.etiqueta }}</option>{% endfor %}
