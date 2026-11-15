@@ -48,12 +48,12 @@ Rutas de pantallas relativas a `http://localhost:8000`. Tests en `tests/`.
 
 | # | Reporte | Implementación | Pantalla | Test |
 |---|---|---|---|---|
-| R1 | Atenciones clínicas y derivaciones realizadas | `app/reportes/r1_atenciones.py` | `/clinica/reportes/r1` | `test_reportes.py::test_r1_*` |
-| R2 | Muestras rechazadas por fallas en el transporte | `app/reportes/r2_rechazos.py` | `/clinica/reportes/r2`, `/laboratorio/reportes/r2` | `test_reportes.py::test_r2_rechazos_por_transporte` |
-| R3 | Tiempo promedio de tránsito y procesamiento | `app/reportes/r3_tiempos.py` | `/clinica/reportes/r3`, `/laboratorio/reportes/r3` | `test_reportes.py::test_r3_tiempos` |
-| R4 | Facturación por clínica y servicios de laboratorio | `app/reportes/r4_facturacion.py` | `/clinica/reportes/r4` | `test_reportes.py::test_r4_facturacion` |
-| R5 | Vacunas pendientes por mascota | `app/reportes/r5_vacunas.py` | `/clinica/reportes/r5` | `test_reportes.py::test_r5_vacunas_pendientes` |
-| — | Filtros, gráfico (Chart.js), tabla y CSV | `app/reportes/comun.py` (`Filtro`, `Grafico.config`, `a_csv`), `app/web/templates/componentes/reporte.html` | `?formato=csv` en cada reporte | `test_reportes.py::test_csv`, `test_web.py::test_csv_de_reportes` |
+| 1 | Atenciones y derivaciones | `app/reportes/r1_atenciones.py` | `/clinica/reportes/atenciones` | `test_reportes.py::test_r1_*` |
+| 2 | Muestras rechazadas | `app/reportes/r2_rechazos.py` | `/clinica/reportes/rechazos`, `/laboratorio/reportes/rechazos` | `test_reportes.py::test_r2_rechazos_por_transporte` |
+| 3 | Tiempos de tránsito | `app/reportes/r3_tiempos.py` | `/clinica/reportes/tiempos`, `/laboratorio/reportes/tiempos` | `test_reportes.py::test_r3_tiempos` |
+| 4 | Facturación por clínica y laboratorio | `app/reportes/r4_facturacion.py` | `/clinica/reportes/facturacion` | `test_reportes.py::test_r4_facturacion` |
+| 5 | Vacunas pendientes | `app/reportes/r5_vacunas.py` | `/clinica/reportes/vacunas` | `test_reportes.py::test_r5_vacunas_pendientes` |
+| — | Filtros, gráfico (Chart.js), tabla, PDF y CSV | `app/reportes/comun.py` (`Filtro`, `Grafico.config`, `a_csv`), `app/reportes/pdf.py` (`a_pdf`), `componentes/reporte.html` | `?formato=pdf` / `?formato=csv` en cada reporte | `test_correcciones_web.py::test_h4_*`, `test_reportes.py::test_csv`, `test_web.py::test_csv_de_reportes` |
 
 ## Arquitectura y criterios generales
 
@@ -63,3 +63,40 @@ Rutas de pantallas relativas a `http://localhost:8000`. Tests en `tests/`.
 | Usuario de sesión en toda la auditoría | `app/web/sesion.py` → servicios (`usuario`, `usuario_armador`, `usuario_colocador`, `usuario_receptor`, `analista`) | `test_observer.py::test_cada_cambio_crea_exactamente_un_registro`, `test_persistencia.py::test_muestra_recargada_sigue_registrando_historial` |
 | Manejo global de `VeterinariaError` | `app/main.py::manejar_error_negocio` | `test_web.py::test_error_de_negocio_se_muestra_en_aviso_rojo` |
 | Seed creado a través de los servicios con 60 días de historia | `app/seed.py` + reloj inyectable `app/domain/reloj.py` | `test_seed.py` |
+
+## Ronda de correcciones del grupo (documento “Errores y cosas a mejorar”)
+
+Tests: `test_correcciones_web.py` (por HTTP con el seed), `test_horarios.py`, `test_validaciones_datos.py`,
+`test_validaciones.py`, `test_seed.py`, `test_interfaz_limpia.py` (greps sobre plantillas y código).
+
+| Punto | Cómo se resolvió | Pantalla | Test |
+|---|---|---|---|
+| Reglas generales | `DatosInvalidosError` y `AtencionNoModificableError`; avisos sin nombres técnicos; modal de Bootstrap (`base.html` + `app.js`); íconos en lugar de emojis; `Cache-Control: no-store` (`main.py`) | Todas | `test_interfaz_limpia.py`, `test_web.py::test_error_de_negocio_se_muestra_en_aviso_rojo` |
+| A1–A3 | Login solo con la sede; tarjetas centradas (`login.html`, `.login-centro`) | `/` | `test_a1_a2_login_solo_sede` |
+| A4 | Usuario de sesión = sede; **Recibido por**, **Analista**, **Colocado por** obligatorios (solo letras) en servicios y formularios; extracción a nombre del profesional | Recepción, Cargar resultados, Remito | `test_a4_*`, `test_validaciones_datos.py::test_nombre_persona_*` |
+| B1 | Tom Select en todos los `select.form-select` (`app.js::crearCombo`, plugin `dropdown_input`) | Todas las pantallas con selectores | `test_b1_tom_select_en_toda_la_app` |
+| B2 | API `/api/titulares/{id}/mascotas` con mascotas activas; recarga del combobox | Registrar atención, Reservar turno | `test_b2_api_devuelve_solo_mascotas_activas` |
+| B3 | Macro `opciones_profesionales` con `<optgroup>` por especialidad | Reservar turno, Registrar atención, Aceptar cirugía | `test_b3_profesionales_agrupados_por_especialidad` |
+| B4–B5 | “Todos los estados/tipos/…”; macro `buscador` con ícono gris | Listados y reportes | `test_b4_filtros_dicen_todos`, `test_b5_sin_lupa_emoji` |
+| C1 | `validar_rango_fechas`; `min` de «Hasta» sigue a «Desde» | Atenciones, Reportes | `test_horarios.py::test_c1_*`, `test_c1_listado_rango_invertido_muestra_error`, `test_h3_*` |
+| C2 | Estado vacío “No hay registros para mostrar” | Listados, Reportes | `test_c2_listado_vacio_muestra_estado_vacio` |
+| C3 | `TipoAtencion.CIRUGIA` y `OTRO`; `TIPOS_RESERVABLES` sin Urgencia | Reservar turno, Registrar atención | `test_c3_*` |
+| C4–C5 | `DURACION_MAXIMA_MINUTOS`, `_validar_horario`, `fin_sugerido`; JS autocompleta el fin; `step=300` | Reservar turno, Registrar atención | `test_c4_*`, `test_c5_*` |
+| C6 | Horario 08:00–19:00 (`HORA_APERTURA`, `HORA_CIERRE`) | Ídem | `test_c6_*` |
+| C7 | `AtencionClinica.reservar`: inicio posterior a ahora | Reservar turno | `test_c7_*` |
+| C8 | `AtencionClinica.registrar_sin_turno`: inicio actual o pasado | Registrar atención | `test_c8_*` |
+| C9 | Superposición sin cambios, sumada a las reglas nuevas | Ídem | `test_c9_superposicion_sigue_vigente` |
+| C10 | Seed con horarios y duraciones válidos (reloj inyectable) | — | `test_seed.py::test_seed_respeta_horarios_y_duraciones` |
+| D1–D6 | Título nuevo, sin recuadro de casos, “Crear titular” con `?next=`, mascota nueva desplegada (una u otra), responsable solo letras | Registrar atención | `test_d1_d2_d6_*`, `test_d3_*`, `test_d4_*`, `test_d5_*` |
+| E1 | `finalizar()` exige importe > 0 | Atención | `test_e1_*`, `test_validaciones.py::test_finalizar_exige_importe_mayor_a_cero` |
+| E2–E3 | Órdenes y derivaciones solo EN_PROGRESO (`AtencionNoModificableError`); pantalla ordenada | Atención, Nueva orden, Derivar | `test_e2_*`, `test_e3_*`, `test_validaciones.py::test_ordenes_y_derivaciones_solo_en_progreso` |
+| E4 | Seed: derivaciones antes de finalizar, sin importes 0 | — | `test_e4_*` |
+| F1 | `Titular.actualizar_datos` + `validaciones` (DNI, teléfono, email, letras) + DNI único; máscara de DNI | Clientes | `test_f1_*`, `test_validaciones_datos.py` |
+| F2 | Modal de baja con la lista de mascotas | Ficha de titular y de mascota | `test_f2_baja_con_modal_que_lista_mascotas` |
+| F3 | Nueva mascota sin textos técnicos, titular preseleccionado | Nueva mascota | `test_f3_*` |
+| G1–G2 | “Registrar muestra”; badges `inline-flex` alineados | Orden, Atención y demás | `test_g1_*`, `test_g2_*` |
+| H1–H2 | Nombres de reportes en interfaz y rutas | Reportes (clínica y laboratorio) | `test_h1_h2_sin_siglas_r1_r5` |
+| H3 | Fechas obligatorias y rango | Reportes | `test_h3_fechas_obligatorias_y_rango` |
+| H4 | Exportar PDF con ReportLab (`app/reportes/pdf.py`) | Reportes | `test_h4_exportar_pdf`, `test_h4_pdf_contenido` |
+| I1 | “Gestión” en menú, título, migas y ruta `/clinica/gestion` | Gestión | `test_i1_catalogos_ahora_es_gestion` |
+| I2 | POST → redirect → GET en facturación; pendientes sin lo facturado; mensajes claros | Facturación | `test_i2_*` |

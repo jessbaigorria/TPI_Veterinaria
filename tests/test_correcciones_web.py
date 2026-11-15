@@ -526,3 +526,16 @@ def test_i2_pago_y_anulacion_con_mensaje_claro(entorno):
     f = s.scalars(select(Factura).where(Factura.estado == EstadoFactura.EMITIDA, Factura.clinica_id == 1)).first()
     html = post(c, f"/clinica/facturas/{f.id}/pagar", {"forma_pago": "EFECTIVO"}, f"/clinica/facturacion/{f.id}").text
     assert f"Pago del comprobante {f.numero} registrado" in html and "Pagada" in html
+
+
+def test_gestion_precio_negativo_rechazado_al_crear_y_editar(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    datos = {"codigo": "TST", "nombre": "Prueba", "precio": "-10", "tipo_muestra_requerida": "SANGRE",
+             "temperatura_min": "2", "temperatura_max": "8", "tiempo_estimado_horas": "4"}
+    html = post(c, "/clinica/gestion/analisis", datos, "/clinica/gestion/analisis/nuevo").text
+    assert "no puede ser negativo" in aviso_rojo(html)
+    from app.domain.laboratorio import TipoAnalisis
+    hem = uno(s, TipoAnalisis, codigo="HEM")
+    html = post(c, f"/clinica/gestion/analisis/{hem.id}", {**datos, "codigo": "HEM"}, f"/clinica/gestion/analisis/{hem.id}/editar").text
+    assert "no puede ser negativo" in aviso_rojo(html)

@@ -1,5 +1,5 @@
 """Portal Laboratorio: bandeja de recepción (verificación de precinto y temperatura), cola de
-muestras a analizar, carga de resultados, trazabilidad y reportes R2/R3 del laboratorio."""
+muestras a analizar, carga de resultados, trazabilidad y reportes de muestras rechazadas y tiempos de tránsito."""
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Request

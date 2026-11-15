@@ -10,7 +10,7 @@ from sqlalchemy import select
 from app.domain.atencion import Clinica, Profesional
 from app.domain.base import a_decimal
 from app.domain.enums import Especie, TipoMuestra
-from app.domain.excepciones import VeterinariaError
+from app.domain.excepciones import DatosInvalidosError, VeterinariaError
 from app.domain.laboratorio import Laboratorio, TipoAnalisis
 from app.domain.personas import Vacuna
 from app.domain.transporte import Contenedor
@@ -126,7 +126,12 @@ class CatalogosService(ServicioBase):
                 valores[campo.nombre] = int(valor) if valor is not None and valor.is_integer() and campo.nombre in (
                     "capacidad", "edad_minima_semanas", "intervalo_refuerzo_dias", "tiempo_estimado_horas") else valor
             elif campo.tipo == "decimal":
-                valores[campo.nombre] = a_decimal(str(crudo).replace(",", "."))
+                try:
+                    valores[campo.nombre] = a_decimal(str(crudo).replace(",", "."))
+                except Exception as exc:
+                    raise DatosInvalidosError(f"El campo «{campo.etiqueta}» debe ser un número.") from exc
+                if valores[campo.nombre] < 0:
+                    raise DatosInvalidosError(f"El campo «{campo.etiqueta}» no puede ser negativo.")
             elif campo.tipo == "select" and campo.nombre.endswith("_id"):
                 valores[campo.nombre] = int(crudo)
             else:

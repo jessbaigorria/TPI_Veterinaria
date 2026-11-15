@@ -16,8 +16,8 @@ Checklist para recorrer **a mano** todos los flujos del sistema y anotar qué fa
 
 | Qué | Datos |
 |---|---|
-| Clínicas y usuarios | **Clínica Centro**: Laura Pérez, Martín Díaz, Julieta Acosta · **Clínica Norte**: Carla Sosa, Pablo Medina · **Hospital Veterinario Sur** (alta complejidad): Diego Ríos (cirugía), Valeria Luna, Tomás Ferreyra · en todas: “Recepción” |
-| Laboratorio | Laboratorio Central de Diagnóstico Veterinario (operador: cualquier nombre, p. ej. “Gómez”) |
+| Clínicas y profesionales | Se ingresa eligiendo solo la sede. **Clínica Centro**: Laura Pérez, Martín Díaz, Julieta Acosta · **Clínica Norte**: Carla Sosa, Pablo Medina · **Hospital Veterinario Sur** (alta complejidad): Diego Ríos (cirugía), Valeria Luna, Tomás Ferreyra |
+| Laboratorio | Laboratorio Central de Diagnóstico Veterinario. Quién recibe y quién analiza se carga en cada formulario (solo letras). |
 | Mascotas con vacunas pendientes | **Rocco** (titular Juan García): Antirrábica y Séxtuple vencidas · **Mía** (Carlos Fernández): falta Triple felina · **Toby** (Martín Herrera): cachorro sin vacunar |
 | Mascotas al día | Firulais, Michi, Thor, Luna, Simba, Bruno, Nina, Coco, Max, Kira, Lola, Tom, Pompón, Rocky |
 | Contenedores | CEN-01 (en uso), **CEN-02** y **CEN-03** (disponibles, 2–8 °C), NOR-01 (en uso), NOR-02 (en mantenimiento), SUR-01 (reservado por REM-000012), SUR-02 (15–25 °C) |
@@ -46,11 +46,12 @@ Checklist para recorrer **a mano** todos los flujos del sistema y anotar qué fa
 | 11 Cirugías |  |  |  |  |
 | 12 Facturación |  |  |  |  |
 | 13 Reportes |  |  |  |  |
-| 14 Catálogos |  |  |  |  |
+| 14 Gestión |  |  |  |  |
 | 15 Inicio / KPIs |  |  |  |  |
 | 16 Inmutabilidad del historial |  |  |  |  |
 | 17 Interfaz general |  |  |  |  |
 | 18 Flujo completo |  |  |  |  |
+| 19 Ronda de correcciones |  |  |  |  |
 
 ---
 
@@ -69,13 +70,13 @@ Checklist para recorrer **a mano** todos los flujos del sistema y anotar qué fa
 
 - [ ] **LG-01 (+)** Abrir `http://localhost:8000`. → Dos tarjetas: “Entrar como Clínica” (verde azulado) y “Entrar como Laboratorio” (violeta).
   - Obs:
-- [ ] **LG-02 (+)** Cambiar la clínica en el desplegable. → La lista de usuarios cambia a los profesionales de esa clínica más “Recepción”.
+- [ ] **LG-02 (+)** La tarjeta de clínica tiene solo el selector de clínica y el botón “Ingresar al Portal Clínica”; la de laboratorio, solo el selector de laboratorio y “Ingresar al Portal Laboratorio”. Las dos tarjetas están centradas.
   - Obs:
-- [ ] **LG-03 (+)** Entrar como Clínica Centro · Laura Pérez. → Barra verde azulada con “Clínica Centro” y “Laura Pérez”; menú lateral de clínica; aviso “Bienvenido/a”.
+- [ ] **LG-03 (+)** Entrar como Clínica Centro. → Barra verde azulada con solo “Clínica Centro” y “Cambiar”; menú lateral de clínica.
   - Obs:
-- [ ] **LG-04 (+)** Cambiar → Entrar como Laboratorio con operador “Gómez”. → Barra violeta con “Operador: Gómez”; menú de laboratorio.
+- [ ] **LG-04 (+)** Cambiar → Entrar como Laboratorio. → Barra violeta con solo el nombre del laboratorio y “Cambiar”; menú de laboratorio.
   - Obs:
-- [ ] **LG-05 (−)** Entrar como Laboratorio con el nombre de operador vacío. → El navegador o el sistema piden el nombre; no ingresa.
+- [ ] **LG-05 (+)** Las acciones hechas en la clínica sin una persona específica (armar o despachar remitos, consentimiento) quedan registradas con el nombre de la sede.
   - Obs:
 - [ ] **LG-06 (−)** Sin sesión (por ejemplo después de `/salir`), abrir `http://localhost:8000/clinica`. → Redirige al ingreso.
   - Obs:
@@ -187,7 +188,7 @@ Checklist para recorrer **a mano** todos los flujos del sistema y anotar qué fa
 
 - [ ] **AT-01 (+) Caso 1 (titular presente)**: Registrar atención → titular (con el buscador) → mascota al día → profesional → Consulta → registrar. → “Atención registrada e iniciada”; queda En progreso.
   - Obs:
-- [ ] **AT-02 (+) Caso 2 (cliente frecuente con mascota nueva)**: titular → activar “Nueva mascota” → completar nombre, especie, sexo y nacimiento → registrar. → Crea la mascota y la atención en un solo paso.
+- [ ] **AT-02 (+) Caso 2 (cliente frecuente con mascota nueva)**: titular → completar la sección “Nueva mascota” (ya visible) con nombre, especie, sexo y nacimiento → registrar. → Crea la mascota y la atención en un solo paso.
   - Obs:
 - [ ] **AT-03 (+) Caso 3 (no asiste el titular)**: “¿Asiste el titular? No” + responsable presente. → En el detalle se ve “No – nombre del responsable”.
   - Obs:
@@ -207,7 +208,7 @@ Checklist para recorrer **a mano** todos los flujos del sistema y anotar qué fa
   - Obs:
 - [ ] **AT-11 (−)** Registrar una atención con el mismo profesional y horario que otra en curso. → Aviso rojo `TurnoSuperpuestoError`.
   - Obs:
-- [ ] **AT-12 (−)** Vacunación con fecha de inicio futura, y finalizarla registrando vacunas. → Aviso rojo “La fecha de aplicación no puede ser futura”.
+- [ ] **AT-12 (−)** Atención sin turno con fecha de inicio futura. → Aviso rojo “Una atención sin turno previo no puede tener fecha y hora de inicio futura”.
   - Obs:
 - [ ] **AT-13 (−)** Finalizar sin diagnóstico. → No se permite.
   - Obs:
@@ -267,9 +268,9 @@ Checklist para recorrer **a mano** todos los flujos del sistema y anotar qué fa
   - Obs:
 - [ ] **EN-06 (+)** Tildar M-000016 y empaquetar. → La muestra pasa a **Empaquetada**; su línea de tiempo suma “Empaquetada en el remito REM-…”.
   - Obs:
-- [ ] **EN-07 (−)** Capacidad: con un contenedor de capacidad baja (editarla en Catálogos), agregar más muestras de las que entran. → Aviso rojo de capacidad.
+- [ ] **EN-07 (−)** Capacidad: con un contenedor de capacidad baja (editarla en Gestión), agregar más muestras de las que entran. → Aviso rojo de capacidad.
   - Obs:
-- [ ] **EN-08 (+)** Paso 3: cerrar con el precinto propuesto (PRE-…) y 4 °C. → “Remito cerrado con el precinto …”; precinto Íntegro; contenedor En uso; desaparece el paso 2.
+- [ ] **EN-08 (+)** Paso 3: cerrar con el precinto propuesto (PRE-…), 4 °C y “Colocado por” (solo letras; con números o vacío se rechaza). → “Remito cerrado con el precinto …”; precinto Íntegro; contenedor En uso; desaparece el paso 2.
   - Obs:
 - [ ] **EN-09 (−)** Cerrar otro remito usando un código de precinto ya usado. → Aviso rojo “Ya existe un precinto con código …”.
   - Obs:
@@ -300,7 +301,7 @@ Checklist para recorrer **a mano** todos los flujos del sistema y anotar qué fa
 
 - [ ] **RE-01 (+)** Recepción. → REM-000010 (y los que despachaste) con botón **Recibir**; REM-000011 aparece en gris como “esperando retiro”, sin botón.
   - Obs:
-- [ ] **RE-02 (+)** Recibir REM-000010 con el precinto esperado, “Sí, íntegro” y 5 °C. → Pantalla verde **ACEPTADA**; M-000013 **Recibida**; el contenedor CEN-01 vuelve a Disponible.
+- [ ] **RE-02 (+)** Recibir REM-000010 con el precinto esperado, “Sí, íntegro”, 5 °C y “Recibido por” (solo letras; con números o vacío se rechaza). → Pantalla verde **ACEPTADA**; M-000013 **Recibida**; el contenedor CEN-01 vuelve a Disponible.
   - Obs:
 - [ ] **RE-03 (+)** Recibir un remito propio con “**No, roto**” y 5 °C. → Pantalla roja **RECHAZADA – Precinto roto**; remito “Recibido con observaciones”; todas sus muestras **Rechazadas**. *(Validación 2)*
   - Obs:
@@ -325,7 +326,7 @@ Checklist para recorrer **a mano** todos los flujos del sistema y anotar qué fa
 
 - [ ] **RS-01 (+)** Muestras a analizar. → M-000011 (URGENTE) aparece primero, después M-000012 y las recibidas; no aparecen rechazadas.
   - Obs:
-- [ ] **RS-02 (+)** Cargar resultados de M-000011 completando los dos bloques (Hemograma y Perfil renal). → “Estado: Analizada”; la orden ORD-000009 pasa a **Completada** sola (Observer).
+- [ ] **RS-02 (+)** Cargar resultados de M-000011 completando los dos bloques (Hemograma y Perfil renal) y el “Analista”. → “Estado: Analizada”; la orden ORD-000009 pasa a **Completada** sola (Observer).
   - Obs:
 - [ ] **RS-03 (+)** Cargar resultados de una muestra con 2 análisis completando solo uno. → Sigue **Recibida** y vuelve al formulario con el análisis pendiente; al completar el otro pasa a Analizada.
   - Obs:
@@ -337,7 +338,7 @@ Checklist para recorrer **a mano** todos los flujos del sistema y anotar qué fa
   - Obs:
 - [ ] **RS-07 (+)** En el Portal Clínica, la ficha de la mascota (pestaña Laboratorio) y la orden muestran los resultados con analista y fecha.
   - Obs:
-- [ ] **RS-08 (+)** El analista registrado es el operador con el que ingresaste al laboratorio.
+- [ ] **RS-08 (+)** El analista registrado (y el usuario del historial) es el nombre cargado en “Analista”.
   - Obs:
 
 ## 10. Trazabilidad
@@ -429,34 +430,34 @@ Checklist para recorrer **a mano** todos los flujos del sistema y anotar qué fa
 
 ## 13. Reportes
 
-Para cada reporte comprobar: filtros, indicadores, gráfico, tabla y **Exportar CSV** (se abre bien en Excel).
+Para cada reporte comprobar: filtros (las dos fechas obligatorias, «Hasta» no menor que «Desde»), indicadores, gráfico, tabla y **Exportar PDF** (encabezado con sede y fecha, filtros, gráfico, tabla y totales). En ninguna pantalla deben aparecer las siglas R1–R5.
 
-- [ ] **RP-01 (+)** R1 Atenciones y derivaciones: filas por clínica y mes; barras apiladas por tipo; columnas con orden de laboratorio, derivadas a cirugía y % derivación.
+- [ ] **RP-01 (+)** Atenciones y derivaciones: filas por clínica y mes; barras apiladas por tipo; columnas con orden de laboratorio, derivadas a cirugía y % derivación.
   - Obs:
-- [ ] **RP-02 (+)** R1 filtrado por una clínica y por un rango de fechas corto. → Cambian los números y el gráfico.
+- [ ] **RP-02 (+)** Atenciones y derivaciones filtrado por una clínica y por un rango de fechas corto. → Cambian los números y el gráfico.
   - Obs:
-- [ ] **RP-03 (+)** R2 Rechazos por transporte: tablas por clínica, por motivo (Precinto roto / Temperatura) y por transportista, con %.
+- [ ] **RP-03 (+)** Muestras rechazadas: tablas por clínica, por motivo (Precinto roto / Temperatura) y por transportista, con %.
   - Obs:
-- [ ] **RP-04 (+)** Después de RE-03 y RE-04, R2 suma esos rechazos.
+- [ ] **RP-04 (+)** Después de RE-03 y RE-04, Muestras rechazadas suma esos rechazos.
   - Obs:
-- [ ] **RP-05 (+)** R3 Tiempos: tránsito promedio, mínimo y máximo por clínica (h); procesamiento por tipo de análisis vs estimado.
+- [ ] **RP-05 (+)** Tiempos de tránsito: tránsito promedio, mínimo y máximo por clínica (h); procesamiento por tipo de análisis vs estimado.
   - Obs:
-- [ ] **RP-06 (+)** R4 Facturación: totales por clínica y tipo, cobrado vs pendiente, ranking de análisis; las facturas anuladas no suman.
+- [ ] **RP-06 (+)** Facturación por clínica y laboratorio: totales por clínica y tipo, cobrado vs pendiente, ranking de análisis; las facturas anuladas no suman.
   - Obs:
-- [ ] **RP-07 (+)** Después de FA-02 o FA-05, R4 refleja el cambio (pendiente → cobrado).
+- [ ] **RP-07 (+)** Después de FA-02 o FA-05, Facturación por clínica y laboratorio refleja el cambio (pendiente → cobrado).
   - Obs:
-- [ ] **RP-08 (+)** R5 Vacunas pendientes: Rocco (si no lo vacunaste), Mía y Toby con días de atraso, titular y teléfono; filtros por especie y clínica de última atención.
+- [ ] **RP-08 (+)** Vacunas pendientes: Rocco (si no lo vacunaste), Mía y Toby con días de atraso, titular y teléfono; filtros por especie y clínica de última atención.
   - Obs:
-- [ ] **RP-09 (+)** Después de vacunar a Rocco (AT-09), desaparece de R5.
+- [ ] **RP-09 (+)** Después de vacunar a Rocco (AT-09), desaparece de Vacunas pendientes.
   - Obs:
 - [ ] **RP-10 (+)** Un rango de fechas sin datos. → “No hay datos para los filtros elegidos” sin error.
   - Obs:
-- [ ] **RP-11 (+)** Portal Laboratorio › Reportes: solo R2 y R3, filtrados a su laboratorio.
+- [ ] **RP-11 (+)** Portal Laboratorio › Reportes: solo “Muestras rechazadas” y “Tiempos de tránsito”, filtrados a su laboratorio.
   - Obs:
-- [ ] **RP-12 (−)** Portal Laboratorio, abrir por URL `/laboratorio/reportes/r4`. → Página de error “solo R2 y R3”.
+- [ ] **RP-12 (−)** Portal Laboratorio, abrir por URL `/laboratorio/reportes/facturacion`. → Aviso de que el laboratorio solo tiene esos dos reportes.
   - Obs:
 
-## 14. Catálogos (Portal Clínica)
+## 14. Gestión (Portal Clínica)
 
 - [ ] **CA-01 (+)** Pestañas Clínicas, Profesionales, Laboratorios, Tipos de análisis, Vacunas y Contenedores. → Cada una lista sus registros.
   - Obs:
@@ -474,7 +475,7 @@ Para cada reporte comprobar: filtros, indicadores, gráfico, tabla y **Exportar 
   - Obs:
 - [ ] **CA-08 (+)** Editar el precio de un análisis. → Las facturas nuevas usan el precio nuevo.
   - Obs:
-- [ ] **CA-09 (+)** Nueva vacuna obligatoria para perros (edad mínima 8 semanas). → Pasa a figurar como pendiente en todos los perros, en la ficha y en R5.
+- [ ] **CA-09 (+)** Nueva vacuna obligatoria para perros (edad mínima 8 semanas). → Pasa a figurar como pendiente en todos los perros, en la ficha y en Vacunas pendientes.
   - Obs:
 - [ ] **CA-10 (+)** Marcar una vacuna como no obligatoria. → Deja de contar como pendiente.
   - Obs:
@@ -560,10 +561,47 @@ Recorrer seguido, sin regenerar la base (es el escenario de demo de la sección 
   - Obs:
 - [ ] **E2E-09** Cirugía Centro → Hospital Sur: aceptar, consentimiento, programar, realizar, facturar (CI-03 a CI-15, FA-11).
   - Obs:
-- [ ] **E2E-10** Facturar atención y laboratorio; abrir R1 a R5 (FA-02, FA-07, sección 13).
+- [ ] **E2E-10** Facturar atención y laboratorio; abrir los cinco reportes (FA-02, FA-07, sección 13).
   - Obs:
 
 ---
+
+## 19. Ronda de correcciones del grupo
+
+- [ ] **RC-A** Ingreso solo por sede; tarjetas centradas; la barra muestra solo la sede y “Cambiar”.
+  - Obs:
+- [ ] **RC-B1** En Registrar atención, Reservar turno, Nueva mascota, Emitir orden, Armar remito, Derivar a cirugía, Facturación y filtros: al hacer clic se abre la lista con un buscador, al escribir se filtra con la lista abierta y se elige con clic o Enter.
+  - Obs:
+- [ ] **RC-B2/B3** Al elegir titular, la mascota muestra solo sus mascotas activas; los profesionales aparecen agrupados por especialidad y sin la especialidad entre paréntesis.
+  - Obs:
+- [ ] **RC-B4/B5** Los filtros dicen “Todos los estados”, “Todos los tipos”, etc.; no hay lupas de color.
+  - Obs:
+- [ ] **RC-C1/C2** «Hasta» no admite una fecha menor que «Desde» (y si se fuerza por URL, aviso rojo); un filtro sin resultados muestra “No hay registros para mostrar”.
+  - Obs:
+- [ ] **RC-C3** Reservar turno ofrece Consulta, Control, Vacunación, Cirugía y Otro (sin Urgencia); sin turno, todos.
+  - Obs:
+- [ ] **RC-C4/C5** Al elegir la hora de inicio o el tipo, el fin se completa solo (30 min consulta/control/vacunación, 60 min cirugía/otro/urgencia) y no se puede alargar; el campo de hora acepta minutos de a 5 sin el error de “00:15 y 00:30”.
+  - Obs:
+- [ ] **RC-C6** Ninguna atención empieza antes de las 08:00 ni termina después de las 19:00.
+  - Obs:
+- [ ] **RC-C7** No se puede reservar un turno en el pasado ni hoy en una hora ya pasada.
+  - Obs:
+- [ ] **RC-C8** La atención sin turno propone la hora actual y no acepta una futura.
+  - Obs:
+- [ ] **RC-D** Título “Registrar atención médica sin turno previo”; sin recuadro de casos; “¿No existe? Crear titular” debajo del titular vuelve con el titular elegido; la mascota nueva está desplegada; “Responsable presente” solo letras (mín. 3).
+  - Obs:
+- [ ] **RC-E** No se puede finalizar sin importe o con 0; con la atención finalizada no aparecen “Emitir orden” ni “Derivar a cirugía” (solo el comprobante).
+  - Obs:
+- [ ] **RC-F** Titular: todos los campos obligatorios, DNI con máscara `## ### ###` (7 u 8 dígitos, no repetido), teléfono solo números (8 a 15), email válido, nombre y apellido solo letras; la baja pide confirmación en un modal que lista las mascotas.
+  - Obs:
+- [ ] **RC-G** El botón dice “Registrar muestra”; los badges de estado se ven como píldoras normales y centradas.
+  - Obs:
+- [ ] **RC-H** Reportes con nombre (sin R1–R5), fechas obligatorias y “Exportar PDF”.
+  - Obs:
+- [ ] **RC-I** El menú dice “Gestión”; al emitir un comprobante desde “Pendiente de facturar”, el ítem desaparece de la lista y el mensaje dice “Comprobante FAC-… emitido”.
+  - Obs:
+- [ ] **RC-General** Ningún mensaje muestra nombres técnicos (VeterinariaError, …Error); las confirmaciones son modales con Aceptar / Cancelar.
+  - Obs:
 
 ## Registro de fallas y cambios
 

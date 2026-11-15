@@ -68,5 +68,5 @@ def email(valor) -> str:
     if not texto:
         raise DatosInvalidosError("El campo «Email» es obligatorio.")
     if not _EMAIL.match(texto):
-        raise DatosInvalidosError("El email no tiene un formato válido (ejemplo: nombre@dominio.com).")
+        raise DatosInvalidosError("El email no tiene un formato válido (ejemplo: nombre@correo.com).")
     return texto.lower()

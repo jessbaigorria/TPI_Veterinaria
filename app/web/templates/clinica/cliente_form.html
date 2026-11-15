@@ -23,7 +23,7 @@
              pattern="[0-9]{8,15}" minlength="8" maxlength="15" title="Solo números, de 8 a 15 dígitos" placeholder="Ej.: 3514221100"
              value="{{ val('telefono', t.telefono if t else '') }}"></div>
     <div class="col-md-6"><label class="form-label" for="email">Email <span class="text-danger">*</span></label>
-      <input class="form-control" id="email" name="email" type="email" required placeholder="nombre@dominio.com"
+      <input class="form-control" id="email" name="email" type="email" required placeholder="nombre@correo.com"
              value="{{ val('email', t.email if t else '') }}"></div>
   </div>
   <input type="hidden" name="next" value="{{ query.next or previo.next }}">

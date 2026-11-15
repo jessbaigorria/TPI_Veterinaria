@@ -125,20 +125,20 @@ Prioridad aplicada cuando algo chocaba: consigna → diagrama de clases → docu
 
 | Reporte | Decisión |
 |---|---|
-| R1 | Cuenta atenciones **realizadas** (en progreso o finalizadas); las reservadas y canceladas no. “% derivación” = atenciones con orden de laboratorio **o** derivación a cirugía / total. |
-| R2 | “Enviadas” = muestras de remitos **despachados** en el período (fecha de despacho). Si un remito tuvo precinto roto y temperatura fuera de rango, se clasifica como “Precinto roto”. |
-| R3 | Tránsito = llegada real − despacho (por clínica de origen). Procesamiento = primera vez Analizada − primera vez Recibida según el historial, por tipo de análisis (cada muestra cuenta para cada análisis de su tipo). |
-| R4 | Excluye ANULADAS. Cobrado = PAGADAS; pendiente = EMITIDAS. Ranking por importe facturado por tipo de análisis. |
-| R5 | “Hasta” es la fecha de corte; “Desde” (opcional) filtra por fecha de vencimiento. Se calcula con el método de dominio `detalle_vacunas_pendientes()` sobre una consulta que trae mascotas activas y la clínica de la última atención (subconsulta agregada). |
-| CSV | Separador `;` y BOM UTF‑8 para que abra bien en Excel en español. |
-| Lab | El portal del laboratorio ve R2 y R3 filtrados a su laboratorio; el de clínica ve los 5. |
+| Atenciones y derivaciones (ex R1) | Cuenta atenciones **realizadas** (en progreso o finalizadas); las reservadas y canceladas no. “% derivación” = atenciones con orden de laboratorio **o** derivación a cirugía / total. |
+| Muestras rechazadas (ex R2) | “Enviadas” = muestras de remitos **despachados** en el período (fecha de despacho). Si un remito tuvo precinto roto y temperatura fuera de rango, se clasifica como “Precinto roto”. |
+| Tiempos de tránsito (ex R3) | Tránsito = llegada real − despacho (por clínica de origen). Procesamiento = primera vez Analizada − primera vez Recibida según el historial, por tipo de análisis (cada muestra cuenta para cada análisis de su tipo). |
+| Facturación por clínica y laboratorio (ex R4) | Excluye ANULADAS. Cobrado = PAGADAS; pendiente = EMITIDAS. Ranking por importe facturado por tipo de análisis. |
+| Vacunas pendientes (ex R5) | “Hasta” es la fecha de corte; “Desde” (obligatoria desde la ronda de correcciones) filtra por fecha de vencimiento. Se calcula con el método de dominio `detalle_vacunas_pendientes()` sobre una consulta que trae mascotas activas y la clínica de la última atención (subconsulta agregada). |
+| CSV | Separador `;` y BOM UTF‑8 para que abra bien en Excel en español (desde la ronda de correcciones, además, **Exportar PDF**: ver H.3). |
+| Laboratorio | El portal del laboratorio ve Muestras rechazadas y Tiempos de tránsito filtrados a su laboratorio; el de clínica ve los cinco. |
 
 ## 8. UI
 
 - El manejador global de `VeterinariaError` (`app/main.py`) guarda el mensaje en la sesión, conserva lo cargado en el formulario y redirige a la página anterior, donde se ve un **aviso rojo**. En GET muestra una página de error con el mismo aviso.
 - La UI decide qué botones mostrar preguntando al dominio (`acciones()`, `transiciones_posibles()`, `esta_realizada()`, `facturable()`…). No hay `if estado == …` en rutas ni plantillas.
 - Quedan dos comparaciones `h.estado_nuevo == …` en `MuestraBiologica.motivo_rechazo()` y `fecha_de_estado()`: **leen** la traza (motivo del rechazo, fecha de un estado), no deciden transiciones. Las consultas de listados/KPIs filtran por la columna `estado` en SQL (`estado_codigo.in_(…)`), tampoco deciden transiciones.
-- El laboratorio no ve las muestras rechazadas en la cola de análisis. Si se abre por URL la carga de resultados de una muestra rechazada, la pantalla lo advierte y el botón “Intentar registrar resultado igualmente” permite **demostrar** que el dominio lanza `MuestraRechazadaError`.
+- El laboratorio no ve las muestras rechazadas en la cola de análisis. Si se abre por URL la carga de resultados de una muestra rechazada, la pantalla avisa que la muestra fue rechazada y, si igual se guarda, se muestra el mensaje de `MuestraRechazadaError` (sirve para demostrar la validación).
 - Las vacunas aplicadas en una atención de VACUNACIÓN se registran al finalizarla, con la fecha de la atención (no se aceptan fechas futuras).
 - Agenda: franjas de 30 minutos de 08:00 a 19:30 por profesional.
 
@@ -241,3 +241,23 @@ Prioridad aplicada cuando algo chocaba: consigna → diagrama de clases → docu
 |---|---|
 | I.1 | “Catálogos” se llama **Gestión** (menú, título y migas de pan) y su ruta es `/clinica/gestion`; `/clinica/catalogos` redirige a la nueva ruta. El servicio interno conserva el nombre `CatalogosService`. |
 | I.2 | Facturación con **POST → redirect → GET**: los botones “Emitir” de “Pendiente de facturar” envían `volver=/clinica/facturacion` y, después de emitir, se vuelve a la lista recargada (el ítem desaparece porque la consulta excluye lo que tiene una factura no anulada y el contador baja). Pagos y anulaciones también redirigen. Las respuestas HTML llevan `Cache-Control: no-store` para que al volver atrás no se vea la lista vieja (era lo que permitía tocar “Emitir” otra vez). Mensajes: “Comprobante FAC-000062 emitido por $ …”, “Pago del comprobante … registrado”, “Comprobante … anulado”; si se intenta facturar dos veces: “Esta atención ya fue facturada (FAC-…).” |
+
+## Gestión (corrección adicional)
+
+| # | Decisión |
+|---|---|
+| X.1 | En Gestión, los montos (precio de los tipos de análisis) no pueden ser negativos ni al crear ni al editar (`DatosInvalidosError`). Antes solo se controlaba al editar (caso CA-07 de `PRUEBAS_MANUALES.md`). |
+
+---
+
+# Resumen: cambios a reflejar en el diagrama de clases
+
+| Elemento | Cambio |
+|---|---|
+| `TipoAtencion` | Agregar **`CIRUGIA`** y **`OTRO`**. |
+| Excepciones (hoja “opciones”) | Agregar **`DatosInvalidosError`** y **`AtencionNoModificableError`** (heredan de `VeterinariaError`); ya existía `HistorialInmutableError`. |
+| `AtencionClinica` | Atributos de clase `HORA_APERTURA`, `HORA_CIERRE`, `DURACION_MAXIMA_MINUTOS`, `TIPOS_RESERVABLES`. Métodos **nuevos**: `reservar(...)` y `registrar_sin_turno(...)` (de clase), `duracion_maxima(tipo)`, `fin_sugerido(inicio, tipo)`, `admite_derivaciones()`, `validar_admite_derivaciones(accion)`, `-_validar_horario(inicio, fin, tipo)`. `finalizar()` exige importe > 0. `emitir_orden_derivacion()` y `derivar_a_cirugia()` solo con la atención en curso. |
+| `Titular` | Método **nuevo** `actualizar_datos(dni, nombre, apellido, direccion, telefono, email)`; todos los atributos obligatorios con formato validado. |
+| `EstadoRemito` / `RemitoArmado` / `RemitoBiologico` | `registrar_temperatura_despacho(...)` (ronda anterior; ver 2.10). |
+| Paquete de validaciones | Módulo `validaciones` (`nombre_persona`, `dni`, `telefono`, `email`, `obligatorio`); se puede dibujar como utilidad del dominio. |
+| Servicios (no van en el diagrama de clases) | `RecepcionService.recibir(…, recibido_por)`, `ResultadosService.cargar_resultados(…, analista)`, `EmpaquetadoService.cerrar_remito(…, colocado_por)`, `validar_rango_fechas`. |

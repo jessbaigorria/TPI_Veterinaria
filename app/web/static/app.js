@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
       plugins: ["dropdown_input"],
       render: { no_results: () => '<div class="no-results text-muted px-3 py-2">Sin resultados</div>' },
     };
-    if (sel.required && vacia) opciones.placeholder = vacia.textContent.trim();
+    if (vacia) opciones.placeholder = vacia.textContent.trim();   // se ve cuando no hay nada elegido
     const ts = new TomSelect(sel, opciones);
     // Texto del cuadro de búsqueda dentro de la lista desplegada.
     const buscar = sel.dataset.buscar || "Escribí para buscar";
