@@ -64,11 +64,11 @@ def test_paginas_portal_clinica(entorno):
     paginas = ["/clinica", "/clinica/agenda", "/clinica/agenda/nuevo", "/clinica/atenciones", "/clinica/atenciones/nueva",
                "/clinica/clientes", "/clinica/clientes/nuevo", "/clinica/mascotas", "/clinica/mascotas/nueva",
                "/clinica/ordenes", "/clinica/envios", "/clinica/envios/nuevo", "/clinica/cirugias",
-               "/clinica/cirugias?tab=recibidas", "/clinica/facturacion", "/clinica/reportes", "/clinica/catalogos"]
+               "/clinica/cirugias?tab=recibidas", "/clinica/facturacion", "/clinica/reportes", "/clinica/gestion", "/clinica/catalogos"]
     paginas += [f"/clinica/reportes/{slug}" for slug in ("atenciones", "rechazos", "tiempos", "facturacion", "vacunas")]
-    paginas += [f"/clinica/catalogos?tab={t}" for t in ("clinicas", "profesionales", "laboratorios", "analisis",
+    paginas += [f"/clinica/gestion?tab={t}" for t in ("clinicas", "profesionales", "laboratorios", "analisis",
                                                          "vacunas", "contenedores")]
-    paginas += [f"/clinica/catalogos/{t}/nuevo" for t in ("clinicas", "profesionales", "analisis", "contenedores")]
+    paginas += [f"/clinica/gestion/{t}/nuevo" for t in ("clinicas", "profesionales", "analisis", "contenedores")]
     paginas += [f"/clinica/atenciones/{i}" for i in ids(AtencionClinica)]
     paginas += [f"/clinica/clientes/{i}" for i in ids(Titular)] + [f"/clinica/clientes/{ids(Titular)[0]}/editar"]
     paginas += [f"/clinica/mascotas/{i}?tab={t}" for i in ids(Mascota)[:4]
@@ -84,7 +84,7 @@ def test_paginas_portal_clinica(entorno):
     paginas += [f"/clinica/atenciones/nueva?mascota={ids(Mascota)[1]}&tipo=VACUNACION",
                 f"/clinica/ordenes/nueva?atencion={en_curso.id}",
                 f"/clinica/cirugias/nueva?atencion={en_curso.id}",
-                f"/clinica/catalogos/contenedores/{s.scalars(select(RemitoBiologico)).first().contenedor_id}/editar"]
+                f"/clinica/gestion/contenedores/{s.scalars(select(RemitoBiologico)).first().contenedor_id}/editar"]
     for url in paginas:
         r = client.get(url)
         assert r.status_code == 200, url

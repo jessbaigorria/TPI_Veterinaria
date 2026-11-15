@@ -234,3 +234,10 @@ Prioridad aplicada cuando algo chocaba: consigna → diagrama de clases → docu
 | H.1 | Sin siglas R1–R5 en la interfaz: los reportes se llaman “Atenciones y derivaciones”, “Muestras rechazadas”, “Tiempos de tránsito”, “Facturación por clínica y laboratorio” y “Vacunas pendientes”. También las rutas usan el nombre: `/reportes/atenciones`, `/rechazos`, `/tiempos`, `/facturacion`, `/vacunas`. Los módulos internos conservan su nombre (`r1_atenciones.py`, …). |
 | H.2 | Fechas: ver C.5 (obligatorias, «Hasta» ≥ «Desde», últimos 30 días por defecto; 12 meses en Vacunas pendientes). |
 | H.3 | **Exportar PDF** con ReportLab 4.2.5 (wheel de Python puro, agregado a `requirements.txt`): `app/reportes/pdf.py::a_pdf`. A4 apaisada con encabezado (nombre del reporte, sede de la sesión y fecha de emisión), filtros aplicados, indicadores, hasta dos gráficos dibujados con `reportlab.graphics` (barras, barras apiladas o torta), tablas con montos `$ 12.500,00`, fechas `dd/mm/aaaa`, porcentajes y fila de totales, y pie con número de página. Se mantiene el CSV (`;` + UTF‑8 con BOM; ahora también las fechas del encabezado en `dd/mm/aaaa`). |
+
+## Bloque I — Navegación y facturación
+
+| # | Decisión |
+|---|---|
+| I.1 | “Catálogos” se llama **Gestión** (menú, título y migas de pan) y su ruta es `/clinica/gestion`; `/clinica/catalogos` redirige a la nueva ruta. El servicio interno conserva el nombre `CatalogosService`. |
+| I.2 | Facturación con **POST → redirect → GET**: los botones “Emitir” de “Pendiente de facturar” envían `volver=/clinica/facturacion` y, después de emitir, se vuelve a la lista recargada (el ítem desaparece porque la consulta excluye lo que tiene una factura no anulada y el contador baja). Pagos y anulaciones también redirigen. Las respuestas HTML llevan `Cache-Control: no-store` para que al volver atrás no se vea la lista vieja (era lo que permitía tocar “Emitir” otra vez). Mensajes: “Comprobante FAC-000062 emitido por $ …”, “Pago del comprobante … registrado”, “Comprobante … anulado”; si se intenta facturar dos veces: “Esta atención ya fue facturada (FAC-…).” |

@@ -481,3 +481,48 @@ def test_h4_pdf_contenido():
         rl_config.pageCompression = anterior
     for esperado in (b"Facturaci", b"Cl\\355nica Centro", b"01/01/2026", b"31/01/2026", b"$ 12.500,00", b"05/01/2026"):
         assert esperado in texto, esperado
+
+
+# ---------------------------------------------------------------- Bloque I: gestión y facturación
+def test_i1_catalogos_ahora_es_gestion(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    html = c.get("/clinica/gestion").text
+    assert 'href="/clinica/gestion"' in html and ">Gestión</h3>" in html.replace(' class="titulo-seccion"', "")
+    assert "Catálogos" not in texto_visible(html)
+    r = c.get("/clinica/catalogos?tab=vacunas", follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/clinica/gestion?tab=vacunas"
+    assert "Gestión" in c.get("/clinica/gestion/clinicas/nuevo").text
+
+
+def test_i2_emitir_desde_pendientes_actualiza_la_lista(entorno):
+    import re
+    c, s = entorno
+    login_clinica(c, s)
+    html = c.get("/clinica/facturacion").text
+    total_antes = int(re.search(r"data-contador-pendientes>(\d+)<", html).group(1))
+    atencion_id = re.search(r'action="/clinica/facturacion/atencion/(\d+)"', html).group(1)
+    r = c.post(f"/clinica/facturacion/atencion/{atencion_id}", data={"volver": "/clinica/facturacion"},
+               follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/clinica/facturacion"     # POST → redirect → GET
+    html = c.get("/clinica/facturacion").text
+    assert re.search(r"Comprobante FAC-\d{6} emitido", html)
+    assert f'action="/clinica/facturacion/atencion/{atencion_id}"' not in html             # ya no está pendiente
+    assert int(re.search(r"data-contador-pendientes>(\d+)<", html).group(1)) == total_antes - 1
+    assert c.get("/clinica/facturacion").headers["cache-control"] == "no-store"
+    html = post(c, f"/clinica/facturacion/atencion/{atencion_id}", {"volver": "/clinica/facturacion"},
+                "/clinica/facturacion").text
+    msg = aviso_rojo(html)
+    assert re.match(r"Esta atención ya fue facturada \(FAC-\d{6}\)\.", msg) and "VeterinariaError" not in html
+
+
+def test_i2_pago_y_anulacion_con_mensaje_claro(entorno):
+    import re
+    c, s = entorno
+    login_clinica(c, s)
+    from app.domain.facturacion import Factura
+    from app.domain.enums import EstadoFactura
+    s.expire_all()
+    f = s.scalars(select(Factura).where(Factura.estado == EstadoFactura.EMITIDA, Factura.clinica_id == 1)).first()
+    html = post(c, f"/clinica/facturas/{f.id}/pagar", {"forma_pago": "EFECTIVO"}, f"/clinica/facturacion/{f.id}").text
+    assert f"Pago del comprobante {f.numero} registrado" in html and "Pagada" in html

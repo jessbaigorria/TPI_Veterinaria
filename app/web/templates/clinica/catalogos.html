@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% from "componentes/macros.html" import encabezado, badge_enum, vacio %}
 {% block contenido %}
-{% call encabezado("Catálogos", "Alta y edición simple de los datos maestros") %}
-  <a href="/clinica/catalogos/{{ cat.clave }}/nuevo" class="btn btn-portal"><i class="bi bi-plus-lg"></i> Nuevo</a>
+{% call encabezado("Gestión", "Clínicas, profesionales, laboratorios, análisis, vacunas y contenedores") %}
+  <a href="/clinica/gestion/{{ cat.clave }}/nuevo" class="btn btn-portal"><i class="bi bi-plus-lg"></i> Nuevo</a>
 {% endcall %}
 <ul class="nav nav-tabs mb-3">{% for clave, c in catalogos.items() %}<li class="nav-item"><a class="nav-link {{ 'active' if tab == clave }}" href="?tab={{ clave }}">{{ c.titulo }}</a></li>{% endfor %}</ul>
 <div class="card"><div class="card-body p-0">
@@ -13,12 +13,12 @@
       <td>{% if col == 'estado' %}{{ badge_enum(v) }}{% elif col == 'clinica' %}{{ v.nombre }}{% elif col == 'precio' %}{{ v|moneda }}{% else %}{{ v|celda if v is not string else v }}{% endif %}</td>
     {% endfor %}
     <td class="text-nowrap text-end">
-      <a href="/clinica/catalogos/{{ cat.clave }}/{{ it.id }}/editar" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+      <a href="/clinica/gestion/{{ cat.clave }}/{{ it.id }}/editar" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
       {% if cat.clave == 'contenedores' %}
         {% if it.puede_ir_a_mantenimiento() %}
-        <form method="post" action="/clinica/catalogos/contenedores/{{ it.id }}/estado/mantenimiento" class="d-inline"><button class="btn btn-sm btn-outline-warning" title="Enviar a mantenimiento"><i class="bi bi-tools"></i></button></form>
+        <form method="post" action="/clinica/gestion/contenedores/{{ it.id }}/estado/mantenimiento" class="d-inline"><button class="btn btn-sm btn-outline-warning" title="Enviar a mantenimiento"><i class="bi bi-tools"></i></button></form>
         {% elif it.en_mantenimiento() %}
-        <form method="post" action="/clinica/catalogos/contenedores/{{ it.id }}/estado/habilitar" class="d-inline"><button class="btn btn-sm btn-outline-success" title="Habilitar"><i class="bi bi-check2"></i></button></form>
+        <form method="post" action="/clinica/gestion/contenedores/{{ it.id }}/estado/habilitar" class="d-inline"><button class="btn btn-sm btn-outline-success" title="Habilitar"><i class="bi bi-check2"></i></button></form>
         {% endif %}
       {% endif %}
     </td></tr>{% endfor %}</tbody>

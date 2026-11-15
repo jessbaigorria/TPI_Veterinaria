@@ -40,6 +40,11 @@ Db = Depends(obtener_sesion)
 FILTROS_REMITO = {"RemitoEnTransito": ["RemitoDespachado", "RemitoEnTransito"]}
 
 
+def _volver(destino: str | None, defecto: str) -> str:
+    """POST → redirect → GET: vuelve a la pantalla interna indicada (por ejemplo el listado) o al defecto."""
+    return destino if destino and destino.startswith("/clinica/") else defecto
+
+
 def ir(url: str) -> RedirectResponse:
     return RedirectResponse(url, status_code=303)
 
@@ -522,7 +527,7 @@ async def facturar(request: Request, origen: str, origen_id: int, u: UsuarioSesi
     else:
         raise VeterinariaError("Origen de factura desconocido.")
     avisar(request, f"Comprobante {f.numero} emitido por {moneda(f.total)}.")
-    return ir(f"/clinica/facturacion/{f.id}")
+    return ir(_volver((await request.form()).get("volver"), f"/clinica/facturacion/{f.id}"))
 
 
 @router.get("/facturacion/{factura_id}")
@@ -534,16 +539,16 @@ def factura_detalle(request: Request, factura_id: int, u: UsuarioSesion = Usr, s
 @router.post("/facturas/{factura_id}/pagar")
 async def factura_pagar(request: Request, factura_id: int, u: UsuarioSesion = Usr, s: Session = Db):
     f = await formulario(request)
-    FacturacionService(s).registrar_pago(factura_id, f.get("forma_pago") or None)
-    avisar(request, "Pago registrado.")
-    return ir(f"/clinica/facturacion/{factura_id}")
+    fac = FacturacionService(s).registrar_pago(factura_id, f.get("forma_pago") or None)
+    avisar(request, f"Pago del comprobante {fac.numero} registrado.")
+    return ir(_volver(f.get("volver"), f"/clinica/facturacion/{factura_id}"))
 
 
 @router.post("/facturas/{factura_id}/anular")
-def factura_anular(request: Request, factura_id: int, u: UsuarioSesion = Usr, s: Session = Db):
-    FacturacionService(s).anular(factura_id)
-    avisar(request, "Factura anulada.")
-    return ir(f"/clinica/facturacion/{factura_id}")
+async def factura_anular(request: Request, factura_id: int, u: UsuarioSesion = Usr, s: Session = Db):
+    fac = FacturacionService(s).anular(factura_id)
+    avisar(request, f"Comprobante {fac.numero} anulado.")
+    return ir(_volver((await request.form()).get("volver"), f"/clinica/facturacion/{factura_id}"))
 
 
 # ========================================================================== reportes ===
@@ -562,44 +567,49 @@ def reporte(request: Request, codigo: str, u: UsuarioSesion = Usr, s: Session = 
 
 # ========================================================================= catálogos ===
 @router.get("/catalogos")
+def catalogos_ruta_anterior(request: Request, u: UsuarioSesion = Usr):
+    return ir("/clinica/gestion" + (f"?{request.url.query}" if request.url.query else ""))
+
+
+@router.get("/gestion")
 def catalogos(request: Request, tab: str = "clinicas", u: UsuarioSesion = Usr, s: Session = Db):
     svc = CatalogosService(s)
-    return render(request, "clinica/catalogos.html", seccion="catalogos", tab=tab, catalogos=CATALOGOS,
+    return render(request, "clinica/catalogos.html", seccion="gestion", tab=tab, catalogos=CATALOGOS,
                   cat=svc.catalogo(tab), items=svc.listar(tab))
 
 
-@router.get("/catalogos/{clave}/nuevo")
+@router.get("/gestion/{clave}/nuevo")
 def catalogo_nuevo(request: Request, clave: str, u: UsuarioSesion = Usr, s: Session = Db):
     svc = CatalogosService(s)
-    return render(request, "clinica/catalogo_form.html", seccion="catalogos", cat=svc.catalogo(clave), obj=None,
+    return render(request, "clinica/catalogo_form.html", seccion="gestion", cat=svc.catalogo(clave), obj=None,
                   clinicas=svc.clinicas())
 
 
-@router.get("/catalogos/{clave}/{obj_id}/editar")
+@router.get("/gestion/{clave}/{obj_id}/editar")
 def catalogo_editar(request: Request, clave: str, obj_id: int, u: UsuarioSesion = Usr, s: Session = Db):
     svc = CatalogosService(s)
     cat = svc.catalogo(clave)
-    return render(request, "clinica/catalogo_form.html", seccion="catalogos", cat=cat,
+    return render(request, "clinica/catalogo_form.html", seccion="gestion", cat=cat,
                   obj=svc.obtener(cat.modelo, obj_id), clinicas=svc.clinicas())
 
 
-@router.post("/catalogos/contenedores/{obj_id}/estado/{accion}")
+@router.post("/gestion/contenedores/{obj_id}/estado/{accion}")
 def contenedor_estado(request: Request, obj_id: int, accion: str, u: UsuarioSesion = Usr, s: Session = Db):
     c = CatalogosService(s).cambiar_estado_contenedor(obj_id, accion)
     avisar(request, f"Contenedor {c.codigo}: {c.estado.etiqueta.lower()}.")
-    return ir("/clinica/catalogos?tab=contenedores")
+    return ir("/clinica/gestion?tab=contenedores")
 
 
-@router.post("/catalogos/{clave}")
+@router.post("/gestion/{clave}")
 async def catalogo_crear(request: Request, clave: str, u: UsuarioSesion = Usr, s: Session = Db):
     CatalogosService(s).guardar(clave, await formulario(request))
     avisar(request, "Registro creado.")
-    return ir(f"/clinica/catalogos?tab={clave}")
+    return ir(f"/clinica/gestion?tab={clave}")
 
 
-@router.post("/catalogos/{clave}/{obj_id}")
+@router.post("/gestion/{clave}/{obj_id}")
 async def catalogo_actualizar(request: Request, clave: str, obj_id: int, u: UsuarioSesion = Usr, s: Session = Db):
     CatalogosService(s).guardar(clave, await formulario(request), obj_id)
     avisar(request, "Registro actualizado.")
-    return ir(f"/clinica/catalogos?tab={clave}")
+    return ir(f"/clinica/gestion?tab={clave}")
 
