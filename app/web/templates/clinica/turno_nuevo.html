@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "componentes/macros.html" import encabezado %}
+{% from "componentes/macros.html" import encabezado, opciones_profesionales %}
 {% block contenido %}
 {% call encabezado("Reservar turno", "Se valida que el profesional no tenga otro turno superpuesto") %}{% endcall %}
 <div class="card" style="max-width: 820px"><div class="card-body">
@@ -7,22 +7,21 @@
   <div class="row g-3">
     <div class="col-md-6">
       <label class="form-label">Titular <span class="text-danger">*</span></label>
-      <input class="form-control form-control-sm mb-1" placeholder="🔎 Buscar por apellido o DNI" data-filtra="titular_id">
-      <select class="form-select" id="titular_id" name="titular_id" required>
+      <select class="form-select" id="titular_id" name="titular_id" required data-buscar="Buscá por apellido o DNI">
         <option value="">— Elegí el titular —</option>
         {% for t in titulares %}<option value="{{ t.id }}" {{ 'selected' if (mascota and mascota.titular.id == t.id) or previo.titular_id == t.id|string }}>{{ t.nombre_completo() }} · DNI {{ t.dni }}</option>{% endfor %}
       </select>
     </div>
     <div class="col-md-6">
       <label class="form-label">Mascota <span class="text-danger">*</span></label>
-      <select class="form-select mt-md-4" name="mascota_id" required data-mascotas-de="titular_id" data-aviso="aviso-vacunas"
-              data-seleccionada="{{ mascota.id if mascota else previo.mascota_id }}"></select>
+      <select class="form-select" name="mascota_id" data-buscar="Buscá la mascota" required data-mascotas-de="titular_id" data-aviso="aviso-vacunas"
+              data-seleccionada="{{ mascota.id if mascota else previo.mascota_id }}"><option value="">— Elegí la mascota —</option></select>
     </div>
     <div class="col-12" id="aviso-vacunas"></div>
     <div class="col-md-6">
       <label class="form-label">Profesional <span class="text-danger">*</span></label>
       <select class="form-select" name="profesional_id" required>
-        {% for p in profesionales %}<option value="{{ p.id }}" {{ 'selected' if query.profesional == p.id|string or previo.profesional_id == p.id|string }}>{{ p.nombre_completo() }} ({{ p.especialidad }})</option>{% endfor %}
+        {{ opciones_profesionales(profesionales, query.profesional or previo.profesional_id) }}
       </select>
     </div>
     <div class="col-md-6">

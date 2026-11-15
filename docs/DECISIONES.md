@@ -172,3 +172,12 @@ Prioridad aplicada cuando algo chocaba: consigna → diagrama de clases → docu
 | A.1 | Se ingresa eligiendo solo la sede (clínica o laboratorio). El **usuario de la sesión es el nombre de la sede** y es lo que queda en la auditoría por defecto (remito armado, despacho, consentimiento). |
 | A.2 | Donde importa la persona se pide en el formulario, obligatoria y solo letras (mín. 3): **Recibido por** (recepción → `RecepcionRemito.usuario_receptor` y el historial de las muestras), **Analista** (resultados → `ResultadoAnalisis.analista` y el historial) y **Colocado por** (cierre del remito → `Precinto.usuario_colocador`). Los servicios reciben ese dato en lugar del usuario de la sesión: `RecepcionService.recibir(…, recibido_por)`, `ResultadosService.cargar_resultados(…, analista)`, `EmpaquetadoService.cerrar_remito(…, colocado_por)`. |
 | A.3 | La extracción de una muestra queda registrada a nombre del **profesional de la atención** (`DerivacionesService.registrar_muestra`, parámetro `usuario` opcional). |
+
+## Bloque B — Buscadores y selectores
+
+| # | Decisión |
+|---|---|
+| B.1 | **Tom Select 2.3.1** (CDN, sin build) se aplica en un único lugar (`app/web/static/app.js::crearCombo`) a **todos** los `select.form-select`, así el comportamiento es idéntico en toda la app. Se usa el plugin `dropdown_input`: al hacer clic se abre la lista con un cuadro de búsqueda arriba que filtra mientras se escribe (la lista queda abierta) y se elige con clic o Enter. En los campos obligatorios la opción vacía es solo el texto de ayuda; en los filtros (“Todos los …”) se puede elegir. |
+| B.2 | El combobox de mascota se recarga con `GET /api/titulares/{id}/mascotas` (solo mascotas activas) al cambiar el titular. |
+| B.3 | Profesionales y cirujanos agrupados por especialidad (`<optgroup>`) con la macro `opciones_profesionales`; el texto de la opción es solo el nombre. |
+| B.4 | Los buscadores de texto de los listados usan la macro `buscador` (ícono `bi-search` gris). |

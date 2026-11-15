@@ -23,49 +23,61 @@ document.addEventListener("DOMContentLoaded", () => {
     formPendiente.requestSubmit ? formPendiente.requestSubmit() : formPendiente.submit();
   });
 
-  // Buscador dentro de un <select> (desplegable con buscador).
-  document.querySelectorAll("[data-filtra]").forEach((input) => {
-    const select = document.getElementById(input.dataset.filtra);
-    input.addEventListener("input", () => {
-      const q = input.value.toLowerCase();
-      let primero = null;
-      [...select.options].forEach((o) => {
-        const ok = !o.value || o.text.toLowerCase().includes(q);
-        o.hidden = !ok;
-        if (ok && o.value && !primero) primero = o;
-      });
-      if (primero && select.selectedOptions[0]?.hidden) { select.value = primero.value; select.dispatchEvent(new Event("change")); }
-    });
-  });
+  // Combobox con búsqueda (Tom Select) en TODOS los selectores de la app: se abre al hacer clic,
+  // filtra mientras se escribe (la lista queda abierta) y se elige con clic o Enter.
+  const crearCombo = (sel) => {
+    if (sel.tomselect) return sel.tomselect;
+    const vacia = sel.querySelector('option[value=""]');
+    // En los obligatorios la opción vacía es solo el texto de ayuda; en los filtros ("Todos los …") se puede elegir.
+    const opciones = {
+      allowEmptyOption: !sel.required, maxOptions: null, create: false, dropdownParent: "body",
+      openOnFocus: true, closeAfterSelect: true, selectOnTab: true, searchField: ["text"],
+      plugins: ["dropdown_input"],
+      render: { no_results: () => '<div class="no-results text-muted px-3 py-2">Sin resultados</div>' },
+    };
+    if (sel.required && vacia) opciones.placeholder = vacia.textContent.trim();
+    const ts = new TomSelect(sel, opciones);
+    // Texto del cuadro de búsqueda dentro de la lista desplegada.
+    const buscar = sel.dataset.buscar || "Escribí para buscar";
+    if (ts.control_input) ts.control_input.placeholder = buscar;
+    return ts;
+  };
+  if (window.TomSelect) document.querySelectorAll("select.form-select").forEach(crearCombo);
 
-  // Titular → mascotas (carga por API) con aviso de vacunas pendientes.
+  // Titular → mascotas activas del titular (carga por API), con aviso de vacunas pendientes.
   document.querySelectorAll("[data-mascotas-de]").forEach((selMascota) => {
     const selTitular = document.getElementById(selMascota.dataset.mascotasDe);
     const aviso = document.getElementById(selMascota.dataset.aviso || "");
-    const elegida = selMascota.dataset.seleccionada;
+    const placeholder = selMascota.dataset.placeholder || "— Elegí la mascota —";
+    let elegida = selMascota.dataset.seleccionada;
+    const pendientes = {};
+    const ts = selMascota.tomselect;
+    const mostrarAviso = () => {
+      if (!aviso) return;
+      const p = pendientes[selMascota.value];
+      aviso.innerHTML = p
+        ? `<div class="alert alert-warning py-2 mb-0"><i class="bi bi-exclamation-triangle"></i> Vacunas pendientes: <b>${p}</b>. Para una consulta o un control primero hay que aplicarlas; se puede atender una urgencia o una vacunación.</div>`
+        : "";
+    };
     const cargar = async () => {
-      selMascota.innerHTML = '<option value="">— Elegí la mascota —</option>';
+      if (ts) { ts.clear(true); ts.clearOptions(); }
+      else selMascota.innerHTML = `<option value="">${placeholder}</option>`;
       if (aviso) aviso.innerHTML = "";
       if (!selTitular.value) return;
-      const r = await fetch(`/api/titulares/${selTitular.value}/mascotas`);
-      const datos = await r.json();
+      const datos = await (await fetch(`/api/titulares/${selTitular.value}/mascotas`)).json();
       datos.forEach((m) => {
-        const o = new Option(`${m.nombre} (${m.especie})` + (m.pendientes.length ? " · vacunas pendientes" : ""), m.id);
-        o.dataset.pendientes = m.pendientes.join(", ");
-        selMascota.add(o);
+        const texto = `${m.nombre} (${m.especie})` + (m.pendientes.length ? " · vacunas pendientes" : "");
+        pendientes[m.id] = m.pendientes.join(", ");
+        if (ts) ts.addOption({ value: String(m.id), text: texto }); else selMascota.add(new Option(texto, m.id));
       });
-      if (elegida) selMascota.value = elegida;
-      selMascota.dispatchEvent(new Event("change"));
+      if (ts) ts.refreshOptions(false);
+      if (elegida) { ts ? ts.setValue(String(elegida)) : (selMascota.value = elegida); elegida = null; }
+      if (ts) ts.close();
+      mostrarAviso();
     };
-    selMascota.addEventListener("change", () => {
-      if (!aviso) return;
-      const o = selMascota.selectedOptions[0];
-      aviso.innerHTML = o && o.dataset.pendientes
-        ? `<div class="alert alert-warning py-2 mb-0"><i class="bi bi-exclamation-triangle"></i> Vacunas pendientes: <b>${o.dataset.pendientes}</b>. Una CONSULTA o CONTROL será bloqueada; podés registrar URGENCIA o VACUNACIÓN.</div>`
-        : "";
-    });
+    selMascota.addEventListener("change", mostrarAviso);
     selTitular.addEventListener("change", cargar);
-    if (selTitular.value) cargar();
+    cargar();
   });
 
   // Mostrar/ocultar bloques según un control (data-muestra-si="idControl:valor").

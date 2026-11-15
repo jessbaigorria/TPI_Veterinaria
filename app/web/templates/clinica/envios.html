@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% from "componentes/macros.html" import encabezado, badge_remito, badge_enum, vacio %}
+{% from "componentes/macros.html" import encabezado, badge_remito, badge_enum, vacio, buscador %}
 {% block contenido %}
 {% call encabezado("Envíos (remitos biológicos)", "Empaquetado en conservadoras, precinto sanitario y cadena de envío al laboratorio") %}
   <a href="/clinica/envios/nuevo" class="btn btn-portal"><i class="bi bi-box-seam"></i> Armar remito</a>
 {% endcall %}
 <div class="card mb-3"><div class="card-body"><form class="row g-2">
-  <div class="col-md-6"><input class="form-control" name="q" value="{{ query.q }}" placeholder="🔎 Número de remito"></div>
+  <div class="col-md-6">{{ buscador('q', query.q, 'Número de remito') }}</div>
   <div class="col-md-4"><select class="form-select" name="estado"><option value="">Todos los estados</option>
     {% for e in estados_remito %}<option value="{{ e.codigo }}" {{ 'selected' if e.codigo == query.get('estado') }}>{{ e.nombre }}</option>{% endfor %}</select></div>
   <div class="col-md-2"><button class="btn btn-outline-secondary w-100">Filtrar</button></div></form></div></div>

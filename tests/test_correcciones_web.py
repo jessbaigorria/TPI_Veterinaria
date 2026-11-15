@@ -87,3 +87,58 @@ def test_a4_auditoria_usa_sede_o_profesional(entorno):
     o = uno(s, OrdenDerivacion, numero="ORD-000014")
     m = o.muestras[0]
     assert m.historial()[0].usuario == o.atencion.profesional.nombre_completo()   # extracción: el profesional
+
+
+# ---------------------------------------------------------------- Bloque B: combobox y filtros
+PANTALLAS_CON_SELECTORES = ["/clinica/atenciones/nueva", "/clinica/agenda/nuevo", "/clinica/mascotas/nueva",
+                            "/clinica/envios/nuevo", "/clinica/atenciones", "/clinica/facturacion",
+                            "/clinica/ordenes", "/clinica/mascotas"]
+
+
+def test_b1_tom_select_en_toda_la_app(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    for url in PANTALLAS_CON_SELECTORES:
+        html = c.get(url).text
+        assert "tom-select" in html and 'class="form-select' in html, url
+        assert "data-filtra" not in html, url          # sin el cuadro de búsqueda separado
+
+
+def test_b2_api_devuelve_solo_mascotas_activas(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    from app.domain.personas import Mascota, Titular
+    t = uno(s, Titular, apellido="García")
+    baja = uno(s, Mascota, nombre="Firulais")
+    post(c, f"/clinica/mascotas/{baja.id}/baja", {}, f"/clinica/mascotas/{baja.id}")
+    nombres = [m["nombre"] for m in c.get(f"/api/titulares/{t.id}/mascotas").json()]
+    assert "Firulais" not in nombres and "Rocco" in nombres
+    post(c, f"/clinica/mascotas/{baja.id}/reactivar", {}, f"/clinica/mascotas/{baja.id}")
+
+
+def test_b3_profesionales_agrupados_por_especialidad(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    for url in ("/clinica/agenda/nuevo", "/clinica/atenciones/nueva"):
+        html = c.get(url).text
+        assert '<optgroup label="Dermatología">' in html and '<optgroup label="Clínica general">' in html
+        assert "(Clínica general)" not in html and "(Dermatología)" not in html
+
+
+def test_b4_filtros_dicen_todos(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    html = c.get("/clinica/atenciones").text
+    assert ">Todos los estados<" in html and ">Todos los tipos<" in html
+    html = c.get("/clinica/facturacion").text
+    assert ">Todos los estados<" in html and ">Todos los tipos<" in html
+    assert '<option value="">Estado</option>' not in html and '<option value="">Tipo</option>' not in html
+
+
+def test_b5_sin_lupa_emoji(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    for url in PANTALLAS_CON_SELECTORES + ["/clinica/clientes"]:
+        html = c.get(url).text
+        assert "🔎" not in html, url
+    assert "bi-search text-secondary" in c.get("/clinica/clientes").text

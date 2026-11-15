@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "componentes/macros.html" import encabezado %}
+{% from "componentes/macros.html" import encabezado, opciones_profesionales %}
 {% block contenido %}
 {% call encabezado("Registrar atención médica", "Sin turno previo (urgencia o espontánea): se crea y se inicia en el momento") %}{% endcall %}
 <form method="post" action="/clinica/atenciones/registrar">
@@ -13,8 +13,7 @@
         ¿Cliente nuevo? <a href="/clinica/clientes/nuevo">Crealo primero</a>.
       </div>
       <label class="form-label">Titular <span class="text-danger">*</span></label>
-      <input class="form-control form-control-sm mb-1" placeholder="🔎 Buscar titular por apellido o DNI" data-filtra="titular_id">
-      <select class="form-select mb-3" id="titular_id" name="titular_id" required>
+      <select class="form-select mb-3" id="titular_id" name="titular_id" required data-buscar="Buscá por apellido o DNI">
         <option value="">— Elegí el titular —</option>
         {% for t in titulares %}<option value="{{ t.id }}" {{ 'selected' if previo.titular_id == t.id|string or (query.mascota and t.mascotas|selectattr('id','equalto',query.mascota|int)|list) }}>{{ t.nombre_completo() }} · DNI {{ t.dni }}</option>{% endfor %}
       </select>
@@ -24,8 +23,8 @@
       </div>
       <div data-muestra-si="nueva_mascota:0">
         <label class="form-label">Mascota <span class="text-danger">*</span></label>
-        <select class="form-select" name="mascota_id" data-requerido="1" data-mascotas-de="titular_id" data-aviso="aviso-vacunas"
-                data-seleccionada="{{ query.mascota or previo.mascota_id }}"></select>
+        <select class="form-select" name="mascota_id" data-buscar="Buscá la mascota" data-requerido="1" data-mascotas-de="titular_id" data-aviso="aviso-vacunas"
+                data-seleccionada="{{ query.mascota or previo.mascota_id }}"><option value="">— Elegí la mascota —</option></select>
         <div id="aviso-vacunas" class="mt-2"></div>
       </div>
       <div data-muestra-si="nueva_mascota:1" class="row g-2 border rounded p-2 bg-light">
@@ -50,7 +49,7 @@
     <div class="card mb-3"><div class="card-header">2 · Atención</div><div class="card-body">
       <label class="form-label">Profesional <span class="text-danger">*</span></label>
       <select class="form-select mb-3" name="profesional_id" required>
-        {% for p in profesionales %}<option value="{{ p.id }}" {{ 'selected' if previo.profesional_id == p.id|string or u.usuario == p.nombre_completo() }}>{{ p.nombre_completo() }}</option>{% endfor %}
+        {{ opciones_profesionales(profesionales, previo.profesional_id) }}
       </select>
       <label class="form-label">Tipo</label>
       <select class="form-select mb-3" name="tipo">

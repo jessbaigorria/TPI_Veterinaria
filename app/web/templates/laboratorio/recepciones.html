@@ -2,7 +2,7 @@
 {% from "componentes/macros.html" import encabezado, badge_enum, vacio %}
 {% block contenido %}
 {% call encabezado("Recepciones", "Historial de recepciones aceptadas y rechazadas") %}
-  <form class="d-flex gap-2"><select class="form-select" name="resultado" onchange="this.form.submit()"><option value="">Todas</option>
+  <form class="d-flex gap-2"><select class="form-select" name="resultado" onchange="this.form.submit()"><option value="">Todos los resultados</option>
     {% for r in enums.ResultadoRecepcion %}<option value="{{ r.value }}" {{ 'selected' if query.resultado == r.value }}>{{ r.etiqueta }}</option>{% endfor %}</select></form>
 {% endcall %}
 <div class="card"><div class="card-body p-0">

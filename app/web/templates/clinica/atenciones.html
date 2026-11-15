@@ -1,15 +1,15 @@
 {% extends "base.html" %}
-{% from "componentes/macros.html" import badge_enum, encabezado, vacio, opciones_enum %}
+{% from "componentes/macros.html" import badge_enum, encabezado, vacio, opciones_enum, buscador %}
 {% block contenido %}
 {% call encabezado("Atenciones", "Consultas, controles, urgencias y vacunaciones de la clínica") %}
   <a href="/clinica/atenciones/nueva" class="btn btn-portal"><i class="bi bi-plus-lg"></i> Registrar atención</a>
 {% endcall %}
 <div class="card mb-3"><div class="card-body">
 <form class="row g-2">
-  <div class="col-md-3"><input class="form-control" name="q" placeholder="🔎 Mascota" value="{{ query.q }}"></div>
-  <div class="col-md-2"><select class="form-select" name="estado"><option value="">Estado</option>
+  <div class="col-md-3">{{ buscador('q', query.q, 'Mascota') }}</div>
+  <div class="col-md-2"><select class="form-select" name="estado"><option value="">Todos los estados</option>
     {{ opciones_enum(enums.EstadoAtencion, query.estado) }}</select></div>
-  <div class="col-md-2"><select class="form-select" name="tipo"><option value="">Tipo</option>
+  <div class="col-md-2"><select class="form-select" name="tipo"><option value="">Todos los tipos</option>
     {{ opciones_enum(enums.TipoAtencion, query.tipo) }}</select></div>
   <div class="col-md-2"><input type="date" class="form-control" name="desde" value="{{ query.desde }}"></div>
   <div class="col-md-2"><input type="date" class="form-control" name="hasta" value="{{ query.hasta }}"></div>

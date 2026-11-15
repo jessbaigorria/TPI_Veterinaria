@@ -9,6 +9,19 @@
 </div>
 {%- endmacro %}
 
+{# <option> de profesionales agrupadas por especialidad (sin la especialidad en el texto) #}
+{% macro opciones_profesionales(profesionales, seleccionado='') -%}
+{% for especialidad, grupo in profesionales|groupby('especialidad') %}<optgroup label="{{ especialidad }}">
+  {% for p in grupo|sort(attribute='apellido') %}<option value="{{ p.id }}" {{ 'selected' if p.id|string == seleccionado|string }}>{{ p.nombre_completo() }}</option>{% endfor %}
+</optgroup>{% endfor %}
+{%- endmacro %}
+
+{# Cuadro de búsqueda de los listados (ícono gris de Bootstrap Icons) #}
+{% macro buscador(nombre, valor, placeholder) -%}
+<div class="input-group"><span class="input-group-text bg-white"><i class="bi bi-search text-secondary"></i></span>
+  <input class="form-control" name="{{ nombre }}" value="{{ valor or '' }}" placeholder="{{ placeholder }}"></div>
+{%- endmacro %}
+
 {# <option> de un enum para los filtros de listados #}
 {% macro opciones_enum(enum_cls, seleccionado) -%}
 {% for e in enum_cls %}<option value="{{ e.value }}" {{ 'selected' if e.value == seleccionado }}>{{ e.etiqueta }}</option>{% endfor %}

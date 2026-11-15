@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "componentes/macros.html" import encabezado, badge_enum %}
+{% from "componentes/macros.html" import encabezado, badge_enum, opciones_profesionales %}
 {% block contenido %}
 {% set E = enums.EstadoDerivacionCirugia %}
 {% set t = d.transiciones_posibles() %}
@@ -33,7 +33,7 @@
       {% if E.ACEPTADA in t %}
       <div class="card mb-3 border-success"><div class="card-header">Aceptar (hospital de destino)</div><div class="card-body">
         <form method="post" action="/clinica/cirugias/{{ d.id }}/aceptar" class="d-flex gap-2">
-          <select class="form-select" name="cirujano_id">{% for p in cirujanos %}<option value="{{ p.id }}">{{ p.nombre_completo() }} · {{ p.especialidad }}</option>{% endfor %}</select>
+          <select class="form-select" name="cirujano_id">{{ opciones_profesionales(cirujanos) }}</select>
           <button class="btn btn-success">Aceptar</button></form></div></div>
       {% endif %}
       {% if E.RECHAZADA in t %}

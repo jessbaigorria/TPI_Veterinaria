@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% from "componentes/macros.html" import encabezado, badge_enum, badge_muestra, vacio, opciones_enum %}
+{% from "componentes/macros.html" import encabezado, badge_enum, badge_muestra, vacio, opciones_enum, buscador %}
 {% block contenido %}
 {% call encabezado("Órdenes de laboratorio", "Se emiten desde una atención (botón “Emitir orden de laboratorio”)") %}{% endcall %}
 <div class="card mb-3"><div class="card-body"><form class="row g-2">
-  <div class="col-md-6"><input class="form-control" name="q" value="{{ query.q }}" placeholder="🔎 Número de orden"></div>
+  <div class="col-md-6">{{ buscador('q', query.q, 'Número de orden') }}</div>
   <div class="col-md-4"><select class="form-select" name="estado"><option value="">Todos los estados</option>
     {{ opciones_enum(enums.EstadoOrden, query.estado) }}</select></div>
   <div class="col-md-2"><button class="btn btn-outline-secondary w-100">Filtrar</button></div></form></div></div>

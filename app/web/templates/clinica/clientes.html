@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% from "componentes/macros.html" import encabezado, vacio %}
+{% from "componentes/macros.html" import encabezado, vacio, buscador %}
 {% block contenido %}
 {% call encabezado("Clientes", "Titulares responsables de las mascotas") %}
   <a href="/clinica/clientes/nuevo" class="btn btn-portal"><i class="bi bi-person-plus"></i> Nuevo titular</a>
 {% endcall %}
 <div class="card mb-3"><div class="card-body"><form class="d-flex gap-2">
-  <input class="form-control" name="q" value="{{ query.q }}" placeholder="🔎 Buscar por DNI, nombre, apellido o email">
+  {{ buscador('q', query.q, 'Buscar por DNI, nombre, apellido o email') }}
   <button class="btn btn-outline-secondary">Buscar</button></form></div></div>
 <div class="card"><div class="card-body p-0">
 {% if titulares %}

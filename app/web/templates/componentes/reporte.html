@@ -11,16 +11,16 @@
   <div class="col-md-2"><label class="form-label small">Hasta{{ ' (fecha de corte)' if codigo == 'r5' }}</label><input type="date" class="form-control" name="hasta" value="{{ rep.filtro.hasta or '' }}"></div>
   {% if clinicas %}
   <div class="col-md-3"><label class="form-label small">{{ 'Clínica de última atención' if codigo == 'r5' else ('Clínica de origen' if codigo in ('r2','r3') else 'Clínica') }}</label>
-    <select class="form-select" name="clinica_id"><option value="">Toda la red</option>
+    <select class="form-select" name="clinica_id"><option value="">Todas las clínicas</option>
       {% for c in clinicas %}<option value="{{ c.id }}" {{ 'selected' if rep.filtro.clinica_id == c.id }}>{{ c.nombre }}</option>{% endfor %}</select></div>
   {% endif %}
   {% if laboratorios and codigo in ('r2', 'r3') %}
   <div class="col-md-3"><label class="form-label small">Laboratorio</label>
-    <select class="form-select" name="laboratorio_id"><option value="">Todos</option>
+    <select class="form-select" name="laboratorio_id"><option value="">Todos los laboratorios</option>
       {% for l in laboratorios %}<option value="{{ l.id }}" {{ 'selected' if rep.filtro.laboratorio_id == l.id }}>{{ l.nombre }}</option>{% endfor %}</select></div>
   {% endif %}
   {% if codigo == 'r5' %}
-  <div class="col-md-2"><label class="form-label small">Especie</label><select class="form-select" name="especie"><option value="">Todas</option>
+  <div class="col-md-2"><label class="form-label small">Especie</label><select class="form-select" name="especie"><option value="">Todas las especies</option>
     {% for e in enums.Especie %}<option value="{{ e.value }}" {{ 'selected' if rep.filtro.especie == e.value }}>{{ e.etiqueta }}</option>{% endfor %}</select></div>
   {% endif %}
   <div class="col-md-2"><button class="btn btn-portal w-100"><i class="bi bi-funnel"></i> Aplicar</button></div>
