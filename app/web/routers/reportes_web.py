@@ -9,16 +9,19 @@ from fastapi.responses import Response
 from app import reportes
 from app.domain import reloj
 from app.reportes import Filtro, a_csv
-from app.services.base import a_fecha
+from app.services.base import a_fecha, validar_rango_fechas
 from app.web.plantillas import render
 
 
 def filtro_desde_query(request: Request, codigo: str, **forzados) -> Filtro:
     q = request.query_params
     hoy = reloj.hoy()
-    desde_defecto = None if codigo == "r5" else hoy - timedelta(days=60)
-    desde = a_fecha(q.get("desde")) if "desde" in q else desde_defecto
-    hasta = a_fecha(q.get("hasta")) or hoy
+    # Las dos fechas son obligatorias; al entrar se proponen los últimos 30 días (12 meses en
+    # vacunas pendientes, porque el atraso de una vacuna se mide en meses: ver DECISIONES.md).
+    dias = 365 if codigo == "r5" else 30
+    desde = a_fecha(q.get("desde")) if "desde" in q else hoy - timedelta(days=dias)
+    hasta = a_fecha(q.get("hasta")) if "hasta" in q else hoy
+    validar_rango_fechas(desde, hasta, obligatorias=True)
     filtro = Filtro(desde=desde, hasta=hasta,
                     clinica_id=int(q["clinica_id"]) if q.get("clinica_id") else None,
                     laboratorio_id=int(q["laboratorio_id"]) if q.get("laboratorio_id") else None,

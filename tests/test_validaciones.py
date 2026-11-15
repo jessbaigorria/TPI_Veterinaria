@@ -91,8 +91,8 @@ def test_turno_fin_debe_ser_posterior(sesion, base):
 
 
 def test_se_superpone_con(base):
-    a = _turno(base.s, base, datetime(2026, 3, 13, 9, 0), 60)
-    b = _turno(base.s, base, datetime(2026, 3, 13, 9, 30), 60, profesional=base.diaz)
+    a = _turno(base.s, base, datetime(2026, 3, 13, 9, 0), 60, tipo="OTRO")
+    b = _turno(base.s, base, datetime(2026, 3, 13, 9, 30), 60, profesional=base.diaz, tipo="CIRUGIA")
     c = _turno(base.s, base, datetime(2026, 3, 13, 10, 0), 30, mascota=base.rocco)
     assert a.se_superpone_con(b) and b.se_superpone_con(a)
     assert not a.se_superpone_con(c)
@@ -127,13 +127,13 @@ def test_consulta_sin_turno_con_pendientes_no_se_registra(sesion, base):
     antes = sesion.query(AtencionClinica).count()
     with pytest.raises(VacunasPendientesError):
         AtencionesService(sesion).registrar_sin_turno(base.perez.id, base.centro.id, "CONSULTA",
-                                                      mascota_id=base.rocco.id, inicio=datetime(2026, 3, 10, 16))
+                                                      mascota_id=base.rocco.id, inicio=datetime(2026, 3, 9, 16))
     assert sesion.query(AtencionClinica).count() == antes
 
 
 def test_urgencia_con_pendientes_se_permite_con_advertencia(sesion, base):
     r = AtencionesService(sesion).registrar_sin_turno(base.perez.id, base.centro.id, "URGENCIA",
-                                                      mascota_id=base.rocco.id, inicio=datetime(2026, 3, 10, 17))
+                                                      mascota_id=base.rocco.id, inicio=datetime(2026, 3, 9, 17))
     assert r.atencion.estado is EstadoAtencion.EN_PROGRESO
     assert r.advertencia and "Antirrábica" in r.advertencia
     assert "vacunas pendientes" in r.atencion.observaciones

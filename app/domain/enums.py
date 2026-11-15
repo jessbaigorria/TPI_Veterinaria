@@ -33,6 +33,8 @@ class TipoAtencion(_EnumBase):
     CONTROL = "CONTROL"
     URGENCIA = "URGENCIA"
     VACUNACION = "VACUNACION"
+    CIRUGIA = "CIRUGIA"   # agregado en la ronda de correcciones (ver DECISIONES.md)
+    OTRO = "OTRO"         # agregado en la ronda de correcciones (ver DECISIONES.md)
 
 
 class EstadoAtencion(_EnumBase):

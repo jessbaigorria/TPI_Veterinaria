@@ -12,9 +12,11 @@ from sqlalchemy import select
 from app.domain import reloj
 from app.domain.atencion import AtencionClinica, Clinica, Profesional
 from app.domain.enums import EstadoAtencion, TipoAtencion
-from app.domain.excepciones import VeterinariaError
+from app.domain.excepciones import DatosInvalidosError, VeterinariaError
 from app.domain.personas import AplicacionVacuna, Mascota, Vacuna
-from app.services.base import ServicioBase, a_bool, a_fecha_hora, a_float, texto, transaccional
+from app.services.base import (
+    ServicioBase, a_bool, a_fecha_hora, a_float, texto, transaccional, validar_rango_fechas,
+)
 from app.services.mascotas import MascotasService
 
 
@@ -32,19 +34,17 @@ class ResultadoInicio:
 
 
 class AtencionesService(ServicioBase):
-    DURACION_POR_DEFECTO = timedelta(minutes=30)
 
     # --- agenda (turnos) ----------------------------------------------------------------
     @transaccional
     def reservar_turno(self, mascota_id, profesional_id, clinica_id, inicio, fin=None,
                        tipo=TipoAtencion.CONSULTA, motivo="", asiste_titular=True,
                        responsable_presente="") -> AtencionClinica:
-        inicio = a_fecha_hora(inicio)
-        fin = a_fecha_hora(fin) or (inicio + self.DURACION_POR_DEFECTO if inicio else None)
-        a = AtencionClinica(self.obtener(Mascota, mascota_id), self.obtener(Clinica, clinica_id),
-                            self.obtener(Profesional, profesional_id), inicio, fin, TipoAtencion(tipo),
-                            observaciones=texto(motivo), asiste_titular=a_bool(asiste_titular),
-                            responsable_presente=texto(responsable_presente))
+        a = AtencionClinica.reservar(self.obtener(Mascota, mascota_id), self.obtener(Clinica, clinica_id),
+                                     self.obtener(Profesional, profesional_id), a_fecha_hora(inicio),
+                                     a_fecha_hora(fin), TipoAtencion(tipo), observaciones=texto(motivo),
+                                     asiste_titular=a_bool(asiste_titular),
+                                     responsable_presente=texto(responsable_presente))
         self.s.add(a)
         return a
 
@@ -64,17 +64,27 @@ class AtencionesService(ServicioBase):
     @transaccional
     def registrar_sin_turno(self, profesional_id, clinica_id, tipo, mascota_id=None, nueva_mascota=None,
                             motivo="", asiste_titular=True, responsable_presente="", inicio=None,
-                            duracion_minutos=30) -> ResultadoInicio:
+                            duracion_minutos=None) -> ResultadoInicio:
         """Crea la atención y la inicia en el momento (urgencia/espontánea), validando superposición
         y vacunas. ``nueva_mascota`` (dict) permite el caso 2: cliente frecuente con mascota nueva."""
         if nueva_mascota:
             mascota = MascotasService(self.s).crear_mascota(**nueva_mascota)
             self.s.flush()
             mascota_id = mascota.id
-        inicio = a_fecha_hora(inicio) or reloj.ahora()
-        fin = inicio + timedelta(minutes=int(duracion_minutos or 30))
-        a = self.reservar_turno(mascota_id, profesional_id, clinica_id, inicio, fin, tipo, motivo,
-                                asiste_titular, responsable_presente)
+        inicio = a_fecha_hora(inicio) or reloj.ahora().replace(second=0)
+        try:
+            minutos = int(duracion_minutos) if duracion_minutos not in (None, "") else None
+        except ValueError as exc:
+            raise DatosInvalidosError("La duración debe ser un número de minutos.") from exc
+        if minutos is not None and minutos <= 0:
+            raise DatosInvalidosError("La duración debe ser mayor que cero.")
+        fin = inicio + timedelta(minutes=minutos) if minutos else None
+        a = AtencionClinica.registrar_sin_turno(self.obtener(Mascota, mascota_id), self.obtener(Clinica, clinica_id),
+                                                self.obtener(Profesional, profesional_id), inicio, fin,
+                                                TipoAtencion(tipo), observaciones=texto(motivo),
+                                                asiste_titular=a_bool(asiste_titular),
+                                                responsable_presente=texto(responsable_presente))
+        self.s.add(a)
         return ResultadoInicio(a, a.iniciar())
 
     @transaccional
@@ -113,6 +123,7 @@ class AtencionesService(ServicioBase):
             stmt = stmt.where(AtencionClinica.estado == EstadoAtencion(estado))
         if tipo:
             stmt = stmt.where(AtencionClinica.tipo == TipoAtencion(tipo))
+        validar_rango_fechas(desde, hasta)
         if desde:
             stmt = stmt.where(AtencionClinica.fecha_hora_inicio >= datetime.combine(desde, datetime.min.time()))
         if hasta:

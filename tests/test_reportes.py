@@ -23,7 +23,9 @@ def escenario(sesion, base):
     a3 = base.atencion()                                       # urgencia simple
     vac = at.registrar_sin_turno(base.perez.id, base.centro.id, "VACUNACION", mascota_id=base.rocco.id,
                                  inicio=base.proxima_hora()).atencion
-    cancelada = at.reservar_turno(base.firulais.id, base.diaz.id, base.centro.id, base.proxima_hora(), tipo="CONTROL")
+    from datetime import datetime
+    cancelada = at.reservar_turno(base.firulais.id, base.diaz.id, base.centro.id, datetime(2026, 3, 11, 10, 0),
+                                  tipo="CONTROL")
     at.cancelar(cancelada.id, "No vino")
     CirugiasService(sesion).derivar(a2.id, base.sur.id, "Cesárea")
 
@@ -64,10 +66,10 @@ def test_r1_atenciones_y_derivaciones(sesion, escenario):
     r = reportes.generar("r1", sesion, _filtro())
     filas = r.tablas[0].filas
     assert len(filas) == 1
-    clinica, mes, consulta, control, urgencia, vacunacion, total, con_orden, con_cirugia, pct = filas[0]
+    clinica, mes, consulta, control, urgencia, vacunacion, cirugia, otro, total, con_orden, con_cirugia, pct = filas[0]
     assert clinica == "Clínica Centro" and mes == "03/2026"
     # 3 urgencias de escenario + 2 urgencias de base.orden() para los remitos rechazados
-    assert (consulta, control, urgencia, vacunacion) == (0, 0, 5, 1)
+    assert (consulta, control, urgencia, vacunacion, cirugia, otro) == (0, 0, 5, 1, 0, 0)
     assert total == 6                      # la cancelada no cuenta
     assert (con_orden, con_cirugia) == (3, 1)
     assert pct == round(100 * 4 / 6, 1)

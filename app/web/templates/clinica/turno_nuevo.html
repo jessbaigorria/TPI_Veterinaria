@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% from "componentes/macros.html" import encabezado, opciones_profesionales %}
 {% block contenido %}
-{% call encabezado("Reservar turno", "Se valida que el profesional no tenga otro turno superpuesto") %}{% endcall %}
+{% call encabezado("Reservar turno") %}{% endcall %}
 <div class="card" style="max-width: 820px"><div class="card-body">
-<form method="post" action="/clinica/agenda/reservar">
+<form method="post" action="/clinica/agenda/reservar" data-horario-turno data-duraciones='{{ DURACIONES|tojson }}'
+      data-hoy="{{ reloj.hoy() }}" data-ahora-min="{{ reloj.ahora().hour * 60 + reloj.ahora().minute }}">
   <div class="row g-3">
     <div class="col-md-6">
       <label class="form-label">Titular <span class="text-danger">*</span></label>
@@ -26,16 +27,18 @@
     </div>
     <div class="col-md-6">
       <label class="form-label">Tipo</label>
-      <select class="form-select" name="tipo">
-        {% for t in enums.TipoAtencion %}<option value="{{ t.value }}" {{ 'selected' if (query.tipo or previo.tipo) == t.value }}>{{ t.etiqueta }}</option>{% endfor %}
+      <select class="form-select" name="tipo" required>
+        {% for t in TIPOS_RESERVABLES %}<option value="{{ t.value }}" {{ 'selected' if (query.tipo or previo.tipo) == t.value }}>{{ t.etiqueta }}</option>{% endfor %}
       </select>
     </div>
     <div class="col-md-4"><label class="form-label">Fecha <span class="text-danger">*</span></label>
-      <input type="date" class="form-control" name="fecha" required value="{{ query.fecha or previo.fecha or reloj.hoy() }}"></div>
+      <input type="date" class="form-control" name="fecha" required min="{{ reloj.hoy() }}" value="{{ query.fecha or previo.fecha or reloj.hoy() }}"></div>
     <div class="col-md-4"><label class="form-label">Inicio <span class="text-danger">*</span></label>
-      <input type="time" class="form-control" name="hora_inicio" required step="900" value="{{ query.hora or previo.hora_inicio or '10:00' }}"></div>
-    <div class="col-md-4"><label class="form-label">Fin</label>
-      <input type="time" class="form-control" name="hora_fin" step="900" value="{{ previo.hora_fin }}"><div class="form-text">Vacío = 30 minutos</div></div>
+      <input type="time" class="form-control" name="hora_inicio" required step="300" min="08:00" max="18:55" value="{{ query.hora or previo.hora_inicio }}">
+      <div class="form-text">Horario de atención: 08:00 a 19:00</div></div>
+    <div class="col-md-4"><label class="form-label">Fin <span class="text-danger">*</span></label>
+      <input type="time" class="form-control" name="hora_fin" required step="300" min="08:05" max="19:00" value="{{ previo.hora_fin }}">
+      <div class="form-text" data-ayuda-duracion></div></div>
     <div class="col-12"><label class="form-label">Motivo (lo que cuenta el cliente)</label>
       <input class="form-control" name="motivo" value="{{ previo.motivo or ('Plan de vacunación' if query.tipo == 'VACUNACION') }}"></div>
     <div class="col-md-4"><label class="form-label">¿Asiste el titular?</label>

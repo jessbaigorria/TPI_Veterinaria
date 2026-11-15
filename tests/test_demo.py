@@ -1,7 +1,7 @@
 """Escenario de demo de la sección 11 de context.md, recorrido de punta a punta por HTTP
 (TestClient) sobre la app con el seed cargado. Cada paso verifica el resultado esperado,
 incluidos los errores de validación que se muestran en la UI."""
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -32,10 +32,16 @@ def demo():
     s.close()
 
 
+AHORA_DEMO = datetime.combine(HOY, time(18, 0))
+
+
 @pytest.fixture(autouse=True)
-def reloj_real():
-    reloj.liberar()
+def reloj_demo():
+    # La app usa el reloj inyectable: se fija hoy a las 18:00 para que el escenario no dependa de la hora
+    # en que corren los tests (las atenciones sin turno solo pueden ser presentes o pasadas, de 8 a 19).
+    reloj.fijar(AHORA_DEMO)
     yield
+    reloj.liberar()
 
 
 def uno(s, modelo, **filtros):
@@ -78,7 +84,7 @@ def ciclo_laboratorio(c, s, atencion_id, integro: bool, contenedor: str):
     assert "cerrado con el precinto PRE-" in r.text
     r = post(c, f"/clinica/envios/{remito.id}/despachar", {
         "transportista": "Logística Fría SRL", "vehiculo": "AE123KD",
-        "llegada_estimada": (datetime.now() + timedelta(hours=3)).strftime("%Y-%m-%dT%H:%M")})
+        "llegada_estimada": (reloj.ahora() + timedelta(hours=3)).strftime("%Y-%m-%dT%H:%M")})
     assert "En tránsito" in r.text
     r = post(c, f"/clinica/envios/{remito.id}/retiro", {})
     assert uno(s, RemitoBiologico, id=remito.id).estado_actual() == "En tránsito"
@@ -110,11 +116,11 @@ def test_escenario_de_demo(demo):
 
     # 2) Vacunas: CONTROL bloqueado → VACUNACIÓN → CONTROL pasa ----------------------------
     atencion = {"titular_id": rocco.titular_id, "mascota_id": rocco.id, "profesional_id": perez.id,
-                "tipo": "CONTROL", "inicio": f"{HOY}T19:00", "duracion": "30", "asiste_titular": "1"}
+                "tipo": "CONTROL", "inicio": f"{HOY}T14:00", "duracion": "30", "asiste_titular": "1"}
     r = post(c, "/clinica/atenciones/registrar", atencion, "/clinica/atenciones/nueva")
     assert "tiene vacunas obligatorias pendientes" in r.text and "Antirrábica" in r.text
     assert "Reservar turno de VACUNACIÓN" in r.text
-    r = post(c, "/clinica/atenciones/registrar", {**atencion, "tipo": "VACUNACION", "inicio": f"{HOY}T19:30"},
+    r = post(c, "/clinica/atenciones/registrar", {**atencion, "tipo": "VACUNACION", "inicio": f"{HOY}T14:30"},
              "/clinica/atenciones/nueva")
     vac = s.scalars(select(AtencionClinica).order_by(AtencionClinica.id.desc())).first()
     vacunas = [v.id for v in s.scalars(select(Vacuna).where(Vacuna.especie == rocco.especie,
@@ -123,7 +129,7 @@ def test_escenario_de_demo(demo):
     datos.update({f"lote_{v}": f"LT{v}" for v in vacunas})
     r = post(c, f"/clinica/atenciones/{vac.id}/finalizar", datos)
     assert "Se registraron 2 vacuna(s)" in r.text
-    r = post(c, "/clinica/atenciones/registrar", {**atencion, "inicio": f"{HOY}T20:00"}, "/clinica/atenciones/nueva")
+    r = post(c, "/clinica/atenciones/registrar", {**atencion, "inicio": f"{HOY}T15:00"}, "/clinica/atenciones/nueva")
     assert "Atención registrada e iniciada" in r.text
     control = s.scalars(select(AtencionClinica).order_by(AtencionClinica.id.desc())).first()
 
@@ -175,7 +181,7 @@ def test_escenario_de_demo(demo):
     assert d.numero in c.get("/clinica/cirugias?tab=recibidas").text
     cirujano = uno(s, Profesional, apellido="Ríos")
     post(c, f"/clinica/cirugias/{d.id}/aceptar", {"cirujano_id": cirujano.id})
-    fecha = (datetime.now() + timedelta(days=5)).strftime("%Y-%m-%dT10:00")
+    fecha = (reloj.ahora() + timedelta(days=5)).strftime("%Y-%m-%dT10:00")
     r = post(c, f"/clinica/cirugias/{d.id}/programar", {"fecha": fecha}, f"/clinica/cirugias/{d.id}")
     assert "sin el consentimiento firmado" in r.text and "alert-danger" in r.text
     post(c, f"/clinica/cirugias/{d.id}/consentimiento", {})

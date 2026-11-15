@@ -7,8 +7,8 @@
 <ul class="nav nav-pills mb-3">{% for c in disponibles %}<li class="nav-item"><a class="nav-link {{ 'active' if c == codigo }} {{ 'btn-portal' if c == codigo }}" href="/{{ portal }}/reportes/{{ c }}">{{ c|upper }}</a></li>{% endfor %}</ul>
 <div class="card mb-3"><div class="card-body">
 <form class="row g-2 align-items-end">
-  <div class="col-md-2"><label class="form-label small">Desde</label><input type="date" class="form-control" name="desde" value="{{ rep.filtro.desde or '' }}"></div>
-  <div class="col-md-2"><label class="form-label small">Hasta{{ ' (fecha de corte)' if codigo == 'r5' }}</label><input type="date" class="form-control" name="hasta" value="{{ rep.filtro.hasta or '' }}"></div>
+  <div class="col-md-2"><label class="form-label small">Desde</label><input type="date" class="form-control" name="desde" required value="{{ rep.filtro.desde or '' }}"></div>
+  <div class="col-md-2"><label class="form-label small">Hasta{{ ' (fecha de corte)' if codigo == 'r5' }}</label><input type="date" class="form-control" name="hasta" required min="{{ rep.filtro.desde or '' }}" value="{{ rep.filtro.hasta or '' }}"></div>
   {% if clinicas %}
   <div class="col-md-3"><label class="form-label small">{{ 'Clínica de última atención' if codigo == 'r5' else ('Clínica de origen' if codigo in ('r2','r3') else 'Clínica') }}</label>
     <select class="form-select" name="clinica_id"><option value="">Todas las clínicas</option>

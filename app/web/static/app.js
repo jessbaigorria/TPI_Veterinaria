@@ -95,6 +95,60 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("input,select").forEach((el) => el.addEventListener("change", actualizar));
   actualizar();
 
+  // Rango de fechas de los filtros: «Hasta» no puede ser anterior a «Desde».
+  document.querySelectorAll("form").forEach((f) => {
+    const desde = f.querySelector("input[type=date][name=desde]"), hasta = f.querySelector("input[type=date][name=hasta]");
+    if (!desde || !hasta) return;
+    const ajustar = () => { hasta.min = desde.value || ""; if (desde.value && hasta.value && hasta.value < desde.value) hasta.value = desde.value; };
+    desde.addEventListener("change", ajustar); ajustar();
+  });
+
+  const aMin = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+  const aHora = (n) => `${String(Math.floor(n / 60)).padStart(2, "0")}:${String(n % 60).padStart(2, "0")}`;
+  const CIERRE = 19 * 60, APERTURA = 8 * 60;
+
+  // Reservar turno: fin autocompletado (inicio + duración máxima del tipo), sin pasar de las 19:00;
+  // si la fecha es hoy, el inicio tiene que ser posterior a la hora actual.
+  const fTurno = document.querySelector("form[data-horario-turno]");
+  if (fTurno) {
+    const dur = JSON.parse(fTurno.dataset.duraciones);
+    const fecha = fTurno.querySelector("[name=fecha]"), ini = fTurno.querySelector("[name=hora_inicio]");
+    const fin = fTurno.querySelector("[name=hora_fin]"), tipo = fTurno.querySelector("[name=tipo]");
+    const ayuda = fTurno.querySelector("[data-ayuda-duracion]");
+    const ahora = Number(fTurno.dataset.ahoraMin);
+    const recalcular = (autocompletar) => {
+      let minimo = APERTURA;
+      if (fecha.value === fTurno.dataset.hoy) minimo = Math.max(minimo, Math.ceil((ahora + 1) / 5) * 5);
+      ini.min = aHora(Math.min(minimo, CIERRE - 5));
+      const d = dur[tipo.value] || 30;
+      if (ayuda) ayuda.textContent = `Máximo ${d} minutos`;
+      if (!ini.value) return;
+      const i = aMin(ini.value), tope = Math.min(i + d, CIERRE);
+      fin.min = aHora(Math.min(i + 5, CIERRE)); fin.max = aHora(tope);
+      if (autocompletar || !fin.value || aMin(fin.value) > tope || aMin(fin.value) <= i) fin.value = aHora(tope);
+    };
+    ini.addEventListener("change", () => recalcular(true));
+    tipo.addEventListener("change", () => recalcular(true));
+    fecha.addEventListener("change", () => recalcular(false));
+    recalcular(!fin.value);
+  }
+
+  // Atención sin turno: duración autocompletada con el máximo del tipo (se puede acortar, no alargar).
+  const fSinTurno = document.querySelector("form[data-horario-sin-turno]");
+  if (fSinTurno) {
+    const dur = JSON.parse(fSinTurno.dataset.duraciones);
+    const tipo = fSinTurno.querySelector("[name=tipo]"), duracion = fSinTurno.querySelector("[name=duracion]");
+    const ayuda = fSinTurno.querySelector("[data-ayuda-duracion]");
+    const recalcular = (autocompletar) => {
+      const d = dur[tipo.value] || 30;
+      duracion.max = d;
+      if (ayuda) ayuda.textContent = `Máximo ${d} minutos`;
+      if (autocompletar || !duracion.value || Number(duracion.value) > d) duracion.value = d;
+    };
+    tipo.addEventListener("change", () => recalcular(true));
+    recalcular(!duracion.value);
+  }
+
   // Gráficos de reportes (Chart.js).
   document.querySelectorAll("canvas[data-grafico]").forEach((c) => {
     try { new Chart(c, JSON.parse(c.dataset.grafico)); } catch (e) { console.error(e); }

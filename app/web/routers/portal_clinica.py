@@ -66,7 +66,7 @@ def agenda(request: Request, fecha: str = "", u: UsuarioSesion = Usr, s: Session
     svc = AtencionesService(s)
     profesionales = svc.profesionales(u.clinica_id)
     turnos = svc.agenda(u.clinica_id, dia)
-    franjas = [datetime.combine(dia, time(8, 0)) + timedelta(minutes=30 * i) for i in range(24)]
+    franjas = [datetime.combine(dia, time(8, 0)) + timedelta(minutes=30 * i) for i in range(22)]  # 08:00 a 18:30
     media_hora = timedelta(minutes=30)
     # se_superpone_con_intervalo ignora los turnos cancelados (regla del dominio).
     grilla = {(a.profesional_id, f): a for a in turnos for f in franjas if a.se_superpone_con_intervalo(f, f + media_hora)}

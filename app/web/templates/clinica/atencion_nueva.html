@@ -2,7 +2,7 @@
 {% from "componentes/macros.html" import encabezado, opciones_profesionales %}
 {% block contenido %}
 {% call encabezado("Registrar atención médica", "Sin turno previo (urgencia o espontánea): se crea y se inicia en el momento") %}{% endcall %}
-<form method="post" action="/clinica/atenciones/registrar">
+<form method="post" action="/clinica/atenciones/registrar" data-horario-sin-turno data-duraciones='{{ DURACIONES|tojson }}'>
 <div class="row g-3">
   <div class="col-lg-7">
     <div class="card mb-3"><div class="card-header">1 · Paciente</div><div class="card-body">
@@ -52,12 +52,16 @@
         {{ opciones_profesionales(profesionales, previo.profesional_id) }}
       </select>
       <label class="form-label">Tipo</label>
-      <select class="form-select mb-3" name="tipo">
+      <select class="form-select mb-3" name="tipo" required>
         {% for t in enums.TipoAtencion %}<option value="{{ t.value }}" {{ 'selected' if (query.tipo or previo.tipo or 'URGENCIA') == t.value }}>{{ t.etiqueta }}</option>{% endfor %}
       </select>
       <div class="row g-2 mb-3">
-        <div class="col-7"><label class="form-label">Inicio</label><input type="datetime-local" class="form-control" name="inicio" value="{{ previo.inicio or ahora.strftime('%Y-%m-%dT%H:%M') }}"></div>
-        <div class="col-5"><label class="form-label">Duración (min)</label><input type="number" class="form-control" name="duracion" value="{{ previo.duracion or 30 }}" min="10" step="5"></div>
+        <div class="col-7"><label class="form-label">Inicio <span class="text-danger">*</span></label>
+          <input type="datetime-local" class="form-control" name="inicio" required max="{{ ahora.strftime('%Y-%m-%dT%H:%M') }}"
+                 value="{{ previo.inicio or ahora.strftime('%Y-%m-%dT%H:%M') }}"></div>
+        <div class="col-5"><label class="form-label">Duración (min) <span class="text-danger">*</span></label>
+          <input type="number" class="form-control" name="duracion" required value="{{ previo.duracion }}" min="5" step="5">
+          <div class="form-text" data-ayuda-duracion></div></div>
       </div>
       <label class="form-label">Motivo / anamnesis (lo que cuenta el cliente)</label>
       <textarea class="form-control" name="motivo" rows="3">{{ previo.motivo }}</textarea>

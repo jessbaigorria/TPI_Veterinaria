@@ -5,7 +5,7 @@ se validan con una tabla ``_TRANSICIONES`` (no con if por estado).
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 
@@ -19,7 +19,7 @@ from app.domain.enums import (
     TipoAtencion, TipoComprobante,
 )
 from app.domain.excepciones import (
-    DerivacionCirugiaError, TurnoSuperpuestoError, VacunasPendientesError, VeterinariaError,
+    DatosInvalidosError, DerivacionCirugiaError, TurnoSuperpuestoError, VacunasPendientesError, VeterinariaError,
 )
 from app.domain.facturacion import Factura
 from app.domain.personas import HistoriaClinica, Vacuna, _en_periodo
@@ -103,7 +103,18 @@ class AtencionClinica(Base):
     _ESTADOS_QUE_OCUPAN_AGENDA = {EstadoAtencion.RESERVADA, EstadoAtencion.EN_PROGRESO, EstadoAtencion.FINALIZADA}
     _ESTADOS_QUE_ADMITEN_DERIVAR = {EstadoAtencion.EN_PROGRESO, EstadoAtencion.FINALIZADA}
     _TIPOS_QUE_BLOQUEAN_POR_VACUNAS = {TipoAtencion.CONSULTA, TipoAtencion.CONTROL}
-    _TIPOS_CON_ADVERTENCIA = {TipoAtencion.URGENCIA}
+    _TIPOS_CON_ADVERTENCIA = {TipoAtencion.URGENCIA, TipoAtencion.CIRUGIA, TipoAtencion.OTRO}
+
+    # Horario de atención y duración máxima por tipo (ronda de correcciones, ver DECISIONES.md).
+    HORA_APERTURA = time(8, 0)
+    HORA_CIERRE = time(19, 0)
+    DURACION_MAXIMA_MINUTOS = {
+        TipoAtencion.CONSULTA: 30, TipoAtencion.CONTROL: 30, TipoAtencion.VACUNACION: 30,
+        TipoAtencion.CIRUGIA: 60, TipoAtencion.OTRO: 60, TipoAtencion.URGENCIA: 60,
+    }
+    # Las urgencias no se reservan: se registran como atención sin turno.
+    TIPOS_RESERVABLES = (TipoAtencion.CONSULTA, TipoAtencion.CONTROL, TipoAtencion.VACUNACION,
+                         TipoAtencion.CIRUGIA, TipoAtencion.OTRO)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     fecha_hora_inicio: Mapped[datetime] = mapped_column(DateTime, index=True)
@@ -142,10 +153,10 @@ class AtencionClinica(Base):
         if profesional.clinica is not clinica:
             raise VeterinariaError(f"{profesional.nombre_completo()} no trabaja en {clinica.nombre}.")
         if fecha_hora_inicio is None:
-            raise VeterinariaError("Hay que indicar la fecha y hora de inicio.")
-        fecha_hora_fin = fecha_hora_fin or fecha_hora_inicio + timedelta(minutes=30)
-        if fecha_hora_fin <= fecha_hora_inicio:
-            raise VeterinariaError("La hora de fin debe ser posterior a la de inicio.")
+            raise DatosInvalidosError("Hay que indicar la fecha y hora de inicio.")
+        tipo = TipoAtencion(tipo)
+        fecha_hora_fin = fecha_hora_fin or self.fin_sugerido(fecha_hora_inicio, tipo)
+        self._validar_horario(fecha_hora_inicio, fecha_hora_fin, tipo)
         if not asiste_titular and not (responsable_presente or "").strip():
             raise VeterinariaError("Si no asiste el titular hay que indicar quién es el responsable presente.")
         # Validación 4: sin superposición de turnos del profesional.
@@ -159,7 +170,7 @@ class AtencionClinica(Base):
             )
         self.fecha_hora_inicio = fecha_hora_inicio
         self.fecha_hora_fin = fecha_hora_fin
-        self.tipo = TipoAtencion(tipo)
+        self.tipo = tipo
         self.estado = EstadoAtencion.RESERVADA
         self.observaciones = observaciones or ""
         self.diagnostico = ""
@@ -169,6 +180,53 @@ class AtencionClinica(Base):
         self.clinica = clinica
         self.profesional = profesional
         mascota.historia_clinica.agregar_atencion(self)
+
+    # --- fábricas: turno reservado o atención sin turno (ver DECISIONES.md) --------------
+    @classmethod
+    def reservar(cls, mascota: "Mascota", clinica: Clinica, profesional: Profesional, fecha_hora_inicio: datetime,
+                 fecha_hora_fin: datetime | None = None, tipo: TipoAtencion = TipoAtencion.CONSULTA,
+                 **kwargs) -> "AtencionClinica":
+        """Turno de la agenda: solo para hoy en un horario posterior al actual o para fechas futuras,
+        y nunca de tipo urgencia."""
+        tipo = TipoAtencion(tipo)
+        if tipo not in cls.TIPOS_RESERVABLES:
+            raise DatosInvalidosError("Las urgencias no se reservan: se registran como atención sin turno previo.")
+        if fecha_hora_inicio is not None and fecha_hora_inicio <= reloj.ahora():
+            raise DatosInvalidosError(
+                "Los turnos se reservan para hoy en un horario posterior al actual o para una fecha futura."
+            )
+        return cls(mascota, clinica, profesional, fecha_hora_inicio, fecha_hora_fin, tipo, **kwargs)
+
+    @classmethod
+    def registrar_sin_turno(cls, mascota: "Mascota", clinica: Clinica, profesional: Profesional,
+                            fecha_hora_inicio: datetime | None = None, fecha_hora_fin: datetime | None = None,
+                            tipo: TipoAtencion = TipoAtencion.URGENCIA, **kwargs) -> "AtencionClinica":
+        """Atención sin turno previo: la fecha y hora de inicio es la actual (por defecto) o una pasada."""
+        fecha_hora_inicio = fecha_hora_inicio or reloj.ahora().replace(second=0)
+        if fecha_hora_inicio > reloj.ahora():
+            raise DatosInvalidosError("Una atención sin turno previo no puede tener fecha y hora de inicio futura.")
+        return cls(mascota, clinica, profesional, fecha_hora_inicio, fecha_hora_fin, tipo, **kwargs)
+
+    @classmethod
+    def duracion_maxima(cls, tipo: TipoAtencion) -> timedelta:
+        return timedelta(minutes=cls.DURACION_MAXIMA_MINUTOS[TipoAtencion(tipo)])
+
+    @classmethod
+    def fin_sugerido(cls, inicio: datetime, tipo: TipoAtencion) -> datetime:
+        """Inicio + duración máxima del tipo, sin pasar del cierre (19:00)."""
+        cierre = datetime.combine(inicio.date(), cls.HORA_CIERRE)
+        return min(inicio + cls.duracion_maxima(tipo), max(cierre, inicio + timedelta(minutes=5)))
+
+    @classmethod
+    def _validar_horario(cls, inicio: datetime, fin: datetime, tipo: TipoAtencion) -> None:
+        if fin <= inicio:
+            raise DatosInvalidosError("La hora de fin debe ser posterior a la de inicio.")
+        maximo = cls.DURACION_MAXIMA_MINUTOS[tipo]
+        if fin - inicio > timedelta(minutes=maximo):
+            raise DatosInvalidosError(f"Una atención de tipo {tipo.etiqueta.lower()} dura como máximo {maximo} minutos.")
+        if (inicio.time() < cls.HORA_APERTURA or fin.date() != inicio.date() or fin.time() > cls.HORA_CIERRE):
+            raise DatosInvalidosError("El horario de atención es de 08:00 a 19:00: la atención debe empezar y "
+                                      "terminar dentro de ese horario.")
 
     # --- propiedades de navegación ----------------------------------------------
     @property

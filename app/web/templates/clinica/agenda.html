@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "componentes/macros.html" import badge_enum, encabezado, vacio %}
 {% block contenido %}
-{% call encabezado("Agenda", "La atención en estado RESERVADA funciona como turno") %}
+{% call encabezado("Agenda", "Turnos de 08:00 a 19:00") %}
   <a href="/clinica/agenda/nuevo?fecha={{ dia }}" class="btn btn-portal"><i class="bi bi-calendar-plus"></i> Reservar turno</a>
 {% endcall %}
 <div class="card mb-3"><div class="card-body d-flex flex-wrap gap-2 align-items-center">

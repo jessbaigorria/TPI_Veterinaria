@@ -10,6 +10,7 @@ from app.domain.laboratorio import OrdenDerivacion
 from app.reportes.comun import PALETA, Filtro, Grafico, Reporte, Tabla, porcentaje
 
 REALIZADAS = (EstadoAtencion.EN_PROGRESO, EstadoAtencion.FINALIZADA)
+N = len(TipoAtencion)  # columnas por tipo de atención
 
 
 def generar(s: Session, filtro: Filtro) -> Reporte:
@@ -40,21 +41,21 @@ def generar(s: Session, filtro: Filtro) -> Reporte:
         totales = [a + b for a, b in zip(totales, valores)]
         tabla.filas.append([f.nombre, _mes(f.mes), *valores[:-1], porcentaje(f.derivadas, f.total)])
     if tabla.filas:
-        tabla.totales = ["Total", "", *totales[:-1], porcentaje(totales[-1], totales[4])]
+        tabla.totales = ["Total", "", *totales[:-1], porcentaje(totales[-1], totales[N])]
 
     etiquetas = [f"{f[0]} · {f[1]}" for f in tabla.filas]
     grafico = Grafico("Atenciones por tipo (barras apiladas por clínica y mes)", "bar", etiquetas,
                       [{"label": t.etiqueta, "data": [fila[2 + i] for fila in tabla.filas],
                         "backgroundColor": PALETA[i]} for i, t in enumerate(TipoAtencion)], apilado=True)
     derivaciones = Grafico("Derivaciones generadas", "bar", etiquetas, [
-        {"label": "Con orden de laboratorio", "data": [fila[7] for fila in tabla.filas], "backgroundColor": PALETA[3]},
-        {"label": "Derivadas a cirugía", "data": [fila[8] for fila in tabla.filas], "backgroundColor": PALETA[4]},
+        {"label": "Con orden de laboratorio", "data": [fila[N + 3] for fila in tabla.filas], "backgroundColor": PALETA[3]},
+        {"label": "Derivadas a cirugía", "data": [fila[N + 4] for fila in tabla.filas], "backgroundColor": PALETA[4]},
     ])
-    total = totales[4]
+    total = totales[N]
     indicadores = [("Atenciones realizadas", str(total)),
-                   ("Con orden de laboratorio", str(totales[5])),
-                   ("Derivadas a cirugía", str(totales[6])),
-                   ("% derivación", f"{porcentaje(totales[7], total)} %")]
+                   ("Con orden de laboratorio", str(totales[N + 1])),
+                   ("Derivadas a cirugía", str(totales[N + 2])),
+                   ("% derivación", f"{porcentaje(totales[N + 3], total)} %")]
     return Reporte("R1", "Atenciones clínicas y derivaciones realizadas",
                    "Atenciones realizadas (en progreso o finalizadas) por clínica y mes, según tipo, y cuántas "
                    "generaron una orden de laboratorio o una derivación a cirugía.",

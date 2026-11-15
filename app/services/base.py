@@ -80,6 +80,16 @@ def a_fecha_hora(valor) -> datetime | None:
         raise VeterinariaError(f"Fecha y hora inválida: {valor}") from exc
 
 
+def validar_rango_fechas(desde, hasta, obligatorias: bool = False) -> None:
+    """«Hasta» no puede ser anterior a «Desde» (y en reportes las dos son obligatorias)."""
+    from app.domain.excepciones import DatosInvalidosError
+
+    if obligatorias and (desde is None or hasta is None):
+        raise DatosInvalidosError("Las fechas «Desde» y «Hasta» son obligatorias.")
+    if desde is not None and hasta is not None and hasta < desde:
+        raise DatosInvalidosError("La fecha «Hasta» no puede ser anterior a la fecha «Desde».")
+
+
 def a_float(valor, campo: str = "valor") -> float | None:
     if valor in (None, ""):
         return None

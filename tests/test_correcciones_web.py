@@ -142,3 +142,50 @@ def test_b5_sin_lupa_emoji(entorno):
         html = c.get(url).text
         assert "🔎" not in html, url
     assert "bi-search text-secondary" in c.get("/clinica/clientes").text
+
+
+# ---------------------------------------------------------------- Bloque C: fechas y horarios por HTTP
+def test_c1_listado_rango_invertido_muestra_error(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    html = c.get("/clinica/atenciones?desde=2026-12-10&hasta=2026-12-01",
+                 headers={"referer": "http://testserver/clinica/atenciones"}).text
+    assert "no puede ser anterior" in aviso_rojo(html)
+
+
+def test_c2_listado_vacio_muestra_estado_vacio(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    html = c.get("/clinica/atenciones?desde=2001-01-01&hasta=2001-01-02").text
+    assert "No hay registros para mostrar" in html and "<tbody>" not in html
+
+
+def test_c3_reservar_turno_sin_urgencia_y_con_cirugia_otro(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    html = c.get("/clinica/agenda/nuevo").text
+    tipos = html.split('name="tipo"')[1].split("</select>")[0]
+    assert ">Urgencia<" not in tipos and ">Cirugía<" in tipos and ">Otro<" in tipos
+    html = c.get("/clinica/atenciones/nueva").text
+    tipos = html.split('name="tipo"')[1].split("</select>")[0]
+    assert ">Urgencia<" in tipos and ">Cirugía<" in tipos and ">Otro<" in tipos
+
+
+def test_c5_campos_de_hora_sin_step_de_15(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    html = c.get("/clinica/agenda/nuevo").text
+    assert 'step="900"' not in html and 'step="300"' in html and 'min="08:00"' in html
+
+
+def test_c7_turno_en_el_pasado_rechazado(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    from app.domain.personas import Mascota
+    m = uno(s, Mascota, nombre="Nina")
+    ayer = (reloj.hoy() - __import__("datetime").timedelta(days=1)).isoformat()
+    html = post(c, "/clinica/agenda/reservar", {"titular_id": m.titular_id, "mascota_id": m.id,
+                                                "profesional_id": m.historia_clinica.atenciones[0].profesional_id,
+                                                "tipo": "CONSULTA", "fecha": ayer, "hora_inicio": "10:00",
+                                                "hora_fin": "10:30"}, "/clinica/agenda/nuevo").text
+    assert "posterior al actual" in aviso_rojo(html)

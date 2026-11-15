@@ -181,3 +181,14 @@ Prioridad aplicada cuando algo chocaba: consigna → diagrama de clases → docu
 | B.2 | El combobox de mascota se recarga con `GET /api/titulares/{id}/mascotas` (solo mascotas activas) al cambiar el titular. |
 | B.3 | Profesionales y cirujanos agrupados por especialidad (`<optgroup>`) con la macro `opciones_profesionales`; el texto de la opción es solo el nombre. |
 | B.4 | Los buscadores de texto de los listados usan la macro `buscador` (ícono `bi-search` gris). |
+
+## Bloque C — Fechas, horarios y duración de atenciones
+
+| # | Decisión |
+|---|---|
+| C.1 | `TipoAtencion` suma **`CIRUGIA`** y **`OTRO`** (actualizar el enum en el diagrama). Al reservar se ofrecen Consulta, Control, Vacunación, Cirugía y Otro (`AtencionClinica.TIPOS_RESERVABLES`); sin turno, todos (incluida Urgencia). Con vacunas pendientes, Cirugía y Otro se comportan como Urgencia: se permiten con advertencia y constancia en observaciones; Consulta y Control siguen bloqueando. |
+| C.2 | Reglas en el dominio (`AtencionClinica`), lanzan `DatosInvalidosError`: duración máxima por tipo (`DURACION_MAXIMA_MINUTOS`: 30 min para consulta, control y vacunación; 60 para cirugía, otro y urgencia); `fin > inicio`; horario de atención `HORA_APERTURA` 08:00 a `HORA_CIERRE` 19:00 (empezar y terminar dentro, el mismo día). Se validan en `_validar_horario`, que llama el constructor; el control de superposición sigue igual. |
+| C.3 | **Métodos nuevos** (agregar al diagrama): `AtencionClinica.reservar(...)` (classmethod: solo tipos reservables y con inicio posterior al momento actual) y `AtencionClinica.registrar_sin_turno(...)` (classmethod: inicio actual por defecto o pasado, nunca futuro); auxiliares `duracion_maxima(tipo)`, `fin_sugerido(inicio, tipo)` (inicio + máximo del tipo, sin pasar de las 19:00) y `_validar_horario`. Los servicios usan estas fábricas. |
+| C.4 | En el formulario: el fin se autocompleta con inicio + duración máxima del tipo y su `max` impide alargarlo; `step="300"` (5 min) en los campos de hora; `min`/`max` de 08:00–19:00; la fecha del turno tiene `min` = hoy y, si es hoy, el inicio mínimo es la hora actual. En la atención sin turno, `max` del inicio = ahora y la duración se autocompleta con el máximo del tipo. |
+| C.5 | Filtros con rango de fechas (listado de atenciones y reportes): el `min` de «Hasta» sigue a «Desde» y el servicio rechaza un rango invertido (`validar_rango_fechas`). En los reportes las dos fechas son obligatorias y se proponen los **últimos 30 días**; en **Vacunas pendientes** se proponen los **últimos 12 meses**, porque ahí el rango filtra por fecha de vencimiento y con 30 días quedarían afuera los atrasos de meses. |
+| C.6 | Agenda: franjas de 08:00 a 18:30. El seed respeta horarios y duraciones (hay un test que lo verifica). |

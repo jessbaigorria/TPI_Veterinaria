@@ -61,3 +61,14 @@ def test_los_cinco_reportes_tienen_datos(sesion_seed):
     for codigo in reportes.REPORTES:
         rep = reportes.generar(codigo, sesion_seed, filtro if codigo != "r5" else Filtro(hasta=date(2026, 6, 15)))
         assert not rep.vacio, codigo
+
+
+def test_seed_respeta_horarios_y_duraciones(sesion_seed):
+    from app.domain.atencion import AtencionClinica
+    from app.domain.enums import EstadoAtencion, TipoAtencion
+    for a in sesion_seed.scalars(select(AtencionClinica)):
+        assert a.fecha_hora_inicio.time() >= AtencionClinica.HORA_APERTURA
+        assert a.fecha_hora_fin.time() <= AtencionClinica.HORA_CIERRE
+        assert a.fecha_hora_fin - a.fecha_hora_inicio <= AtencionClinica.duracion_maxima(a.tipo)
+        if a.estado is EstadoAtencion.RESERVADA:
+            assert a.tipo is not TipoAtencion.URGENCIA
