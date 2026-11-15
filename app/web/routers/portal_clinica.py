@@ -316,8 +316,9 @@ def ordenes(request: Request, estado: str = "", q: str = "", u: UsuarioSesion = 
 @router.get("/ordenes/nueva")
 def orden_nueva(request: Request, atencion: int, u: UsuarioSesion = Usr, s: Session = Db):
     svc = DerivacionesService(s)
-    return render(request, "clinica/orden_nueva.html", seccion="ordenes",
-                  a=AtencionesService(s).obtener_atencion(atencion), laboratorios=svc.laboratorios(),
+    a = AtencionesService(s).obtener_atencion(atencion)
+    a.validar_admite_derivaciones("emitir una orden de laboratorio")
+    return render(request, "clinica/orden_nueva.html", seccion="ordenes", a=a, laboratorios=svc.laboratorios(),
                   tipos=svc.tipos_analisis())
 
 
@@ -456,8 +457,10 @@ def cirugias(request: Request, tab: str = "enviadas", u: UsuarioSesion = Usr, s:
 
 @router.get("/cirugias/nueva")
 def cirugia_nueva(request: Request, atencion: int, u: UsuarioSesion = Usr, s: Session = Db):
-    return render(request, "clinica/cirugia_nueva.html", seccion="cirugias",
-                  a=AtencionesService(s).obtener_atencion(atencion), clinicas=CirugiasService(s).todas_las_clinicas())
+    a = AtencionesService(s).obtener_atencion(atencion)
+    a.validar_admite_derivaciones("derivar a cirugía")
+    return render(request, "clinica/cirugia_nueva.html", seccion="cirugias", a=a,
+                  clinicas=CirugiasService(s).todas_las_clinicas())
 
 
 @router.post("/cirugias")

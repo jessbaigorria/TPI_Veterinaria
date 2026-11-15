@@ -201,3 +201,12 @@ Prioridad aplicada cuando algo chocaba: consigna → diagrama de clases → docu
 | D.2 | La sección “Nueva mascota” está siempre visible. Si se completa el nombre de la mascota nueva se crea y se usa esa (y especie, sexo y nacimiento pasan a ser obligatorios); si no, se usa la elegida en el combobox. Si no hay ni una ni otra, `AtencionesService.registrar_sin_turno` lanza `DatosInvalidosError`. |
 | D.3 | “Responsable presente” (si no asiste el titular): obligatorio, solo letras y espacios, mínimo 3 caracteres; lo valida `AtencionClinica.__init__` con `validaciones.nombre_persona`. |
 | D.4 | Los DNI se muestran con el formato de la máscara (`## ### ###`) mediante el filtro `dni`. |
+
+## Bloque E — Atención finalizada e importes
+
+| # | Decisión |
+|---|---|
+| E.1 | `AtencionClinica.finalizar()` exige **importe mayor a 0** (`DatosInvalidosError`); el formulario lo pide con `required min="0.01"`. |
+| E.2 | Órdenes de laboratorio y derivaciones a cirugía **solo con la atención EN_PROGRESO**: `emitir_orden_derivacion()` y `derivar_a_cirugia()` lanzan `AtencionNoModificableError` si está finalizada (o si todavía no se inició). Cualquier transición sobre una atención finalizada también lanza `AtencionNoModificableError`. Métodos **nuevos**: `admite_derivaciones()` (para la UI) y `validar_admite_derivaciones(accion)` (la usan las pantallas de nueva orden / nueva derivación para no abrir el formulario). |
+| E.3 | Pantalla de la atención: en curso muestra “Emitir orden de laboratorio” y “Derivar a cirugía”, luego las órdenes y derivaciones emitidas y al final el formulario “Finalizar atención”; finalizada muestra solo “Emitir comprobante” o “Ver comprobante”. |
+| E.4 | Seed: las derivaciones a cirugía se emiten con la atención en curso y después se finaliza con importe (`Sembrador.cerrar`); ninguna atención finalizada queda con importe 0. |

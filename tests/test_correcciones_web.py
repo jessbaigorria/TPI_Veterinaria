@@ -258,3 +258,65 @@ def test_d5_responsable_presente_solo_letras(entorno):
     datos = _datos_atencion(s, asiste_titular="0", responsable_presente="Lu")
     html = post(c, "/clinica/atenciones/registrar", datos, "/clinica/atenciones/nueva").text
     assert "al menos 3" in aviso_rojo(html)
+
+
+# ---------------------------------------------------------------- Bloque E: atención finalizada e importes
+def _atencion(s, estado):
+    from app.domain.atencion import AtencionClinica
+    from app.domain.enums import EstadoAtencion
+    s.expire_all()
+    return s.scalars(select(AtencionClinica).where(AtencionClinica.estado == EstadoAtencion(estado),
+                                                   AtencionClinica.clinica.has(nombre="Clínica Centro"))).first()
+
+
+def test_e1_importe_obligatorio_y_mayor_a_cero(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    a = _atencion(s, "EN_PROGRESO")
+    url = f"/clinica/atenciones/{a.id}"
+    html = c.get(url).text
+    assert 'name="importe" required min="0.01"' in html
+    for importe in ("", "0"):
+        html = post(c, f"{url}/finalizar", {"diagnostico": "Sano", "importe": importe}, url).text
+        assert "importe es obligatorio y debe ser mayor a cero" in aviso_rojo(html)
+    assert _atencion(s, "EN_PROGRESO") is not None
+
+
+def test_e2_atencion_finalizada_no_emite_ordenes_ni_derivaciones(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    a = _atencion(s, "FINALIZADA")
+    html = c.get(f"/clinica/atenciones/{a.id}").text
+    assert "Emitir orden de laboratorio" not in html and "Derivar a cirugía" not in html
+    assert "Emitir comprobante" in html or "Ver comprobante" in html
+    html = c.get(f"/clinica/ordenes/nueva?atencion={a.id}", headers={"referer": f"http://testserver/clinica/atenciones/{a.id}"}).text
+    assert "ya está finalizada" in aviso_rojo(html)
+    from app.domain.laboratorio import Laboratorio, TipoAnalisis
+    html = post(c, "/clinica/ordenes", {"atencion_id": a.id, "laboratorio_id": s.scalars(select(Laboratorio)).first().id,
+                                        "analisis_id": [s.scalars(select(TipoAnalisis)).first().id]},
+                f"/clinica/atenciones/{a.id}").text
+    assert "ya está finalizada" in aviso_rojo(html)
+    html = post(c, "/clinica/cirugias", {"atencion_id": a.id, "destino_id": 3, "tipo_cirugia": "Biopsia"},
+                f"/clinica/atenciones/{a.id}").text
+    assert "ya está finalizada" in aviso_rojo(html)
+
+
+def test_e3_en_curso_ofrece_ordenes_y_derivaciones_antes_de_finalizar(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    html = c.get(f"/clinica/atenciones/{_atencion(s, 'EN_PROGRESO').id}").text
+    assert "Emitir orden de laboratorio" in html and "Derivar a cirugía" in html
+    assert html.index("Órdenes de laboratorio") < html.index("Finalizar atención")
+    assert "Emitir comprobante" not in html
+
+
+def test_e4_seed_sin_finalizadas_sin_importe_ni_derivaciones_posteriores(entorno):
+    c, s = entorno
+    from app.domain.atencion import AtencionClinica
+    from app.domain.enums import EstadoAtencion
+    for a in s.scalars(select(AtencionClinica).where(AtencionClinica.estado == EstadoAtencion.FINALIZADA)):
+        assert a.importe and a.importe > 0
+        for o in a.ordenes:
+            assert o.fecha_emision <= a.fecha_hora_fin
+        for d in a.derivaciones:
+            assert d.fecha_solicitud <= a.fecha_hora_fin

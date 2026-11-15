@@ -260,6 +260,11 @@ class Sembrador:
                                                         "Crisis respiratoria compensada"]),
                 TipoAtencion.VACUNACION: "Se aplican vacunas del esquema"}[tipo]
 
+    def cerrar(self, atencion, diagnostico):
+        """Finaliza (con importe) una atención que quedó en curso para emitir órdenes o derivaciones."""
+        reloj.fijar(max(reloj.ahora(), atencion.fecha_hora_inicio + timedelta(minutes=25)))
+        self.ate.finalizar(atencion.id, diagnostico, importe=IMPORTES[atencion.tipo] + 1500)
+
     # --- flujo de laboratorio --------------------------------------------------------------
     def orden(self, atencion, codigos, prioridad=Prioridad.NORMAL, obs="Descartar patología sistémica"):
         return self.der.emitir_orden(atencion.id, self.lab.id, [self.a[c].id for c in codigos], prioridad, obs)
@@ -418,9 +423,10 @@ class Sembrador:
         c = self.cir
         # Realizada y facturada (pagada).
         a = self.atender(-45, 17, self.centro, m["Thor"], TipoAtencion.URGENCIA, prof=self.perez,
-                         diagnostico="Fractura de fémur derecho")
+                         diagnostico="Fractura de fémur derecho", finalizar=False)
         d = c.derivar(a.id, self.sur.id, "Osteosíntesis de fémur", Prioridad.URGENTE, "Fractura diafisaria de fémur",
                       RiesgoAnestesico.ASA_II, "Rx y hemograma prequirúrgico normales")
+        self.cerrar(a, "Fractura de fémur derecho")  # la derivación se emite con la atención en curso
         self.mas_tarde(hours=2)
         c.aceptar(d.id, self.ferreyra.id)
         c.registrar_consentimiento(d.id, "Recepción Sur")
@@ -431,9 +437,10 @@ class Sembrador:
         self.mas_tarde(days=2)
         self.fac.registrar_pago(f.id, FormaPago.TARJETA)
         # Realizada, facturada y pendiente de cobro (ASA III con estudios).
-        a = self.atender(-30, 17, self.norte, m["Simba"], prof=self.sosa, diagnostico="Obstrucción uretral recurrente")
+        a = self.atender(-30, 17, self.norte, m["Simba"], prof=self.sosa, diagnostico="Obstrucción uretral recurrente", finalizar=False)
         d = c.derivar(a.id, self.sur.id, "Uretrostomía perineal", Prioridad.NORMAL, "Obstrucción uretral",
                       RiesgoAnestesico.ASA_III)
+        self.cerrar(a, "Obstrucción uretral recurrente")  # la derivación se emite con la atención en curso
         self.mas_tarde(hours=3)
         c.aceptar(d.id, self.rios.id)
         c.registrar_consentimiento(d.id, "Recepción Norte")
@@ -443,34 +450,39 @@ class Sembrador:
         c.registrar_cirugia(d.id, "Uretrostomía sin complicaciones. Sonda 48 h.")
         self.fac.facturar_cirugia(d.id, 210000)
         # Rechazada.
-        a = self.atender(-20, 17, self.centro, m["Luna"], prof=self.diaz, diagnostico="Tumor mamario")
+        a = self.atender(-20, 17, self.centro, m["Luna"], prof=self.diaz, diagnostico="Tumor mamario", finalizar=False)
         d = c.derivar(a.id, self.sur.id, "Mastectomía radical", Prioridad.NORMAL, "Neoplasia mamaria",
                       RiesgoAnestesico.ASA_IV)
+        self.cerrar(a, "Tumor mamario")  # la derivación se emite con la atención en curso
         self.mas_tarde(hours=5)
         c.rechazar(d.id, "Paciente con riesgo ASA IV: primero estabilizar y reevaluar con cardiología")
         # Cancelada.
-        a = self.atender(-14, 17, self.norte, m["Kira"], prof=self.sosa, diagnostico="Luxación de rótula")
+        a = self.atender(-14, 17, self.norte, m["Kira"], prof=self.sosa, diagnostico="Luxación de rótula", finalizar=False)
         d = c.derivar(a.id, self.sur.id, "Trocleoplastia", Prioridad.NORMAL, "Luxación patelar grado III",
                       RiesgoAnestesico.ASA_I)
+        self.cerrar(a, "Luxación de rótula")  # la derivación se emite con la atención en curso
         self.mas_tarde(hours=2)
         c.aceptar(d.id, self.ferreyra.id)
         c.cancelar(d.id, "El titular decidió posponer la cirugía")
         # Programada a futuro.
-        a = self.atender(-8, 17, self.norte, m["Coco"], prof=self.sosa, diagnostico="Cuerpo extraño gástrico")
+        a = self.atender(-8, 17, self.norte, m["Coco"], prof=self.sosa, diagnostico="Cuerpo extraño gástrico", finalizar=False)
         d = c.derivar(a.id, self.sur.id, "Gastrotomía", Prioridad.URGENTE, "Cuerpo extraño", RiesgoAnestesico.ASA_II)
+        self.cerrar(a, "Cuerpo extraño gástrico")  # la derivación se emite con la atención en curso
         self.mas_tarde(hours=1)
         c.aceptar(d.id, self.rios.id)
         c.registrar_consentimiento(d.id, "Recepción Norte")
         c.programar(d.id, datetime.combine(self.hoy + timedelta(days=3), time(9, 0)))
         # Aceptada sin consentimiento (para la demo de la validación).
-        a = self.atender(-4, 17, self.centro, m["Bruno"], prof=self.acosta, diagnostico="Masa esplénica")
+        a = self.atender(-4, 17, self.centro, m["Bruno"], prof=self.acosta, diagnostico="Masa esplénica", finalizar=False)
         d = c.derivar(a.id, self.sur.id, "Esplenectomía", Prioridad.URGENTE, "Masa esplénica", RiesgoAnestesico.ASA_III)
+        self.cerrar(a, "Masa esplénica")  # la derivación se emite con la atención en curso
         self.mas_tarde(hours=2)
         c.aceptar(d.id, self.rios.id)
         # Solicitada (pendiente de respuesta del hospital).
-        a = self.atender(-2, 17, self.centro, m["Max"], prof=self.perez, diagnostico="Rotura de ligamento cruzado")
+        a = self.atender(-2, 17, self.centro, m["Max"], prof=self.perez, diagnostico="Rotura de ligamento cruzado", finalizar=False)
         c.derivar(a.id, self.sur.id, "Cirugía de ligamento cruzado (TPLO)", Prioridad.NORMAL,
                   "Rotura de LCA", RiesgoAnestesico.ASA_II)
+        self.cerrar(a, "Rotura de ligamento cruzado")  # la derivación se emite con la atención en curso
 
     def facturacion(self):
         """Factura ~75 % de las atenciones finalizadas y todas las órdenes completadas con resultados."""

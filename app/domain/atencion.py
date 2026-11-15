@@ -19,7 +19,7 @@ from app.domain.enums import (
     TipoAtencion, TipoComprobante,
 )
 from app.domain.excepciones import (
-    DatosInvalidosError, DerivacionCirugiaError, TurnoSuperpuestoError, VacunasPendientesError, VeterinariaError,
+    AtencionNoModificableError, DatosInvalidosError, DerivacionCirugiaError, TurnoSuperpuestoError, VacunasPendientesError, VeterinariaError,
 )
 from app.domain.facturacion import Factura
 from app.domain.personas import HistoriaClinica, Vacuna, _en_periodo
@@ -101,7 +101,9 @@ class AtencionClinica(Base):
         EstadoAtencion.CANCELADA: set(),
     }
     _ESTADOS_QUE_OCUPAN_AGENDA = {EstadoAtencion.RESERVADA, EstadoAtencion.EN_PROGRESO, EstadoAtencion.FINALIZADA}
-    _ESTADOS_QUE_ADMITEN_DERIVAR = {EstadoAtencion.EN_PROGRESO, EstadoAtencion.FINALIZADA}
+    _ESTADOS_REALIZADOS = {EstadoAtencion.EN_PROGRESO, EstadoAtencion.FINALIZADA}
+    # Órdenes de laboratorio y derivaciones a cirugía solo mientras la atención está en curso.
+    _ESTADOS_QUE_ADMITEN_DERIVAR = {EstadoAtencion.EN_PROGRESO}
     _TIPOS_QUE_BLOQUEAN_POR_VACUNAS = {TipoAtencion.CONSULTA, TipoAtencion.CONTROL}
     _TIPOS_CON_ADVERTENCIA = {TipoAtencion.URGENCIA, TipoAtencion.CIRUGIA, TipoAtencion.OTRO}
 
@@ -255,20 +257,20 @@ class AtencionClinica(Base):
 
     def finalizar(self, diagnostico: str, peso_registrado: float | None = None,
                   importe=None, observaciones: str | None = None) -> None:
+        """EN_PROGRESO → FINALIZADA. Exige diagnóstico e importe mayor a cero; después la atención no se modifica."""
         self._validar_transicion(EstadoAtencion.FINALIZADA)
         if not (diagnostico or "").strip():
-            raise VeterinariaError("Para finalizar la atención hay que cargar el diagnóstico.")
+            raise DatosInvalidosError("Para finalizar la atención hay que cargar el diagnóstico.")
         self.diagnostico = diagnostico.strip()
         if observaciones is not None:
             self.observaciones = observaciones
         if peso_registrado:
             self.peso_registrado = float(peso_registrado)
             self.mascota.peso = float(peso_registrado)
-        if importe is not None:
-            importe = a_decimal(importe)
-            if importe < 0:
-                raise VeterinariaError("El importe no puede ser negativo.")
-            self.importe = importe
+        importe = a_decimal(importe) if importe not in (None, "") else None
+        if importe is None or importe <= 0:
+            raise DatosInvalidosError("El importe es obligatorio y debe ser mayor a cero.")
+        self.importe = importe
         self.estado = EstadoAtencion.FINALIZADA
 
     def cancelar(self, motivo: str) -> None:
@@ -344,7 +346,15 @@ class AtencionClinica(Base):
         return self.fecha_hora_inicio < fin and inicio < self.fecha_hora_fin
 
     def esta_realizada(self) -> bool:
+        return self.estado in self._ESTADOS_REALIZADOS
+
+    def admite_derivaciones(self) -> bool:
+        """True si se pueden emitir órdenes de laboratorio o derivar a cirugía (solo EN_PROGRESO)."""
         return self.estado in self._ESTADOS_QUE_ADMITEN_DERIVAR
+
+    def validar_admite_derivaciones(self, accion: str) -> None:
+        """Lanza AtencionNoModificableError si la atención no está en curso."""
+        self._validar_admite_derivar(accion)
 
     def transiciones_posibles(self) -> set[EstadoAtencion]:
         return set(self._TRANSICIONES[self.estado])
@@ -364,14 +374,18 @@ class AtencionClinica(Base):
                 and self.tipo in self._TIPOS_QUE_BLOQUEAN_POR_VACUNAS)
 
     def _validar_transicion(self, nuevo: EstadoAtencion) -> None:
+        if self.estado is EstadoAtencion.FINALIZADA:
+            raise AtencionNoModificableError("Esta atención ya está finalizada y no se puede modificar.")
         if nuevo not in self._TRANSICIONES[self.estado]:
             raise VeterinariaError(
                 f"La atención está {self.estado.etiqueta.lower()}: no puede pasar a {nuevo.etiqueta.lower()}."
             )
 
     def _validar_admite_derivar(self, accion: str) -> None:
+        if self.estado is EstadoAtencion.FINALIZADA:
+            raise AtencionNoModificableError(f"Esta atención ya está finalizada: no se puede {accion}.")
         if self.estado not in self._ESTADOS_QUE_ADMITEN_DERIVAR:
-            raise VeterinariaError(f"Para {accion} la atención debe estar en progreso o finalizada.")
+            raise AtencionNoModificableError(f"Para {accion} la atención tiene que estar en curso.")
 
     def __repr__(self) -> str:
         return f"<AtencionClinica {self.id} {self.tipo.value} {self.estado.value}>"

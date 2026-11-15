@@ -213,3 +213,30 @@ def test_rechazo_requiere_motivo(sesion, base):
         svc.rechazar(d.id, "")
     svc.rechazar(d.id, "Sin quirófano disponible")
     assert d.estado.value == "RECHAZADA"
+
+
+# --- Ronda de correcciones: atención finalizada e importe -----------------------------------
+def test_finalizar_exige_importe_mayor_a_cero(sesion, base):
+    from app.domain.excepciones import DatosInvalidosError
+    a = base.atencion()
+    for importe in (None, "", 0, "-5"):
+        with pytest.raises(DatosInvalidosError, match="importe"):
+            AtencionesService(sesion).finalizar(a.id, "Diagnóstico", importe=importe)
+    AtencionesService(sesion).finalizar(a.id, "Diagnóstico", importe="0.01")
+
+
+def test_ordenes_y_derivaciones_solo_en_progreso(sesion, base):
+    from app.domain.excepciones import AtencionNoModificableError
+    from app.services.derivaciones import DerivacionesService
+    a = base.atencion()
+    DerivacionesService(sesion).emitir_orden(a.id, base.lab.id, [base.hemograma.id])     # en curso: OK
+    AtencionesService(sesion).finalizar(a.id, "Diagnóstico", importe=1000)
+    with pytest.raises(AtencionNoModificableError, match="finalizada"):
+        DerivacionesService(sesion).emitir_orden(a.id, base.lab.id, [base.hemograma.id])
+    with pytest.raises(AtencionNoModificableError, match="finalizada"):
+        CirugiasService(sesion).derivar(a.id, base.sur.id, "Biopsia")
+    with pytest.raises(AtencionNoModificableError):
+        AtencionesService(sesion).finalizar(a.id, "Otro diagnóstico", importe=2000)
+    turno = _turno(sesion, base, datetime(2026, 3, 14, 10, 0))
+    with pytest.raises(AtencionNoModificableError, match="en curso"):
+        DerivacionesService(sesion).emitir_orden(turno.id, base.lab.id, [base.hemograma.id])   # reservada

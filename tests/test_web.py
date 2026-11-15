@@ -79,9 +79,11 @@ def test_paginas_portal_clinica(entorno):
     paginas += [f"/clinica/envios/{i}" for i in ids(RemitoBiologico)]
     paginas += [f"/clinica/cirugias/{i}" for i in ids(DerivacionCirugia)]
     paginas += [f"/clinica/facturacion/{i}" for i in ids(Factura)]
+    from app.domain.enums import EstadoAtencion
+    en_curso = s.scalars(select(AtencionClinica).where(AtencionClinica.estado == EstadoAtencion.EN_PROGRESO)).first()
     paginas += [f"/clinica/atenciones/nueva?mascota={ids(Mascota)[1]}&tipo=VACUNACION",
-                f"/clinica/ordenes/nueva?atencion={ids(AtencionClinica)[0]}",
-                f"/clinica/cirugias/nueva?atencion={ids(AtencionClinica)[0]}",
+                f"/clinica/ordenes/nueva?atencion={en_curso.id}",
+                f"/clinica/cirugias/nueva?atencion={en_curso.id}",
                 f"/clinica/catalogos/contenedores/{s.scalars(select(RemitoBiologico)).first().contenedor_id}/editar"]
     for url in paginas:
         r = client.get(url)
