@@ -28,7 +28,8 @@ class Mundo:
         self.cirujano = Profesional(legajo="P3", matricula="MP3", dni="3", nombre="Sara", apellido="Ruiz",
                                     especialidad="Cirugía")
         self.hospital.agregar_profesional(self.cirujano)
-        self.titular = Titular(dni="30111222", nombre="Juan", apellido="García", fecha_alta=date(2025, 1, 1))
+        self.titular = Titular(dni="30111222", nombre="Juan", apellido="García", direccion="Colón 100",
+                               telefono="3511000000", email="juan@mail.com", fecha_alta=date(2025, 1, 1))
         self.mascota = Mascota(self.titular, "Pompón", Especie.PERRO, Sexo.MACHO, date(2022, 1, 1), peso=10)
         self.lab = Laboratorio(nombre="Laboratorio Central", activo=True)
         self.hemograma = TipoAnalisis(codigo="HEM", nombre="Hemograma", precio=Decimal("8000"),

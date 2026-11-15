@@ -320,3 +320,69 @@ def test_e4_seed_sin_finalizadas_sin_importe_ni_derivaciones_posteriores(entorno
             assert o.fecha_emision <= a.fecha_hora_fin
         for d in a.derivaciones:
             assert d.fecha_solicitud <= a.fecha_hora_fin
+
+
+# ---------------------------------------------------------------- Bloque F: titulares y mascotas
+TITULAR_OK = {"dni": "41 222 333", "nombre": "Rocío", "apellido": "Benítez", "direccion": "Ituzaingó 300",
+              "telefono": "3515550000", "email": "rocio@mail.com"}
+
+
+def test_f1_formulario_titular_con_validaciones_html(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    html = c.get("/clinica/clientes/nuevo").text
+    for nombre in ("dni", "nombre", "apellido", "direccion", "telefono", "email"):
+        bloque = html.split(f'name="{nombre}"', 1)[1].split(">", 1)[0]
+        assert "required" in bloque, nombre
+    assert "data-mascara-dni" in html and 'pattern="[0-9]{8,15}"' in html and 'type="email"' in html
+
+
+@pytest.mark.parametrize("campo,valor,mensaje", [("dni", "12ab5678", "solo admite números"),
+                                                 ("dni", "", "obligatorio"),
+                                                 ("telefono", "351-555", "solo admite números"),
+                                                 ("telefono", "", "obligatorio"),
+                                                 ("email", "rocio@", "formato válido"),
+                                                 ("direccion", "", "obligatorio"),
+                                                 ("nombre", "R0cío", "solo admite letras")])
+def test_f1_alta_titular_invalida_muestra_mensaje(entorno, campo, valor, mensaje):
+    c, s = entorno
+    login_clinica(c, s)
+    html = post(c, "/clinica/clientes", {**TITULAR_OK, campo: valor}, "/clinica/clientes/nuevo").text
+    assert mensaje in aviso_rojo(html)
+
+
+def test_f1_alta_titular_guarda_solo_digitos_y_no_repite(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    post(c, "/clinica/clientes", TITULAR_OK, "/clinica/clientes/nuevo")
+    from app.domain.personas import Titular
+    t = uno(s, Titular, dni="41222333")
+    assert "41 222 333" in c.get(f"/clinica/clientes/{t.id}").text
+    html = post(c, "/clinica/clientes", {**TITULAR_OK, "email": "otra@mail.com"}, "/clinica/clientes/nuevo").text
+    assert "Ya existe un titular con DNI 41222333" in aviso_rojo(html)
+
+
+def test_f2_baja_con_modal_que_lista_mascotas(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    from app.domain.personas import Titular
+    t = uno(s, Titular, apellido="García")
+    html = c.get(f"/clinica/clientes/{t.id}").text
+    assert f'data-confirm="¿Confirmás dar de baja a {t.nombre_completo()}?"' in html
+    assert "También se van a dar de baja sus 2 mascotas:" in html and "Rocco" in html
+    assert 'id="modal-confirmar"' in html and ">Aceptar<" in html and ">Cancelar<" in html
+    assert "confirm(" not in c.get("/static/app.js").text
+
+
+def test_f3_nueva_mascota_sin_textos_tecnicos_y_titular_preseleccionado(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    from app.domain.personas import Titular
+    t = uno(s, Titular, apellido="García")
+    html = c.get(f"/clinica/mascotas/nueva?titular={t.id}").text
+    assert "MascotaSinTitularError" not in html and "dominio" not in html and "Validación:" not in html
+    assert f'<option value="{t.id}" selected>' in html
+    assert 'href="/clinica/clientes/nuevo?next=/clinica/mascotas/nueva"' in html
+    html = post(c, "/clinica/mascotas", {"titular_id": "", "nombre": "Sola", "especie": "GATO", "sexo": "HEMBRA",
+                                         "fecha_nacimiento": "2024-01-01"}, "/clinica/mascotas/nueva").text
+    assert "sin titular responsable" in aviso_rojo(html)

@@ -1,19 +1,33 @@
 {% extends "base.html" %}
-{% from "componentes/macros.html" import encabezado, campo %}
+{% from "componentes/macros.html" import encabezado %}
 {% block contenido %}
 {% call encabezado("Editar titular" if t else "Nuevo titular") %}{% endcall %}
+{% macro val(nombre, actual) %}{{ previo[nombre] if nombre in previo else (actual if t else '') }}{% endmacro %}
 <div class="card" style="max-width: 760px"><div class="card-body">
 <form method="post" action="{{ '/clinica/clientes/' ~ t.id if t else '/clinica/clientes' }}">
-  <div class="row">
-    <div class="col-md-4">{{ campo('dni', 'DNI', previo.dni or (t.dni if t), requerido=True) }}</div>
-    <div class="col-md-4">{{ campo('nombre', 'Nombre', previo.nombre or (t.nombre if t), requerido=True) }}</div>
-    <div class="col-md-4">{{ campo('apellido', 'Apellido', previo.apellido or (t.apellido if t), requerido=True) }}</div>
-    <div class="col-md-12">{{ campo('direccion', 'Dirección', previo.direccion or (t.direccion if t)) }}</div>
-    <div class="col-md-6">{{ campo('telefono', 'Teléfono', previo.telefono or (t.telefono if t)) }}</div>
-    <div class="col-md-6">{{ campo('email', 'Email', previo.email or (t.email if t), tipo='email') }}</div>
+  <div class="row g-3">
+    <div class="col-md-4"><label class="form-label" for="dni">DNI <span class="text-danger">*</span></label>
+      <input class="form-control" id="dni" name="dni" required inputmode="numeric" data-mascara-dni maxlength="10"
+             pattern="[0-9]{1,2} ?[0-9]{3} ?[0-9]{3}" title="7 u 8 dígitos (## ### ###)" placeholder="## ### ###"
+             value="{{ val('dni', t.dni|dni if t else '') }}"></div>
+    <div class="col-md-4"><label class="form-label" for="nombre">Nombre <span class="text-danger">*</span></label>
+      <input class="form-control" id="nombre" name="nombre" required minlength="2" pattern="{{ PATRON_LETRAS_2 }}"
+             title="Solo letras y espacios" value="{{ val('nombre', t.nombre if t else '') }}"></div>
+    <div class="col-md-4"><label class="form-label" for="apellido">Apellido <span class="text-danger">*</span></label>
+      <input class="form-control" id="apellido" name="apellido" required minlength="2" pattern="{{ PATRON_LETRAS_2 }}"
+             title="Solo letras y espacios" value="{{ val('apellido', t.apellido if t else '') }}"></div>
+    <div class="col-12"><label class="form-label" for="direccion">Dirección <span class="text-danger">*</span></label>
+      <input class="form-control" id="direccion" name="direccion" required value="{{ val('direccion', t.direccion if t else '') }}"></div>
+    <div class="col-md-6"><label class="form-label" for="telefono">Teléfono <span class="text-danger">*</span></label>
+      <input class="form-control" id="telefono" name="telefono" type="tel" required inputmode="numeric" data-solo-numeros
+             pattern="[0-9]{8,15}" minlength="8" maxlength="15" title="Solo números, de 8 a 15 dígitos" placeholder="Ej.: 3514221100"
+             value="{{ val('telefono', t.telefono if t else '') }}"></div>
+    <div class="col-md-6"><label class="form-label" for="email">Email <span class="text-danger">*</span></label>
+      <input class="form-control" id="email" name="email" type="email" required placeholder="nombre@dominio.com"
+             value="{{ val('email', t.email if t else '') }}"></div>
   </div>
   <input type="hidden" name="next" value="{{ query.next or previo.next }}">
-  <button class="btn btn-portal"><i class="bi bi-check-lg"></i> Guardar</button>
-  <a href="{{ '/clinica/clientes/' ~ t.id if t else '/clinica/clientes' }}" class="btn btn-outline-secondary">Cancelar</a>
+  <div class="mt-4"><button class="btn btn-portal"><i class="bi bi-check-lg"></i> Guardar</button>
+  <a href="{{ '/clinica/clientes/' ~ t.id if t else (query.next or '/clinica/clientes') }}" class="btn btn-outline-secondary">Cancelar</a></div>
 </form></div></div>
 {% endblock %}

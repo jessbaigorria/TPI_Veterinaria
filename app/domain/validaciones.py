@@ -13,6 +13,7 @@ _EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$")
 
 # Patrones equivalentes para el atributo HTML ``pattern`` (se usan en las plantillas).
 PATRON_HTML_LETRAS = rf"[{LETRAS} ]{{3,}}"
+PATRON_HTML_LETRAS_2 = rf"[{LETRAS} ]{{2,}}"
 
 
 def _texto(valor) -> str:

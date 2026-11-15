@@ -49,7 +49,7 @@ class Base:
                                                        "temperatura_max": 8, "clinica_id": self.centro.id})
         self.contenedor2 = cat.guardar("contenedores", {"codigo": "C-2", "capacidad": 6, "temperatura_min": 2,
                                                         "temperatura_max": 8, "clinica_id": self.centro.id})
-        self.titular = ClientesService(s).crear_titular("30111222", "Juan", "García", telefono="351-1")
+        self.titular = ClientesService(s).crear_titular("30111222", "Juan", "García", "Colón 100", "3511000000", "juan@mail.com")
         ms = MascotasService(s)
         self.firulais = ms.crear_mascota(self.titular.id, "Firulais", "PERRO", "MACHO", date(2022, 1, 1))
         # Firulais con vacunas al día

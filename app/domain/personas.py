@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Optional
 from sqlalchemy import Boolean, Date, Float, ForeignKey, Integer, String, Text, select
 from sqlalchemy.orm import Mapped, mapped_column, object_session, relationship
 
-from app.domain import reloj
+from app.domain import reloj, validaciones
 from app.domain.base import Base, EnumCol
 from app.domain.enums import Especie, Sexo
 from app.domain.excepciones import MascotaSinTitularError, VeterinariaError
@@ -39,17 +39,20 @@ class Titular(Base):
 
     def __init__(self, dni: str, nombre: str, apellido: str, direccion: str = "", telefono: str = "",
                  email: str = "", fecha_alta: date | None = None, activo: bool = True):
-        for campo, valor in (("DNI", dni), ("nombre", nombre), ("apellido", apellido)):
-            if not (valor or "").strip():
-                raise VeterinariaError(f"El {campo} del titular es obligatorio.")
-        self.dni = dni.strip()
-        self.nombre = nombre.strip()
-        self.apellido = apellido.strip()
-        self.direccion = direccion or ""
-        self.telefono = telefono or ""
-        self.email = email or ""
+        self.actualizar_datos(dni, nombre, apellido, direccion, telefono, email)
         self.fecha_alta = fecha_alta or reloj.hoy()
         self.activo = activo
+
+    def actualizar_datos(self, dni: str, nombre: str, apellido: str, direccion: str, telefono: str,
+                         email: str) -> None:
+        """Todos los datos son obligatorios: DNI de 7 u 8 dígitos (se guardan solo los dígitos), nombre y
+        apellido solo letras, teléfono de 8 a 15 dígitos y email válido. Lanza DatosInvalidosError."""
+        self.dni = validaciones.dni(dni)
+        self.nombre = validaciones.nombre_persona(nombre, "Nombre", minimo=2)
+        self.apellido = validaciones.nombre_persona(apellido, "Apellido", minimo=2)
+        self.direccion = validaciones.obligatorio(direccion, "Dirección")
+        self.telefono = validaciones.telefono(telefono)
+        self.email = validaciones.email(email)
 
     # --- métodos del diagrama -------------------------------------------------
     def agregar_mascota(self, m: "Mascota") -> None:

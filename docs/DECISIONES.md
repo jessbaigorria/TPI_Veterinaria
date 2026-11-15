@@ -210,3 +210,12 @@ Prioridad aplicada cuando algo chocaba: consigna → diagrama de clases → docu
 | E.2 | Órdenes de laboratorio y derivaciones a cirugía **solo con la atención EN_PROGRESO**: `emitir_orden_derivacion()` y `derivar_a_cirugia()` lanzan `AtencionNoModificableError` si está finalizada (o si todavía no se inició). Cualquier transición sobre una atención finalizada también lanza `AtencionNoModificableError`. Métodos **nuevos**: `admite_derivaciones()` (para la UI) y `validar_admite_derivaciones(accion)` (la usan las pantallas de nueva orden / nueva derivación para no abrir el formulario). |
 | E.3 | Pantalla de la atención: en curso muestra “Emitir orden de laboratorio” y “Derivar a cirugía”, luego las órdenes y derivaciones emitidas y al final el formulario “Finalizar atención”; finalizada muestra solo “Emitir comprobante” o “Ver comprobante”. |
 | E.4 | Seed: las derivaciones a cirugía se emiten con la atención en curso y después se finaliza con importe (`Sembrador.cerrar`); ninguna atención finalizada queda con importe 0. |
+
+## Bloque F — Titulares y mascotas
+
+| # | Decisión |
+|---|---|
+| F.1 | Método **nuevo** `Titular.actualizar_datos(dni, nombre, apellido, direccion, telefono, email)`: lo usan el constructor y la edición. Todos los campos son obligatorios: DNI con 7 u 8 dígitos (se aceptan espacios o puntos al escribir y **se guardan solo los dígitos**), nombre y apellido solo letras (mín. 2), teléfono solo números de 8 a 15 dígitos, email con formato válido (se guarda en minúsculas). El servicio controla que el DNI no se repita. Todo lanza `DatosInvalidosError` con un mensaje por campo. |
+| F.2 | En el formulario: máscara `## ### ###` para el DNI mientras se escribe (con 7 dígitos se muestra `# ### ###`), teléfono que descarta lo que no sea número, `type="email"`, `pattern`, `minlength` y `required` en todos los campos. |
+| F.3 | Bajas de titular y de mascota con el modal de confirmación; en la del titular el modal lista las mascotas activas que también se dan de baja. |
+| F.4 | Seed: los teléfonos de los titulares se guardan solo con dígitos. |

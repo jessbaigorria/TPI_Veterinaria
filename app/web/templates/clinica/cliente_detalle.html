@@ -1,11 +1,14 @@
 {% extends "base.html" %}
 {% from "componentes/macros.html" import encabezado, badge_enum, vacio %}
 {% block contenido %}
-{% call encabezado(t.nombre_completo(), "DNI " ~ t.dni ~ (" · DADO DE BAJA" if not t.activo else "")) %}
+{% call encabezado(t.nombre_completo(), "DNI " ~ t.dni|dni ~ (" · DADO DE BAJA" if not t.activo else "")) %}
   <a href="/clinica/clientes/{{ t.id }}/editar" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i> Editar</a>
   {% if t.activo %}
   <a href="/clinica/mascotas/nueva?titular={{ t.id }}" class="btn btn-portal"><i class="bi bi-plus-lg"></i> Nueva mascota</a>
-  <form method="post" action="/clinica/clientes/{{ t.id }}/baja" data-confirm="¿Dar de baja al titular y sus mascotas? (baja lógica)"><button class="btn btn-outline-danger"><i class="bi bi-person-x"></i> Baja</button></form>
+  {% set activas = t.mascotas_activas() %}
+  <form method="post" action="/clinica/clientes/{{ t.id }}/baja" data-confirm="¿Confirmás dar de baja a {{ t.nombre_completo() }}?"
+        data-confirm-detalle="{% if activas %}También se van a dar de baja {{ 'su mascota' if activas|length == 1 else 'sus ' ~ activas|length ~ ' mascotas' }}: {{ activas|map(attribute='nombre')|join(', ') }}.{% endif %}">
+    <button class="btn btn-outline-danger"><i class="bi bi-person-x"></i> Baja</button></form>
   {% else %}
   <form method="post" action="/clinica/clientes/{{ t.id }}/reactivar"><button class="btn btn-outline-success">Reactivar</button></form>
   {% endif %}

@@ -162,6 +162,19 @@ document.addEventListener("DOMContentLoaded", () => {
     nombre.addEventListener("input", ajustar); ajustar();
   }
 
+  // DNI con máscara ## ### ### mientras se escribe (solo dígitos; 7 dígitos → # ### ### al salir del campo).
+  const formatoDni = (d, final) => {
+    if (final && d.length === 7) return `${d[0]} ${d.slice(1, 4)} ${d.slice(4)}`;
+    return [d.slice(0, 2), d.slice(2, 5), d.slice(5, 8)].filter(Boolean).join(" ");
+  };
+  document.querySelectorAll("[data-mascara-dni]").forEach((el) => {
+    el.addEventListener("input", () => { el.value = formatoDni(el.value.replace(/\D/g, "").slice(0, 8), false); });
+    el.addEventListener("blur", () => { el.value = formatoDni(el.value.replace(/\D/g, "").slice(0, 8), true); });
+    el.value = formatoDni(el.value.replace(/\D/g, ""), true);
+  });
+  document.querySelectorAll("[data-solo-numeros]").forEach((el) =>
+    el.addEventListener("input", () => { el.value = el.value.replace(/\D/g, ""); }));
+
   // Gráficos de reportes (Chart.js).
   document.querySelectorAll("canvas[data-grafico]").forEach((c) => {
     try { new Chart(c, JSON.parse(c.dataset.grafico)); } catch (e) { console.error(e); }

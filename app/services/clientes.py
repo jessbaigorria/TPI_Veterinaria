@@ -3,37 +3,34 @@ from __future__ import annotations
 
 from sqlalchemy import or_, select
 
-from app.domain.excepciones import VeterinariaError
+from app.domain import validaciones
+from app.domain.excepciones import DatosInvalidosError
 from app.domain.personas import Titular
-from app.services.base import ServicioBase, texto, transaccional
+from app.services.base import ServicioBase, transaccional
 
 
 class ClientesService(ServicioBase):
     @transaccional
     def crear_titular(self, dni, nombre, apellido, direccion="", telefono="", email="") -> Titular:
-        dni = texto(dni)
-        if self.repo(Titular).buscar_por(dni=dni):
-            raise VeterinariaError(f"Ya existe un titular con DNI {dni}.")
-        t = Titular(dni=dni, nombre=texto(nombre), apellido=texto(apellido), direccion=texto(direccion),
-                    telefono=texto(telefono), email=texto(email))
+        t = Titular(dni=dni, nombre=nombre, apellido=apellido, direccion=direccion, telefono=telefono, email=email)
+        self._validar_dni_unico(t.dni)
         self.s.add(t)
         return t
 
     @transaccional
     def actualizar_titular(self, titular_id, **datos) -> Titular:
         t = self.obtener(Titular, titular_id)
-        nuevo_dni = texto(datos.get("dni", t.dni))
-        otro = self.repo(Titular).buscar_por(dni=nuevo_dni)
-        if otro is not None and otro is not t:
-            raise VeterinariaError(f"Ya existe otro titular con DNI {nuevo_dni}.")
-        for campo in ("nombre", "apellido"):
-            if campo in datos and not texto(datos[campo]):
-                raise VeterinariaError(f"El {campo} es obligatorio.")
-        t.dni = nuevo_dni
-        for campo in ("nombre", "apellido", "direccion", "telefono", "email"):
-            if campo in datos:
-                setattr(t, campo, texto(datos[campo]))
+        valores = {campo: datos.get(campo, getattr(t, campo))
+                   for campo in ("dni", "nombre", "apellido", "direccion", "telefono", "email")}
+        dni_nuevo = validaciones.dni(valores["dni"])
+        self._validar_dni_unico(dni_nuevo, excepto=t)
+        t.actualizar_datos(**valores)
         return t
+
+    def _validar_dni_unico(self, dni: str, excepto: Titular | None = None) -> None:
+        otro = self.repo(Titular).buscar_por(dni=dni)
+        if otro is not None and otro is not excepto:
+            raise DatosInvalidosError(f"Ya existe un titular con DNI {dni} ({otro.nombre_completo()}).")
 
     @transaccional
     def dar_de_baja(self, titular_id) -> Titular:

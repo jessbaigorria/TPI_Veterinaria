@@ -157,17 +157,17 @@ class Sembrador:
     def clientes(self):
         self.en(-70, 9)
         datos = [
-            ("28456123", "Juan", "García", "Bv. Chacabuco 450", "351-155-1001", "juan.garcia@mail.com"),
-            ("31222987", "María", "López", "Obispo Trejo 1020", "351-155-1002", "maria.lopez@mail.com"),
-            ("25987456", "Carlos", "Fernández", "Av. Sabattini 2300", "351-155-1003", "cfernandez@mail.com"),
-            ("33654789", "Ana", "Martínez", "Rondeau 870", "351-155-1004", "ana.martinez@mail.com"),
-            ("29874123", "Lucía", "Romero", "Av. Recta Martinoli 6100", "351-155-1005", "lucia.romero@mail.com"),
-            ("35123654", "Diego", "Suárez", "Lima 340", "351-155-1006", "dsuarez@mail.com"),
-            ("27456321", "Sofía", "Torres", "Av. Fuerza Aérea 2900", "351-155-1007", "sofia.torres@mail.com"),
-            ("30789654", "Martín", "Herrera", "Av. Colón 3800", "351-155-1008", "mherrera@mail.com"),
-            ("32147852", "Valentina", "Castro", "Bv. San Juan 1500", "351-155-1009", "vcastro@mail.com"),
-            ("26369258", "Jorge", "Molina", "Av. Vélez Sarsfield 5100", "351-155-1010", "jmolina@mail.com"),
-            ("34852963", "Paula", "Navarro", "Caseros 2200", "351-155-1011", "pnavarro@mail.com"),
+            ("28456123", "Juan", "García", "Bv. Chacabuco 450", "3511551001", "juan.garcia@mail.com"),
+            ("31222987", "María", "López", "Obispo Trejo 1020", "3511551002", "maria.lopez@mail.com"),
+            ("25987456", "Carlos", "Fernández", "Av. Sabattini 2300", "3511551003", "cfernandez@mail.com"),
+            ("33654789", "Ana", "Martínez", "Rondeau 870", "3511551004", "ana.martinez@mail.com"),
+            ("29874123", "Lucía", "Romero", "Av. Recta Martinoli 6100", "3511551005", "lucia.romero@mail.com"),
+            ("35123654", "Diego", "Suárez", "Lima 340", "3511551006", "dsuarez@mail.com"),
+            ("27456321", "Sofía", "Torres", "Av. Fuerza Aérea 2900", "3511551007", "sofia.torres@mail.com"),
+            ("30789654", "Martín", "Herrera", "Av. Colón 3800", "3511551008", "mherrera@mail.com"),
+            ("32147852", "Valentina", "Castro", "Bv. San Juan 1500", "3511551009", "vcastro@mail.com"),
+            ("26369258", "Jorge", "Molina", "Av. Vélez Sarsfield 5100", "3511551010", "jmolina@mail.com"),
+            ("34852963", "Paula", "Navarro", "Caseros 2200", "3511551011", "pnavarro@mail.com"),
         ]
         self.t = {d[2]: self.cli.crear_titular(*d) for d in datos}
 

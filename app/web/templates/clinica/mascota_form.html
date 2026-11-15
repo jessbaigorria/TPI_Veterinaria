@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% from "componentes/macros.html" import encabezado, campo %}
 {% block contenido %}
-{% call encabezado("Editar mascota" if m else "Nueva mascota", None if m else "Validación: toda mascota debe tener un titular responsable") %}{% endcall %}
+{% call encabezado("Editar mascota" if m else "Nueva mascota") %}{% endcall %}
 <div class="card" style="max-width: 860px"><div class="card-body">
 <form method="post" action="{{ '/clinica/mascotas/' ~ m.id if m else '/clinica/mascotas' }}">
   {% if not m %}
   <label class="form-label">Titular responsable <span class="text-danger">*</span></label>
   <div class="row g-2 mb-3">
-    <div class="col-md-8"><select class="form-select" id="titular_id" name="titular_id" data-buscar="Buscá por apellido o DNI">
-      <option value="">— Sin titular —</option>
+    <div class="col-md-8"><select class="form-select" id="titular_id" name="titular_id" required data-buscar="Buscá por apellido o DNI">
+      <option value="">— Elegí el titular —</option>
       {% for t in titulares %}<option value="{{ t.id }}" {{ 'selected' if query.titular == t.id|string or previo.titular_id == t.id|string }}>{{ t.nombre_completo() }} · DNI {{ t.dni|dni }}</option>{% endfor %}
     </select>
     <div class="form-text">¿No existe? <a href="/clinica/clientes/nuevo?next=/clinica/mascotas/nueva">Crear titular</a>.</div></div>

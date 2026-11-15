@@ -8,7 +8,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.domain import enums, reloj
 from app.domain.atencion import AtencionClinica
-from app.domain.validaciones import PATRON_HTML_LETRAS
+from app.domain.validaciones import PATRON_HTML_LETRAS, PATRON_HTML_LETRAS_2
 from app.web import formato
 from app.web.sesion import tomar_formulario, tomar_mensajes, usuario_actual
 
@@ -21,7 +21,7 @@ env.filters.update(
     color_remito=formato.color_remito, color_enum=formato.color_enum, color_nombre=formato.color_nombre_estado,
     etiqueta=formato.etiqueta,
 )
-env.globals.update(enums=enums, reloj=reloj, PATRON_LETRAS=PATRON_HTML_LETRAS,
+env.globals.update(enums=enums, reloj=reloj, PATRON_LETRAS=PATRON_HTML_LETRAS, PATRON_LETRAS_2=PATRON_HTML_LETRAS_2,
                    DURACIONES={t.value: m for t, m in AtencionClinica.DURACION_MAXIMA_MINUTOS.items()},
                    TIPOS_RESERVABLES=AtencionClinica.TIPOS_RESERVABLES, NOMBRES_REMITO=formato.NOMBRES_REMITO,
                    NOMBRES_MUESTRA=formato.NOMBRES_MUESTRA)
