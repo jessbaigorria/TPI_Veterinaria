@@ -50,6 +50,12 @@ class EmpaquetadoService(ServicioBase):
         remito.cerrar(Precinto(codigo, usuario), temperatura)
         return remito
 
+    @transaccional
+    def registrar_temperatura_despacho(self, remito_id, temperatura) -> RemitoBiologico:
+        remito = self.obtener(RemitoBiologico, remito_id)
+        remito.registrar_temperatura_despacho(a_float(temperatura, "temperatura de despacho"))
+        return remito
+
     # --- consultas --------------------------------------------------------------------
     def muestras_para_empaquetar(self, clinica_id, laboratorio_id=None) -> list[MuestraBiologica]:
         """Muestras Extraídas de la clínica (y del laboratorio de destino, si se indica)."""

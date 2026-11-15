@@ -154,6 +154,10 @@ class RemitoBiologico(Base):
             self.temperatura_despacho = float(temperatura_despacho)
         self._estado.cerrar(self, p)
 
+    def registrar_temperatura_despacho(self, temperatura: float) -> None:
+        """Nueva medición de la temperatura de despacho (solo en Armado, ya precintado)."""
+        self._estado.registrar_temperatura_despacho(self, temperatura)
+
     def despachar(self, e: "Envio", usuario: str | None = None) -> None:
         self._estado.despachar(self, e, usuario or self.usuario_armador)
 

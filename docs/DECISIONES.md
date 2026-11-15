@@ -44,6 +44,7 @@ Prioridad aplicada cuando algo chocaba: consigna → diagrama de clases → docu
 | 2.7 | Precondiciones de despacho (sin muestras, sin precinto, temperatura de despacho fuera del rango del contenedor) lanzan `TransicionInvalidaError` desde `RemitoArmado.despachar`. Agregar una muestra a un remito ya precintado también. | Son transiciones no permitidas en ese momento. |
 | 2.8 | `RemitoArmado.cerrar` exige al menos una muestra y asigna el contenedor (`DISPONIBLE → EN_USO`), como la tabla 5.3. | — |
 | 2.9 | `RemitoArmado.agregar_muestra` valida capacidad del contenedor, laboratorio de destino, clínica de origen y orden vigente; luego delega en `muestra.empaquetar()` (la muestra decide). | Tabla 5.3. |
+| 2.10 | `EstadoRemito.registrar_temperatura_despacho(r, t)` (base = inválido) redefinido solo en `RemitoArmado`, y `RemitoBiologico.registrar_temperatura_despacho(t)`. Permite **volver a medir** la temperatura de un remito ya precintado mientras no salió. | Si la temperatura de despacho daba fuera de rango, el remito quedaba trabado en Armado (no se podía despachar, ni agregar/quitar muestras) con el contenedor en uso. Ahora se acondiciona la conservadora, se registra una nueva medición y se despacha; la muestra nunca deja de estar Empaquetada en la clínica. **Falta en el diagrama.** |
 
 ## 3. Patrón Observer
 

@@ -53,6 +53,9 @@ class EstadoRemito(ABC):
     def despachar(self, r: "RemitoBiologico", envio: "Envio", usuario: str) -> None:
         self._invalida("despachar", r)
 
+    def registrar_temperatura_despacho(self, r: "RemitoBiologico", temperatura: float) -> None:
+        self._invalida("volver a medir la temperatura de despacho de", r)
+
     def iniciar_transito(self, r: "RemitoBiologico") -> None:
         self._invalida("iniciar el tránsito de", r)
 
@@ -108,6 +111,16 @@ class RemitoArmado(EstadoRemito):
         r.contenedor.asignar()  # DISPONIBLE → EN_USO
         r.precinto = precinto
 
+    def registrar_temperatura_despacho(self, r, temperatura):
+        # Mientras no salió, la conservadora se puede volver a enfriar/medir: la muestra no se pierde.
+        if r.precinto is None:
+            raise TransicionInvalidaError(
+                f"El remito {r.numero} todavía no está cerrado: la temperatura se registra al cerrarlo."
+            )
+        if temperatura is None:
+            raise VeterinariaError("Hay que indicar la temperatura medida.")
+        r.temperatura_despacho = float(temperatura)
+
     def despachar(self, r, envio, usuario):
         if not r.muestras:
             raise TransicionInvalidaError(f"El remito {r.numero} no tiene muestras.")
@@ -126,7 +139,7 @@ class RemitoArmado(EstadoRemito):
     def acciones_disponibles(self, r):
         if r.precinto is None:
             return ["agregar_muestra", "cerrar"] if r.muestras else ["agregar_muestra"]
-        return ["despachar"]
+        return ["despachar", "registrar_temperatura"]
 
 
 class RemitoDespachado(EstadoRemito):

@@ -165,3 +165,25 @@ def test_estados_finales_y_rehidratacion():
     assert {e.codigo for e in EstadoRemito.todos() if e.es_final()} == {
         "RemitoRecibido", "RemitoRecibidoConObservaciones"}
     assert isinstance(EstadoRemito.desde_nombre("RemitoEnTransito"), RemitoEnTransito)
+
+
+def test_temperatura_fuera_de_rango_se_puede_volver_a_medir(mundo):
+    m = mundo.muestra()
+    r = mundo.remito_cerrado([m], temperatura=0.0)
+    with pytest.raises(TransicionInvalidaError, match="fuera del rango"):
+        r.despachar(mundo.envio())
+    assert m.estado_codigo == "Empaquetada"          # la muestra no se pierde
+    assert "registrar_temperatura" in r.acciones()
+    r.registrar_temperatura_despacho(4.0)
+    r.despachar(mundo.envio())
+    assert isinstance(r.estado, RemitoDespachado) and m.estado_codigo == "EnTransito"
+
+
+def test_volver_a_medir_solo_en_armado_y_precintado(mundo):
+    r = mundo.remito()
+    r.agregar_muestra(mundo.muestra())
+    with pytest.raises(TransicionInvalidaError):
+        r.registrar_temperatura_despacho(4.0)        # todavía sin precinto
+    r2 = mundo.remito_en_transito([mundo.muestra()])
+    with pytest.raises(TransicionInvalidaError):
+        r2.registrar_temperatura_despacho(4.0)       # ya salió

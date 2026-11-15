@@ -99,3 +99,16 @@ def test_no_se_anula_orden_despachada(sesion, base):
     base.remito_en_transito([base.muestra(orden)])
     with pytest.raises(VeterinariaError):
         DerivacionesService(sesion).anular_orden(orden.id, "x")
+
+
+def test_servicio_vuelve_a_medir_y_despacha(sesion, base):
+    from datetime import timedelta
+    from app.domain import reloj
+    from app.services.envios import EnviosService
+    emp = EmpaquetadoService(sesion)
+    r = emp.crear_remito(base.centro.id, base.lab.id, base.contenedor.id, "u")
+    emp.agregar_muestras(r.id, [base.muestra().id], "u")
+    emp.cerrar_remito(r.id, "", 0, "u")
+    emp.registrar_temperatura_despacho(r.id, "4,5")
+    EnviosService(sesion).despachar(r.id, "Transp", reloj.ahora() + timedelta(hours=2), "u")
+    assert r.estado_actual() == "Despachado" and r.temperatura_despacho == 4.5

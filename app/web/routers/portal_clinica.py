@@ -415,6 +415,18 @@ async def remito_cerrar(request: Request, remito_id: int, u: UsuarioSesion = Usr
     return ir(f"/clinica/envios/{remito_id}")
 
 
+@router.post("/envios/{remito_id}/temperatura")
+async def remito_temperatura(request: Request, remito_id: int, u: UsuarioSesion = Usr, s: Session = Db):
+    f = await formulario(request)
+    r = EmpaquetadoService(s).registrar_temperatura_despacho(remito_id, f.get("temperatura_despacho"))
+    if r.contenedor.temperatura_adecuada(r.temperatura_despacho):
+        avisar(request, f"Temperatura de despacho registrada: {r.temperatura_despacho} °C. Ya se puede despachar.")
+    else:
+        avisar(request, f"La nueva medición ({r.temperatura_despacho} °C) sigue fuera del rango del contenedor "
+                        f"({r.contenedor.rango_texto()}).", "warning")
+    return ir(f"/clinica/envios/{remito_id}")
+
+
 @router.post("/envios/{remito_id}/despachar")
 async def remito_despachar(request: Request, remito_id: int, u: UsuarioSesion = Usr, s: Session = Db):
     f = await formulario(request)
