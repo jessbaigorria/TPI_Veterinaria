@@ -386,3 +386,23 @@ def test_f3_nueva_mascota_sin_textos_tecnicos_y_titular_preseleccionado(entorno)
     html = post(c, "/clinica/mascotas", {"titular_id": "", "nombre": "Sola", "especie": "GATO", "sexo": "HEMBRA",
                                          "fecha_nacimiento": "2024-01-01"}, "/clinica/mascotas/nueva").text
     assert "sin titular responsable" in aviso_rojo(html)
+
+
+# ---------------------------------------------------------------- Bloque G: órdenes y badges
+def test_g1_boton_registrar_muestra(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    from app.domain.laboratorio import OrdenDerivacion
+    html = c.get(f"/clinica/ordenes/{uno(s, OrdenDerivacion, numero='ORD-000014').id}").text
+    assert ">Registrar muestra</button>" in html and "nace Extraída" not in html
+
+
+def test_g2_badges_alineados_en_encabezados(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    from app.domain.laboratorio import OrdenDerivacion
+    html = c.get(f"/clinica/ordenes/{uno(s, OrdenDerivacion, numero='ORD-000009').id}").text
+    assert 'class="d-flex align-items-center flex-wrap gap-2 acciones-encabezado"' in html
+    css = c.get("/static/estilos.css").text
+    regla = css.split(".badge.estado {", 1)[1].split("}", 1)[0]
+    assert "align-items: center" in regla and "height: auto" in regla

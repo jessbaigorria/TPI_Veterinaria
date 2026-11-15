@@ -82,12 +82,12 @@
 
 {% elif tab == 'laboratorio' %}
 {% for o in hc.ordenes_derivacion()|reverse %}
-<div class="card mb-3"><div class="card-header d-flex justify-content-between">
+<div class="card mb-3"><div class="card-header d-flex justify-content-between align-items-center">
   <span><a href="/clinica/ordenes/{{ o.id }}">{{ o.numero }}</a> · {{ o.fecha_emision|fecha }} · {{ o.analisis|map(attribute='nombre')|join(', ') }}</span>{{ badge_enum(o.estado) }}</div>
   <div class="card-body"><div class="row g-3">
   {% for mu in o.muestras %}
     <div class="col-md-6"><div class="border rounded p-3">
-      <div class="d-flex justify-content-between mb-2"><a href="/clinica/muestras/{{ mu.id }}" class="fw-semibold">{{ mu.codigo }} · {{ mu.tipo.etiqueta }}</a>{{ badge_muestra(mu) }}</div>
+      <div class="d-flex justify-content-between align-items-center mb-2"><a href="/clinica/muestras/{{ mu.id }}" class="fw-semibold">{{ mu.codigo }} · {{ mu.tipo.etiqueta }}</a>{{ badge_muestra(mu) }}</div>
       {{ linea_tiempo(mu.historial()) }}
       {% for r in mu.resultados %}<div class="mt-2 p-2 bg-light rounded small"><b>{{ r.tipo_analisis.nombre }}:</b> {{ r.valores }} {{ r.unidad }}<br><i>{{ r.interpretacion }}</i></div>{% endfor %}
     </div></div>

@@ -27,7 +27,7 @@
         <select class="form-select mb-2" name="tipo">{% for t in tipos_muestra %}<option value="{{ t.value }}">{{ t.etiqueta }}</option>{% endfor %}</select>
         <label class="form-label">Volumen (ml)</label><input class="form-control mb-2" name="volumen" value="3" required>
         <input class="form-control mb-2" name="observaciones" placeholder="Observaciones (opcional)">
-        <button class="btn btn-portal w-100">Registrar (nace Extraída)</button>
+        <button class="btn btn-portal w-100">Registrar muestra</button>
       </form></div></div>
     {% if not o.muestras|selectattr('remito')|list %}
     <div class="card"><div class="card-body"><form method="post" action="/clinica/ordenes/{{ o.id }}/anular" data-confirm="¿Anular la orden?">

@@ -219,3 +219,10 @@ Prioridad aplicada cuando algo chocaba: consigna → diagrama de clases → docu
 | F.2 | En el formulario: máscara `## ### ###` para el DNI mientras se escribe (con 7 dígitos se muestra `# ### ###`), teléfono que descarta lo que no sea número, `type="email"`, `pattern`, `minlength` y `required` en todos los campos. |
 | F.3 | Bajas de titular y de mascota con el modal de confirmación; en la del titular el modal lista las mascotas activas que también se dan de baja. |
 | F.4 | Seed: los teléfonos de los titulares se guardan solo con dígitos. |
+
+## Bloque G — Órdenes de laboratorio y estados
+
+| # | Decisión |
+|---|---|
+| G.1 | El botón de la orden dice “Registrar muestra”. |
+| G.2 | Badges de estado: píldora `inline-flex` de tamaño normal, centrada (`align-self: center`, sin altura fija) en toda la app; el contenedor de acciones de los encabezados es `d-flex align-items-center gap-2` y los encabezados de tarjeta con badge también alinean al centro. |
