@@ -8,9 +8,12 @@ from fastapi.responses import Response
 
 from app import reportes
 from app.domain import reloj
+from app.domain.excepciones import VeterinariaError
 from app.reportes import Filtro, a_csv
 from app.services.base import a_fecha, validar_rango_fechas
+from app.web.formato import fecha
 from app.web.plantillas import render
+from app.web.sesion import usuario_actual
 
 
 def filtro_desde_query(request: Request, codigo: str, **forzados) -> Filtro:
@@ -33,8 +36,6 @@ def filtro_desde_query(request: Request, codigo: str, **forzados) -> Filtro:
 
 def describir_filtros(filtro: Filtro, clinicas=(), laboratorios=(), **_) -> list[tuple[str, str]]:
     """Texto de los filtros aplicados (para el encabezado del PDF)."""
-    from app.web.formato import fecha
-
     nombres_clinicas = {c.id: c.nombre for c in clinicas}
     nombres_labs = {l.id: l.nombre for l in laboratorios}
     filtros = [("Desde", fecha(filtro.desde)), ("Hasta", fecha(filtro.hasta)),
@@ -48,12 +49,11 @@ def describir_filtros(filtro: Filtro, clinicas=(), laboratorios=(), **_) -> list
 
 def mostrar(request: Request, s, codigo: str, plantilla_base: str, filtro: Filtro, **contexto):
     if codigo not in reportes.REPORTES:
-        from app.domain.excepciones import VeterinariaError
         raise VeterinariaError(f"Reporte desconocido: {codigo}")
     rep = reportes.generar(codigo, s, filtro)
     if request.query_params.get("formato") == "pdf":
-        from app.reportes.pdf import a_pdf
-        from app.web.sesion import usuario_actual
+        from app.reportes.pdf import a_pdf  # ReportLab se carga solo cuando se exporta un PDF
+
         u = usuario_actual(request)
         contenido = a_pdf(rep, u.sede_nombre if u else "VetRed", describir_filtros(rep.filtro, **contexto))
         return Response(contenido, media_type="application/pdf",

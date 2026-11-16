@@ -7,7 +7,7 @@ from typing import Type, TypeVar
 
 from sqlalchemy.orm import Session
 
-from app.domain.excepciones import VeterinariaError
+from app.domain.excepciones import DatosInvalidosError, VeterinariaError
 from app.repositories.base import Repositorio
 from app.repositories.numerador import Numerador
 
@@ -82,8 +82,6 @@ def a_fecha_hora(valor) -> datetime | None:
 
 def validar_rango_fechas(desde, hasta, obligatorias: bool = False) -> None:
     """«Hasta» no puede ser anterior a «Desde» (y en reportes las dos son obligatorias)."""
-    from app.domain.excepciones import DatosInvalidosError
-
     if obligatorias and (desde is None or hasta is None):
         raise DatosInvalidosError("Las fechas «Desde» y «Hasta» son obligatorias.")
     if desde is not None and hasta is not None and hasta < desde:
