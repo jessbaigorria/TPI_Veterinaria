@@ -13,11 +13,11 @@ from sqlalchemy.orm import Mapped, mapped_column, reconstructor, relationship
 from app.domain import reloj
 from app.domain.base import Base, Dinero, EnumCol
 from app.domain.enums import (
-    EstadoFactura, EstadoOrden, EstadoPrecinto, Prioridad, TipoComprobante, TipoMuestra,
+    EstadoOrden, EstadoPrecinto, Prioridad, TipoComprobante, TipoMuestra,
 )
 from app.domain.estados.estado_muestra import EstadoMuestra, Extraida, Rechazada
 from app.domain.excepciones import TransicionInvalidaError, VeterinariaError
-from app.domain.facturacion import Factura
+from app.domain.facturacion import ConFacturas, Factura
 
 if TYPE_CHECKING:  # pragma: no cover
     from app.domain.atencion import AtencionClinica, Clinica
@@ -82,7 +82,7 @@ class Laboratorio(Base):
         return f"<Laboratorio {self.nombre}>"
 
 
-class OrdenDerivacion(Base):
+class OrdenDerivacion(ConFacturas, Base):
     __tablename__ = "orden_derivacion"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -189,9 +189,6 @@ class OrdenDerivacion(Base):
     def esta_abierta(self) -> bool:
         return self.estado in self._ESTADOS_ABIERTOS
 
-    def tiene_factura_vigente(self) -> bool:
-        return any(f.estado is not EstadoFactura.ANULADA for f in self.facturas)
-
     def facturable(self) -> bool:
         """Completada, con análisis realizados y sin comprobante vigente."""
         return self.estado is EstadoOrden.COMPLETADA and not self.tiene_factura_vigente() and bool(self.resultados())
@@ -204,9 +201,7 @@ class OrdenDerivacion(Base):
         (no se cobra lo rechazado por fallas de transporte)."""
         if self.estado is not EstadoOrden.COMPLETADA:
             raise VeterinariaError("Solo se facturan órdenes completadas.")
-        if self.tiene_factura_vigente():
-            vigente = next(f for f in self.facturas if f.estado is not EstadoFactura.ANULADA)
-            raise VeterinariaError(f"Esta orden ya fue facturada ({vigente.numero}).")
+        self._validar_sin_factura_vigente("Esta orden ya fue facturada")
         resultados = self.resultados()
         if not resultados:
             raise VeterinariaError(

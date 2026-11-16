@@ -1,4 +1,4 @@
-"""Facturación: Factura (comprobante) e ItemFactura."""
+"""Facturación: Factura (comprobante), ItemFactura y ConFacturas (lo que comparten las entidades facturables)."""
 from __future__ import annotations
 
 from datetime import datetime
@@ -17,6 +17,26 @@ if TYPE_CHECKING:  # pragma: no cover
     from app.domain.atencion import AtencionClinica, Clinica, DerivacionCirugia
     from app.domain.laboratorio import OrdenDerivacion, TipoAnalisis
     from app.domain.personas import Titular
+
+
+class ConFacturas:
+    """Comportamiento común de lo que se factura (atención, orden de derivación y cirugía).
+
+    La clase que lo usa debe tener la relación ``facturas``. Una factura anulada no cuenta:
+    después de anularla se puede volver a facturar.
+    """
+
+    def factura_vigente(self) -> "Factura | None":
+        return next((f for f in self.facturas if f.estado is not EstadoFactura.ANULADA), None)
+
+    def tiene_factura_vigente(self) -> bool:
+        return self.factura_vigente() is not None
+
+    def _validar_sin_factura_vigente(self, mensaje: str) -> None:
+        """Impide facturar dos veces: ``mensaje`` describe qué ya fue facturado."""
+        vigente = self.factura_vigente()
+        if vigente is not None:
+            raise VeterinariaError(f"{mensaje} ({vigente.numero}).")
 
 
 class Factura(Base):

@@ -15,13 +15,13 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.domain import reloj, validaciones
 from app.domain.base import Base, Dinero, EnumCol, a_decimal
 from app.domain.enums import (
-    EstadoAtencion, EstadoDerivacionCirugia, EstadoFactura, Prioridad, RiesgoAnestesico,
+    EstadoAtencion, EstadoDerivacionCirugia, Prioridad, RiesgoAnestesico,
     TipoAtencion, TipoComprobante,
 )
 from app.domain.excepciones import (
     AtencionNoModificableError, DatosInvalidosError, DerivacionCirugiaError, TurnoSuperpuestoError, VacunasPendientesError, VeterinariaError,
 )
-from app.domain.facturacion import Factura
+from app.domain.facturacion import ConFacturas, Factura
 from app.domain.personas import HistoriaClinica, Vacuna, _en_periodo
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -89,7 +89,7 @@ class Profesional(Base):
         return f"<Profesional {self.legajo} {self.nombre_completo()}>"
 
 
-class AtencionClinica(Base):
+class AtencionClinica(ConFacturas, Base):
     """La atención en estado RESERVADA funciona como turno de la agenda."""
 
     __tablename__ = "atencion_clinica"
@@ -330,7 +330,7 @@ class AtencionClinica(Base):
             raise VeterinariaError("Solo se facturan atenciones finalizadas.")
         if self.importe is None or self.importe <= 0:
             raise VeterinariaError("La atención no tiene importe para facturar.")
-        _validar_sin_factura_vigente(self.facturas, "Esta atención ya fue facturada")
+        self._validar_sin_factura_vigente("Esta atención ya fue facturada")
         factura = Factura(tipo=TipoComprobante.ATENCION_CLINICA, titular=self.titular, clinica=self.clinica,
                           numero=numero, atencion=self)
         factura.agregar_item(f"{self.tipo.etiqueta} – {self.mascota.nombre} "
@@ -359,12 +359,6 @@ class AtencionClinica(Base):
     def transiciones_posibles(self) -> set[EstadoAtencion]:
         return set(self._TRANSICIONES[self.estado])
 
-    def tiene_factura_vigente(self) -> bool:
-        return self.factura_vigente() is not None
-
-    def factura_vigente(self) -> "Factura | None":
-        return next((f for f in self.facturas if f.estado is not EstadoFactura.ANULADA), None)
-
     def esta_finalizada(self) -> bool:
         return self.estado is EstadoAtencion.FINALIZADA
 
@@ -391,7 +385,7 @@ class AtencionClinica(Base):
         return f"<AtencionClinica {self.id} {self.tipo.value} {self.estado.value}>"
 
 
-class DerivacionCirugia(Base):
+class DerivacionCirugia(ConFacturas, Base):
     """Proceso opcional: derivación a una clínica de alta complejidad de la red."""
 
     __tablename__ = "derivacion_cirugia"
@@ -525,7 +519,7 @@ class DerivacionCirugia(Base):
         importe = a_decimal(importe)
         if importe <= 0:
             raise VeterinariaError("Hay que ingresar el importe de la cirugía.")
-        _validar_sin_factura_vigente(self.facturas, "Esta cirugía ya fue facturada")
+        self._validar_sin_factura_vigente("Esta cirugía ya fue facturada")
         factura = Factura(tipo=TipoComprobante.CIRUGIA, titular=self.atencion.titular, clinica=self.destino,
                           numero=numero, derivacion=self)
         factura.agregar_item(f"Cirugía: {self.tipo_cirugia} – {self.mascota.nombre}", 1, importe)
@@ -544,9 +538,6 @@ class DerivacionCirugia(Base):
     def admite_consentimiento(self) -> bool:
         return self.estado in self._ESTADOS_QUE_ADMITEN_CONSENTIMIENTO and not self.consentimiento_firmado
 
-    def tiene_factura_vigente(self) -> bool:
-        return any(f.estado is not EstadoFactura.ANULADA for f in self.facturas)
-
     def esta_realizada(self) -> bool:
         return self.estado is EstadoDerivacionCirugia.REALIZADA
 
@@ -556,9 +547,3 @@ class DerivacionCirugia(Base):
                 f"La derivación {self.numero or ''} está {self.estado.etiqueta.lower()}: "
                 f"no puede pasar a {nuevo.etiqueta.lower()}."
             )
-
-
-def _validar_sin_factura_vigente(facturas: list[Factura], mensaje: str) -> None:
-    vigentes = [f for f in facturas if f.estado is not EstadoFactura.ANULADA]
-    if vigentes:
-        raise VeterinariaError(f"{mensaje} ({vigentes[0].numero}).")
