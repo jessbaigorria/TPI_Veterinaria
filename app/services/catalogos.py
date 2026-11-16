@@ -7,8 +7,8 @@ from decimal import Decimal
 
 from sqlalchemy import select
 
-from app.domain.atencion import Clinica, Profesional
 from app.domain.base import a_decimal
+from app.domain.clinica import Clinica, Profesional
 from app.domain.enums import Especie, TipoMuestra
 from app.domain.excepciones import DatosInvalidosError, VeterinariaError
 from app.domain.laboratorio import Laboratorio, TipoAnalisis

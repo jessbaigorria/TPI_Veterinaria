@@ -4,7 +4,7 @@ from __future__ import annotations
 from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session, aliased
 
-from app.domain.atencion import Clinica
+from app.domain.clinica import Clinica
 from app.domain.estados.estado_muestra import Analizada, Recibida
 from app.domain.laboratorio import (
     HistorialEstadoMuestraFila, MuestraBiologica, OrdenDerivacion, TipoAnalisis, orden_analisis,

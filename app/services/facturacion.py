@@ -5,7 +5,8 @@ from dataclasses import dataclass
 
 from sqlalchemy import select
 
-from app.domain.atencion import AtencionClinica, DerivacionCirugia
+from app.domain.atencion import AtencionClinica
+from app.domain.cirugia import DerivacionCirugia
 from app.domain.enums import EstadoAtencion, EstadoDerivacionCirugia, EstadoOrden, FormaPago
 from app.domain.facturacion import Factura
 from app.domain.laboratorio import OrdenDerivacion

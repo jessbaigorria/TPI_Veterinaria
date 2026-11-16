@@ -5,7 +5,8 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from app.domain import reloj
-from app.domain.atencion import AtencionClinica, Clinica, Profesional
+from app.domain.atencion import AtencionClinica
+from app.domain.clinica import Clinica, Profesional
 from app.domain.enums import Especie, Prioridad, Sexo, TipoAtencion, TipoMuestra
 from app.domain.laboratorio import Laboratorio, TipoAnalisis
 from app.domain.personas import Mascota, Titular, Vacuna

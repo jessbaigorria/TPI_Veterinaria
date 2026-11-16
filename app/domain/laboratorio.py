@@ -20,7 +20,8 @@ from app.domain.excepciones import TransicionInvalidaError, VeterinariaError
 from app.domain.facturacion import ConFacturas, Factura
 
 if TYPE_CHECKING:  # pragma: no cover
-    from app.domain.atencion import AtencionClinica, Clinica
+    from app.domain.atencion import AtencionClinica
+    from app.domain.clinica import Clinica
     from app.domain.observadores.observadores_muestra import ObservadorMuestra
     from app.domain.transporte import RecepcionRemito, RemitoBiologico
 

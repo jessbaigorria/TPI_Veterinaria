@@ -9,7 +9,7 @@ from sqlalchemy import select
 
 from app import db
 from app.domain import reloj
-from app.domain.atencion import Clinica
+from app.domain.clinica import Clinica
 from app.domain.laboratorio import Laboratorio
 from app.seed import sembrar
 

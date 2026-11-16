@@ -6,8 +6,8 @@ from decimal import Decimal
 from sqlalchemy import case, func, select, type_coerce
 from sqlalchemy.orm import Session
 
-from app.domain.atencion import Clinica
 from app.domain.base import Dinero
+from app.domain.clinica import Clinica
 from app.domain.enums import EstadoFactura, TipoComprobante
 from app.domain.facturacion import Factura, ItemFactura
 from app.domain.laboratorio import TipoAnalisis

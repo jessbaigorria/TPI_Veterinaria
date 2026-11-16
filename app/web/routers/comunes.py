@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.db import obtener_sesion
-from app.domain.atencion import Clinica
+from app.domain.clinica import Clinica
 from app.domain.excepciones import VeterinariaError
 from app.domain.laboratorio import Laboratorio
 from app.services.catalogos import CatalogosService

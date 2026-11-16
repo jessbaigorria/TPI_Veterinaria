@@ -4,7 +4,9 @@ from __future__ import annotations
 from sqlalchemy import case, exists, func, select
 from sqlalchemy.orm import Session
 
-from app.domain.atencion import AtencionClinica, Clinica, DerivacionCirugia
+from app.domain.atencion import AtencionClinica
+from app.domain.cirugia import DerivacionCirugia
+from app.domain.clinica import Clinica
 from app.domain.enums import EstadoAtencion, TipoAtencion
 from app.domain.laboratorio import OrdenDerivacion
 from app.reportes.comun import PALETA, Filtro, Grafico, Reporte, Tabla, porcentaje

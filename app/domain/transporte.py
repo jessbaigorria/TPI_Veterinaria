@@ -14,7 +14,7 @@ from app.domain.estados.estado_remito import EstadoRemito, RemitoArmado
 from app.domain.excepciones import TransicionInvalidaError, VeterinariaError
 
 if TYPE_CHECKING:  # pragma: no cover
-    from app.domain.atencion import Clinica
+    from app.domain.clinica import Clinica
     from app.domain.laboratorio import Laboratorio, MuestraBiologica
 
 

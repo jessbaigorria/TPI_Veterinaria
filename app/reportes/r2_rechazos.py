@@ -4,7 +4,7 @@ from __future__ import annotations
 from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
-from app.domain.atencion import Clinica
+from app.domain.clinica import Clinica
 from app.domain.enums import EstadoPrecinto, ResultadoRecepcion
 from app.domain.laboratorio import MuestraBiologica
 from app.domain.transporte import Envio, RecepcionRemito, RemitoBiologico

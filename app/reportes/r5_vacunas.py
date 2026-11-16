@@ -5,7 +5,8 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.domain import reloj
-from app.domain.atencion import AtencionClinica, Clinica
+from app.domain.atencion import AtencionClinica
+from app.domain.clinica import Clinica
 from app.domain.enums import EstadoAtencion, Especie
 from app.domain.personas import HistoriaClinica, Mascota, Titular, Vacuna
 from app.reportes.comun import PALETA, Filtro, Grafico, Reporte, Tabla

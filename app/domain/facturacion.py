@@ -14,7 +14,9 @@ from app.domain.enums import EstadoFactura, FormaPago, TipoComprobante
 from app.domain.excepciones import VeterinariaError
 
 if TYPE_CHECKING:  # pragma: no cover
-    from app.domain.atencion import AtencionClinica, Clinica, DerivacionCirugia
+    from app.domain.atencion import AtencionClinica
+    from app.domain.cirugia import DerivacionCirugia
+    from app.domain.clinica import Clinica
     from app.domain.laboratorio import OrdenDerivacion, TipoAnalisis
     from app.domain.personas import Titular
 

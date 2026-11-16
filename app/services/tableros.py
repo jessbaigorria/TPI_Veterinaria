@@ -7,7 +7,8 @@ from datetime import datetime, time, timedelta
 from sqlalchemy import func, or_, select
 
 from app.domain import reloj
-from app.domain.atencion import AtencionClinica, DerivacionCirugia
+from app.domain.atencion import AtencionClinica
+from app.domain.cirugia import DerivacionCirugia
 from app.domain.enums import EstadoAtencion, EstadoDerivacionCirugia
 from app.domain.estados.estado_muestra import Analizada, Extraida, Recibida, Rechazada
 from app.domain.estados.estado_remito import RemitoArmado, RemitoDespachado, RemitoEnTransito

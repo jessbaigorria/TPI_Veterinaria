@@ -10,7 +10,8 @@ from datetime import date, datetime, timedelta
 from sqlalchemy import select
 
 from app.domain import reloj
-from app.domain.atencion import AtencionClinica, Clinica, Profesional
+from app.domain.atencion import AtencionClinica
+from app.domain.clinica import Clinica, Profesional
 from app.domain.enums import EstadoAtencion, TipoAtencion
 from app.domain.excepciones import DatosInvalidosError, VeterinariaError
 from app.domain.personas import AplicacionVacuna, Mascota, Vacuna

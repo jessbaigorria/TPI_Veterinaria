@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import Boolean, Date, Float, ForeignKey, Integer, String, Text, select
@@ -14,7 +14,8 @@ from app.domain.enums import Especie, Sexo
 from app.domain.excepciones import MascotaSinTitularError, VeterinariaError
 
 if TYPE_CHECKING:  # pragma: no cover
-    from app.domain.atencion import AtencionClinica, DerivacionCirugia
+    from app.domain.atencion import AtencionClinica
+    from app.domain.cirugia import DerivacionCirugia
     from app.domain.facturacion import Factura
     from app.domain.laboratorio import OrdenDerivacion, ResultadoAnalisis
 
@@ -266,7 +267,7 @@ class HistoriaClinica(Base):
         return [d.vacuna for d in self.detalle_vacunas_pendientes(fecha, catalogo)]
 
     def atenciones_en_periodo(self, desde, hasta) -> list["AtencionClinica"]:
-        return [a for a in self.atenciones if _en_periodo(a.fecha_hora_inicio, desde, hasta)]
+        return [a for a in self.atenciones if reloj.en_periodo(a.fecha_hora_inicio, desde, hasta)]
 
     def ultima_atencion(self) -> "AtencionClinica | None":
         validas = [a for a in self.atenciones if a.esta_realizada()]
@@ -318,16 +319,3 @@ class HistoriaClinica(Base):
     def ultima_aplicacion(self, v: Vacuna) -> AplicacionVacuna | None:
         apps = [a for a in self.aplicaciones if a.vacuna is v]
         return max(apps, key=lambda a: a.fecha_aplicacion) if apps else None
-
-
-def _a_fecha(valor):
-    return valor.date() if isinstance(valor, datetime) else valor
-
-
-def _en_periodo(momento, desde, hasta) -> bool:
-    d = _a_fecha(momento)
-    if desde is not None and d < _a_fecha(desde):
-        return False
-    if hasta is not None and d > _a_fecha(hasta):
-        return False
-    return True

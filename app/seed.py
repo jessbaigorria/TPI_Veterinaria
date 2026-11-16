@@ -16,7 +16,8 @@ from sqlalchemy.orm import Session
 
 from app import db
 from app.domain import reloj
-from app.domain.atencion import AtencionClinica, Clinica, Profesional
+from app.domain.atencion import AtencionClinica
+from app.domain.clinica import Clinica, Profesional
 from app.domain.enums import FormaPago, Prioridad, RiesgoAnestesico, TipoAtencion
 from app.domain.personas import Titular
 from app.services.atenciones import AtencionesService

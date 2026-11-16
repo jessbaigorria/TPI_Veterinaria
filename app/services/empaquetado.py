@@ -4,7 +4,8 @@ from __future__ import annotations
 from sqlalchemy import select
 
 from app.domain import validaciones
-from app.domain.atencion import AtencionClinica, Clinica
+from app.domain.atencion import AtencionClinica
+from app.domain.clinica import Clinica
 from app.domain.enums import EstadoContenedor
 from app.domain.estados.estado_muestra import Extraida
 from app.domain.estados.estado_remito import RemitoArmado

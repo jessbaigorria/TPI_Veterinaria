@@ -9,7 +9,9 @@ from sqlalchemy import select
 
 from app import db
 from app.domain import reloj
-from app.domain.atencion import AtencionClinica, Clinica, DerivacionCirugia, Profesional
+from app.domain.atencion import AtencionClinica
+from app.domain.cirugia import DerivacionCirugia
+from app.domain.clinica import Clinica, Profesional
 from app.domain.enums import EstadoOrden
 from app.domain.laboratorio import Laboratorio, MuestraBiologica, OrdenDerivacion, TipoAnalisis
 from app.domain.personas import Mascota, Vacuna

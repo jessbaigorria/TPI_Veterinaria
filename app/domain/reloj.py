@@ -45,6 +45,20 @@ def esta_fijo() -> bool:
     return _fijo is not None
 
 
+def en_periodo(momento: date | datetime, desde: date | datetime | None, hasta: date | datetime | None) -> bool:
+    """True si el día de ``momento`` cae entre ``desde`` y ``hasta`` (ambos inclusive; ``None`` = sin límite)."""
+    dia = _solo_fecha(momento)
+    if desde is not None and dia < _solo_fecha(desde):
+        return False
+    if hasta is not None and dia > _solo_fecha(hasta):
+        return False
+    return True
+
+
+def _solo_fecha(valor: date | datetime) -> date:
+    return valor.date() if isinstance(valor, datetime) else valor
+
+
 @contextmanager
 def fijado(momento: datetime):
     """Context manager: fija el reloj y lo restaura al salir."""
