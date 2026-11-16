@@ -9,13 +9,22 @@ from app.domain.cirugia import DerivacionCirugia
 from app.domain.clinica import Clinica
 from app.domain.enums import EstadoAtencion, TipoAtencion
 from app.domain.laboratorio import OrdenDerivacion
-from app.reportes.comun import PALETA, Filtro, Grafico, Reporte, Tabla, porcentaje
+from app.reportes.comun import PALETA, Filtro, Grafico, Reporte, Tabla, porcentaje, serie
 
 REALIZADAS = (EstadoAtencion.EN_PROGRESO, EstadoAtencion.FINALIZADA)
 N = len(TipoAtencion)  # columnas por tipo de atención
+DESCRIPCION = ("Atenciones realizadas (en progreso o finalizadas) por clínica y mes, según tipo, y cuántas "
+               "generaron una orden de laboratorio o una derivación a cirugía.")
 
 
 def generar(s: Session, filtro: Filtro) -> Reporte:
+    tabla, totales = _tabla(_consultar(s, filtro))
+    return Reporte("atenciones", "Atenciones y derivaciones", DESCRIPCION, filtro, [tabla], _graficos(tabla),
+                   _indicadores(totales))
+
+
+def _consultar(s: Session, filtro: Filtro):
+    """Una fila por clínica y mes: cantidad por tipo, total y cuántas derivaron (laboratorio/cirugía)."""
     mes = func.strftime("%Y-%m", AtencionClinica.fecha_hora_inicio).label("mes")
     tiene_orden = exists().where(OrdenDerivacion.atencion_id == AtencionClinica.id)
     tiene_cirugia = exists().where(DerivacionCirugia.atencion_id == AtencionClinica.id)
@@ -29,14 +38,15 @@ def generar(s: Session, filtro: Filtro) -> Reporte:
         .where(filtro.en_rango(AtencionClinica.fecha_hora_inicio), AtencionClinica.estado.in_(REALIZADAS))
         .group_by(Clinica.nombre, mes).order_by(mes, Clinica.nombre)
     )
-    if filtro.clinica_id:
-        stmt = stmt.where(AtencionClinica.clinica_id == filtro.clinica_id)
-    filas_db = s.execute(stmt).all()
+    return s.execute(filtro.aplicar(stmt, clinica=AtencionClinica.clinica_id)).all()
 
+
+def _tabla(filas_db) -> tuple[Tabla, list[int]]:
+    """Devuelve la tabla y los totales acumulados [por tipo…, total, con orden, con cirugía, derivadas]."""
     tabla = Tabla("Atenciones por clínica y mes",
                   ["Clínica", "Mes", *[t.etiqueta for t in TipoAtencion], "Total", "Con orden de laboratorio",
                    "Derivadas a cirugía", "% derivación"])
-    totales = [0] * (len(TipoAtencion) + 4)
+    totales = [0] * (N + 4)
     for f in filas_db:
         cuenta_tipos = [int(getattr(f, t.value) or 0) for t in TipoAtencion]
         valores = [*cuenta_tipos, f.total, int(f.con_orden or 0), int(f.con_cirugia or 0), int(f.derivadas or 0)]
@@ -44,24 +54,27 @@ def generar(s: Session, filtro: Filtro) -> Reporte:
         tabla.filas.append([f.nombre, _mes(f.mes), *valores[:-1], porcentaje(f.derivadas, f.total)])
     if tabla.filas:
         tabla.totales = ["Total", "", *totales[:-1], porcentaje(totales[-1], totales[N])]
+    return tabla, totales
 
+
+def _graficos(tabla: Tabla) -> list[Grafico]:
     etiquetas = [f"{f[0]} · {f[1]}" for f in tabla.filas]
-    grafico = Grafico("Atenciones por tipo (barras apiladas por clínica y mes)", "bar", etiquetas,
-                      [{"label": t.etiqueta, "data": [fila[2 + i] for fila in tabla.filas],
-                        "backgroundColor": PALETA[i]} for i, t in enumerate(TipoAtencion)], apilado=True)
-    derivaciones = Grafico("Derivaciones generadas", "bar", etiquetas, [
-        {"label": "Con orden de laboratorio", "data": [fila[N + 3] for fila in tabla.filas], "backgroundColor": PALETA[3]},
-        {"label": "Derivadas a cirugía", "data": [fila[N + 4] for fila in tabla.filas], "backgroundColor": PALETA[4]},
-    ])
+    por_tipo = [serie(t.etiqueta, tabla.columna(2 + i), PALETA[i]) for i, t in enumerate(TipoAtencion)]
+    return [
+        Grafico("Atenciones por tipo (barras apiladas por clínica y mes)", "bar", etiquetas, por_tipo, apilado=True),
+        Grafico("Derivaciones generadas", "bar", etiquetas, [
+            serie("Con orden de laboratorio", tabla.columna(N + 3), PALETA[3]),
+            serie("Derivadas a cirugía", tabla.columna(N + 4), PALETA[4]),
+        ]),
+    ]
+
+
+def _indicadores(totales: list[int]) -> list[tuple[str, str]]:
     total = totales[N]
-    indicadores = [("Atenciones realizadas", str(total)),
-                   ("Con orden de laboratorio", str(totales[N + 1])),
-                   ("Derivadas a cirugía", str(totales[N + 2])),
-                   ("% derivación", f"{porcentaje(totales[N + 3], total)} %")]
-    return Reporte("atenciones", "Atenciones y derivaciones",
-                   "Atenciones realizadas (en progreso o finalizadas) por clínica y mes, según tipo, y cuántas "
-                   "generaron una orden de laboratorio o una derivación a cirugía.",
-                   filtro, [tabla], [grafico, derivaciones], indicadores)
+    return [("Atenciones realizadas", str(total)),
+            ("Con orden de laboratorio", str(totales[N + 1])),
+            ("Derivadas a cirugía", str(totales[N + 2])),
+            ("% derivación", f"{porcentaje(totales[N + 3], total)} %")]
 
 
 def _mes(aaaa_mm: str) -> str:

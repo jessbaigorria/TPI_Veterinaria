@@ -37,6 +37,15 @@ class Filtro:
     def en_rango(self, columna):
         return (columna >= self.inicio) & (columna < self.fin)
 
+    def aplicar(self, stmt, clinica=None, laboratorio=None):
+        """Agrega al SELECT los filtros opcionales de clínica y de laboratorio, comparando contra las
+        columnas indicadas (cada reporte sabe qué columna representa la clínica o el laboratorio)."""
+        if clinica is not None and self.clinica_id:
+            stmt = stmt.where(clinica == self.clinica_id)
+        if laboratorio is not None and self.laboratorio_id:
+            stmt = stmt.where(laboratorio == self.laboratorio_id)
+        return stmt
+
 
 @dataclass
 class Tabla:
@@ -44,6 +53,10 @@ class Tabla:
     columnas: list[str]
     filas: list[list] = field(default_factory=list)
     totales: list | None = None
+
+    def columna(self, indice: int) -> list:
+        """Valores de una columna (para armar los gráficos a partir de la tabla)."""
+        return [fila[indice] for fila in self.filas]
 
 
 @dataclass
@@ -83,6 +96,11 @@ class Reporte:
         return all(not t.filas for t in self.tablas)
 
 
+def serie(etiqueta: str, datos: list, color) -> dict:
+    """Serie de un gráfico de Chart.js (``color`` puede ser uno o una lista, uno por barra/porción)."""
+    return {"label": etiqueta, "data": datos, "backgroundColor": color}
+
+
 def horas(expr_fin, expr_inicio):
     """Diferencia en horas entre dos columnas DateTime (SQLite: julianday)."""
     return (func.julianday(expr_fin) - func.julianday(expr_inicio)) * 24.0
@@ -98,7 +116,8 @@ def a_csv(reporte: Reporte) -> str:
     salida.write("﻿")
     w = csv.writer(salida, delimiter=";", lineterminator="\n")
     w.writerow([reporte.titulo])
-    w.writerow([f"Desde: {_csv_valor(reporte.filtro.desde) or '-'}", f"Hasta: {_csv_valor(reporte.filtro.hasta) or '-'}"])
+    w.writerow([f"Desde: {_csv_valor(reporte.filtro.desde) or '-'}",
+                f"Hasta: {_csv_valor(reporte.filtro.hasta) or '-'}"])
     for tabla in reporte.tablas:
         w.writerow([])
         w.writerow([tabla.titulo])
