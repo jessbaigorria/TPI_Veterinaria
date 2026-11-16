@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from app import reportes
 from app.domain import reloj
 from app.domain.cirugia import DerivacionCirugia
-from app.domain.laboratorio import HistorialEstadoMuestraFila, MuestraBiologica
+from app.domain.muestra import HistorialEstadoMuestraFila, MuestraBiologica
 from app.domain.transporte import RecepcionRemito, RemitoBiologico
 from app.reportes import Filtro
 from app.seed import sembrar

@@ -13,7 +13,8 @@ from app.domain.atencion import AtencionClinica
 from app.domain.cirugia import DerivacionCirugia
 from app.domain.clinica import Clinica, Profesional
 from app.domain.enums import EstadoOrden
-from app.domain.laboratorio import Laboratorio, MuestraBiologica, OrdenDerivacion, TipoAnalisis
+from app.domain.laboratorio import Laboratorio, OrdenDerivacion, TipoAnalisis
+from app.domain.muestra import MuestraBiologica
 from app.domain.personas import Mascota, Vacuna
 from app.domain.transporte import Contenedor, RemitoBiologico
 from app.seed import sembrar

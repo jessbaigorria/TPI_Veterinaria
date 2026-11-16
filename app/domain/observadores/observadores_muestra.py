@@ -18,7 +18,7 @@ from app.domain import reloj
 
 if TYPE_CHECKING:  # pragma: no cover
     from app.domain.estados.estado_muestra import EstadoMuestra
-    from app.domain.laboratorio import HistorialEstadoMuestraFila, MuestraBiologica
+    from app.domain.muestra import HistorialEstadoMuestraFila, MuestraBiologica
 
 
 class RepositorioHistorial(Protocol):
@@ -45,7 +45,7 @@ class RegistroHistorial(ObservadorMuestra):
         self._repositorio = repositorio
 
     def actualizar(self, muestra, anterior, nuevo, motivo, usuario):
-        from app.domain.laboratorio import HistorialEstadoMuestraFila
+        from app.domain.muestra import HistorialEstadoMuestraFila
 
         fila = HistorialEstadoMuestraFila(
             muestra=muestra,

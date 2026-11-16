@@ -10,7 +10,8 @@ from app.domain.enums import EstadoContenedor
 from app.domain.estados.estado_muestra import Extraida
 from app.domain.estados.estado_remito import RemitoArmado
 from app.domain.excepciones import VeterinariaError
-from app.domain.laboratorio import Laboratorio, MuestraBiologica, OrdenDerivacion
+from app.domain.laboratorio import Laboratorio, OrdenDerivacion
+from app.domain.muestra import MuestraBiologica
 from app.domain.transporte import Contenedor, Precinto, RemitoBiologico
 from app.repositories.numerador import Numerador
 from app.services.base import ServicioBase, a_float, texto, transaccional

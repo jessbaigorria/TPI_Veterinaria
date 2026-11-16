@@ -12,7 +12,8 @@ from app.domain.cirugia import DerivacionCirugia
 from app.domain.enums import EstadoAtencion, EstadoDerivacionCirugia
 from app.domain.estados.estado_muestra import Analizada, Extraida, Recibida, Rechazada
 from app.domain.estados.estado_remito import RemitoArmado, RemitoDespachado, RemitoEnTransito
-from app.domain.laboratorio import HistorialEstadoMuestraFila, MuestraBiologica, OrdenDerivacion, ResultadoAnalisis
+from app.domain.laboratorio import OrdenDerivacion
+from app.domain.muestra import HistorialEstadoMuestraFila, MuestraBiologica, ResultadoAnalisis
 from app.domain.transporte import Envio, RemitoBiologico
 from app.reportes.comun import horas
 from app.services.base import ServicioBase

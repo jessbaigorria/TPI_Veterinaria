@@ -3,7 +3,7 @@ import pytest
 from sqlalchemy import select
 
 from app.domain import reloj
-from app.domain.laboratorio import MuestraBiologica
+from app.domain.muestra import MuestraBiologica
 from app.domain.transporte import RemitoBiologico
 from tests.web_util import aviso_rojo, crear_entorno, login_clinica, login_lab, post, texto_visible, uno
 

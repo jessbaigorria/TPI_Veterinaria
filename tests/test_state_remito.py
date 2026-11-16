@@ -9,7 +9,7 @@ from app.domain.estados.estado_remito import (
 from app.domain.excepciones import (
     MuestraRechazadaError, TransicionInvalidaError, VeterinariaError,
 )
-from app.domain.laboratorio import ResultadoAnalisis
+from app.domain.muestra import ResultadoAnalisis
 from app.domain.transporte import Precinto
 
 

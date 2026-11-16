@@ -12,7 +12,8 @@ from app.domain.atencion import AtencionClinica
 from app.domain.cirugia import DerivacionCirugia
 from app.domain.clinica import Clinica
 from app.domain.facturacion import Factura
-from app.domain.laboratorio import Laboratorio, MuestraBiologica, OrdenDerivacion
+from app.domain.laboratorio import Laboratorio, OrdenDerivacion
+from app.domain.muestra import MuestraBiologica
 from app.domain.personas import Mascota, Titular
 from app.domain.transporte import RecepcionRemito, RemitoBiologico
 from app.seed import sembrar

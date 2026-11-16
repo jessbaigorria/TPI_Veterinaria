@@ -5,7 +5,8 @@ from sqlalchemy import select
 
 from app.domain.atencion import AtencionClinica
 from app.domain.enums import EstadoOrden, Prioridad, TipoMuestra
-from app.domain.laboratorio import Laboratorio, MuestraBiologica, OrdenDerivacion, TipoAnalisis
+from app.domain.laboratorio import Laboratorio, OrdenDerivacion, TipoAnalisis
+from app.domain.muestra import MuestraBiologica
 from app.repositories.numerador import Numerador
 from app.services.base import ServicioBase, a_float, texto, transaccional
 

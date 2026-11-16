@@ -1,6 +1,6 @@
 """Patrón Observer: historial + actualización automática de la orden."""
 from app.domain.enums import EstadoOrden
-from app.domain.laboratorio import ResultadoAnalisis
+from app.domain.muestra import ResultadoAnalisis
 from app.domain.observadores.observadores_muestra import (
     ActualizadorEstadoOrden, ObservadorMuestra, RegistroHistorial,
 )

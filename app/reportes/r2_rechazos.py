@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.domain.clinica import Clinica
 from app.domain.enums import EstadoPrecinto, ResultadoRecepcion
-from app.domain.laboratorio import MuestraBiologica
+from app.domain.muestra import MuestraBiologica
 from app.domain.transporte import Envio, RecepcionRemito, RemitoBiologico
 from app.reportes.comun import PALETA, Filtro, Grafico, Reporte, Tabla, porcentaje
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 from sqlalchemy import event
 from sqlalchemy.orm import Session
 
-from app.domain.laboratorio import MuestraBiologica
+from app.domain.muestra import MuestraBiologica
 from app.domain.observadores.observadores_muestra import ActualizadorEstadoOrden, RegistroHistorial
 from app.repositories.historial import HistorialRepository
 

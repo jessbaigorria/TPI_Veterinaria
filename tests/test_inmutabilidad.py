@@ -4,7 +4,7 @@ from sqlalchemy import delete, text, update
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import attributes
 
-from app.domain.laboratorio import HistorialEstadoMuestraFila
+from app.domain.muestra import HistorialEstadoMuestraFila
 from app.repositories.historial import HistorialInmutableError, HistorialRepository
 
 

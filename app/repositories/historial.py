@@ -9,7 +9,7 @@ from sqlalchemy import event, select
 from sqlalchemy.orm import Session, object_session
 
 from app.domain.excepciones import VeterinariaError
-from app.domain.laboratorio import HistorialEstadoMuestra, HistorialEstadoMuestraFila
+from app.domain.muestra import HistorialEstadoMuestra, HistorialEstadoMuestraFila
 
 
 class HistorialInmutableError(VeterinariaError):

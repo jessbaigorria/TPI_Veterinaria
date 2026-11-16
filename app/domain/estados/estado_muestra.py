@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 from app.domain.excepciones import MuestraRechazadaError, TransicionInvalidaError, VeterinariaError
 
 if TYPE_CHECKING:  # pragma: no cover
-    from app.domain.laboratorio import MuestraBiologica, ResultadoAnalisis
+    from app.domain.muestra import MuestraBiologica, ResultadoAnalisis
     from app.domain.transporte import RemitoBiologico
 
 

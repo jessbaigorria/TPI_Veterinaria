@@ -6,9 +6,8 @@ from sqlalchemy.orm import Session, aliased
 
 from app.domain.clinica import Clinica
 from app.domain.estados.estado_muestra import Analizada, Recibida
-from app.domain.laboratorio import (
-    HistorialEstadoMuestraFila, MuestraBiologica, OrdenDerivacion, TipoAnalisis, orden_analisis,
-)
+from app.domain.laboratorio import OrdenDerivacion, TipoAnalisis, orden_analisis
+from app.domain.muestra import HistorialEstadoMuestraFila, MuestraBiologica
 from app.domain.transporte import Envio, RemitoBiologico
 from app.reportes.comun import PALETA, Filtro, Grafico, Reporte, Tabla, horas
 

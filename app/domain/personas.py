@@ -17,7 +17,8 @@ if TYPE_CHECKING:  # pragma: no cover
     from app.domain.atencion import AtencionClinica
     from app.domain.cirugia import DerivacionCirugia
     from app.domain.facturacion import Factura
-    from app.domain.laboratorio import OrdenDerivacion, ResultadoAnalisis
+    from app.domain.laboratorio import OrdenDerivacion
+    from app.domain.muestra import ResultadoAnalisis
 
 
 class Titular(Base):

@@ -5,7 +5,7 @@ from app.domain.estados.estado_muestra import (
     Analizada, Empaquetada, EnTransito, EstadoMuestra, Extraida, Recibida, Rechazada,
 )
 from app.domain.excepciones import MuestraRechazadaError, TransicionInvalidaError
-from app.domain.laboratorio import ResultadoAnalisis
+from app.domain.muestra import ResultadoAnalisis
 
 
 def _resultados(m, mundo):

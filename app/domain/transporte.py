@@ -15,7 +15,8 @@ from app.domain.excepciones import TransicionInvalidaError, VeterinariaError
 
 if TYPE_CHECKING:  # pragma: no cover
     from app.domain.clinica import Clinica
-    from app.domain.laboratorio import Laboratorio, MuestraBiologica
+    from app.domain.laboratorio import Laboratorio
+    from app.domain.muestra import MuestraBiologica
 
 
 class Contenedor(Base):

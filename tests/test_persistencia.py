@@ -1,7 +1,7 @@
 """Persistencia del State (string + @orm.reconstructor) y del Observer al recargar."""
 from app.domain.estados.estado_muestra import EnTransito
 from app.domain.estados.estado_remito import RemitoEnTransito
-from app.domain.laboratorio import MuestraBiologica
+from app.domain.muestra import MuestraBiologica
 from app.domain.observadores.observadores_muestra import ActualizadorEstadoOrden, RegistroHistorial
 from app.domain.transporte import RemitoBiologico
 from app import db as db_mod

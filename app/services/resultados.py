@@ -7,7 +7,8 @@ from app.domain import validaciones
 from app.domain.atencion import AtencionClinica
 from app.domain.estados.estado_muestra import Recibida
 from app.domain.excepciones import VeterinariaError
-from app.domain.laboratorio import MuestraBiologica, OrdenDerivacion, ResultadoAnalisis, TipoAnalisis
+from app.domain.laboratorio import OrdenDerivacion, TipoAnalisis
+from app.domain.muestra import MuestraBiologica, ResultadoAnalisis
 from app.services.base import ServicioBase, texto, transaccional
 
 
