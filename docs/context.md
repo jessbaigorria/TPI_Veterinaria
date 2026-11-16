@@ -790,8 +790,11 @@ veterinaria/
 │   │   ├── enums.py
 │   │   ├── excepciones.py
 │   │   ├── personas.py           # Titular, Mascota, HistoriaClinica, Vacuna, AplicacionVacuna
-│   │   ├── atencion.py           # Clinica, Profesional, AtencionClinica, DerivacionCirugia
-│   │   ├── laboratorio.py        # OrdenDerivacion, TipoAnalisis, MuestraBiologica, HistorialEstadoMuestra, ResultadoAnalisis, Laboratorio
+│   │   ├── clinica.py            # Clinica, Profesional
+│   │   ├── atencion.py           # AtencionClinica
+│   │   ├── cirugia.py            # DerivacionCirugia
+│   │   ├── laboratorio.py        # Laboratorio, TipoAnalisis, OrdenDerivacion
+│   │   ├── muestra.py            # MuestraBiologica, HistorialEstadoMuestra, ResultadoAnalisis
 │   │   ├── transporte.py         # Contenedor, RemitoBiologico, Precinto, Envio, RecepcionRemito
 │   │   ├── facturacion.py        # Factura, ItemFactura
 │   │   ├── estados/              # PATRÓN STATE
@@ -804,10 +807,10 @@ veterinaria/
 │   │                             #   empaquetado, envios, recepcion, resultados, facturacion, cirugias)
 │   ├── reportes/                 # R1..R5
 │   ├── web/
-│   │   ├── routers/              # portal_clinica.py, portal_laboratorio.py, comunes.py
+│   │   ├── routers/              # portal_clinica/ (un módulo por sección), portal_laboratorio.py, comunes.py
 │   │   ├── templates/            # base.html, clinica/*, laboratorio/*, componentes/*
 │   │   └── static/
-│   └── seed.py                   # datos de prueba
+│   └── seed/                     # datos de prueba
 ├── tests/
 ├── docs/
 │   ├── DECISIONES.md             # desvíos respecto del diagrama y decisiones tomadas
@@ -901,7 +904,7 @@ Cada portal tiene un **color de barra distinto** (clínica: verde azulado; labor
 
 ---
 
-## 11. Datos de prueba (`seed.py`) y escenario de demo
+## 11. Datos de prueba (`app/seed/`) y escenario de demo
 
 El seed debe crear los datos **a través de los servicios del dominio** (no con INSERTs directos), para que el historial de estados quede consistente.
 Para fechar eventos en el pasado, usá un reloj inyectable (`app/domain/reloj.py` con `ahora()` que el seed puede fijar).

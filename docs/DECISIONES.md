@@ -261,3 +261,23 @@ Prioridad aplicada cuando algo chocaba: consigna → diagrama de clases → docu
 | `EstadoRemito` / `RemitoArmado` / `RemitoBiologico` | `registrar_temperatura_despacho(...)` (ronda anterior; ver 2.10). |
 | Paquete de validaciones | Módulo `validaciones` (`nombre_persona`, `dni`, `telefono`, `email`, `obligatorio`); se puede dibujar como utilidad del dominio. |
 | Servicios (no van en el diagrama de clases) | `RecepcionService.recibir(…, recibido_por)`, `ResultadosService.cargar_resultados(…, analista)`, `EmpaquetadoService.cerrar_remito(…, colocado_por)`, `validar_rango_fechas`. |
+
+---
+
+# Refactorización del backend (rama `alvarez`)
+
+Cambios de organización del código **sin cambiar el comportamiento**: las mismas clases y métodos del
+diagrama, las mismas rutas, plantillas y tablas. Se verificó con los tests y comparando, antes y después,
+los datos del seed, los cinco reportes (datos, CSV y PDF), los KPIs y la tabla de rutas.
+
+| # | Cambio | Motivo |
+|---|---|---|
+| R.1 | `domain/atencion.py` se separa en `clinica.py` (`Clinica`, `Profesional`), `atencion.py` (`AtencionClinica`) y `cirugia.py` (`DerivacionCirugia`). | Un archivo por grupo del diagrama (Atención clínica / Derivación a cirugía). |
+| R.2 | `MuestraBiologica`, `HistorialEstadoMuestra` y `ResultadoAnalisis` pasan de `laboratorio.py` a `muestra.py`. | El contexto del State y sujeto del Observer queda aislado. |
+| R.3 | Clase **`ConFacturas`** (`facturacion.py`) con `factura_vigente()`, `tiene_factura_vigente()` y la validación de “ya fue facturada”; la usan `AtencionClinica`, `OrdenDerivacion` y `DerivacionCirugia`. | Era el mismo código en tres clases. Si se quiere reflejar en el diagrama, es una superclase de esas tres. |
+| R.4 | `AtencionClinica.__init__` delega en `_validar_participantes`, `_responsable_presente_validado` y `_validar_disponibilidad` (en el mismo orden que antes); `validar_admite_derivaciones` absorbe al privado equivalente. | Constructor de 42 líneas → 24. |
+| R.5 | `reloj.en_periodo(momento, desde, hasta)` reemplaza a `_en_periodo` de `personas.py`. | Lo usaban dos módulos (era privado). |
+| R.6 | `web/routers/portal_clinica.py` pasa a ser el paquete `portal_clinica/` con un módulo por sección; los helpers de las rutas (`ir`, `formulario`, `Db`, `UsrClinica`, `UsrLaboratorio`) están en `web/routers/_comun.py`. La grilla de la agenda la arma `AtencionesService` (`franjas_agenda`, `grilla_agenda`). | Archivo de 615 líneas con 11 secciones. |
+| R.7 | `app/seed.py` pasa a ser el paquete `app/seed/`: `datos.py` (tablas), `sembrador.py` (operaciones reutilizables) y un módulo por etapa. `python -m app.seed` funciona igual. | Métodos de 60–100 líneas con bloques repetidos. Los datos generados son idénticos. |
+| R.8 | Reportes: cada `generar()` se divide en consulta, tabla, gráficos e indicadores; `Filtro.aplicar(...)` y `serie(...)` en `comun.py`; `pdf.py` en funciones chicas. `r4` usa `moneda()` de `web/formato.py` (daba el mismo texto que su `_pesos()`). | Funciones de 47–68 líneas y filtros repetidos. |
+| R.9 | `TablerosService`: un método por KPI y consultas comunes (`_muestras_en_estado`, `_cambios_a_estado`). `CatalogosService`: un conversor por tipo de campo (`Campo.entero` reemplaza la lista de nombres de campos enteros). | Legibilidad. Se quitó un control de precio negativo que nunca se ejecutaba (la conversión ya lo rechaza, ver X.1). |

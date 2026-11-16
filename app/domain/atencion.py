@@ -214,7 +214,8 @@ class AtencionClinica(ConFacturas, Base):
 
     def finalizar(self, diagnostico: str, peso_registrado: float | None = None,
                   importe=None, observaciones: str | None = None) -> None:
-        """EN_PROGRESO → FINALIZADA. Exige diagnóstico e importe mayor a cero; después la atención no se modifica."""
+        """EN_PROGRESO → FINALIZADA. Exige diagnóstico e importe mayor a cero; después la atención
+        no se modifica."""
         self._validar_transicion(EstadoAtencion.FINALIZADA)
         if not (diagnostico or "").strip():
             raise DatosInvalidosError("Para finalizar la atención hay que cargar el diagnóstico.")

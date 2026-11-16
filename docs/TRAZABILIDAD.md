@@ -59,10 +59,10 @@ Rutas de pantallas relativas a `http://localhost:8000`. Tests en `tests/`.
 
 | Requisito | Dónde | Test |
 |---|---|---|
-| Dos portales sobre los mismos datos | `app/web/routers/portal_clinica.py`, `portal_laboratorio.py`; `base.html` (barra verde azulada / violeta) | `test_web.py`, `test_demo.py` (la clínica despacha y el laboratorio recibe) |
+| Dos portales sobre los mismos datos | `app/web/routers/portal_clinica/` (un módulo por sección), `portal_laboratorio.py`; `base.html` (barra verde azulada / violeta) | `test_web.py`, `test_demo.py` (la clínica despacha y el laboratorio recibe) |
 | Usuario de sesión en toda la auditoría | `app/web/sesion.py` → servicios (`usuario`, `usuario_armador`, `usuario_colocador`, `usuario_receptor`, `analista`) | `test_observer.py::test_cada_cambio_crea_exactamente_un_registro`, `test_persistencia.py::test_muestra_recargada_sigue_registrando_historial` |
 | Manejo global de `VeterinariaError` | `app/main.py::manejar_error_negocio` | `test_web.py::test_error_de_negocio_se_muestra_en_aviso_rojo` |
-| Seed creado a través de los servicios con 60 días de historia | `app/seed.py` + reloj inyectable `app/domain/reloj.py` | `test_seed.py` |
+| Seed creado a través de los servicios con 60 días de historia | `app/seed/` + reloj inyectable `app/domain/reloj.py` | `test_seed.py` |
 
 ## Ronda de correcciones del grupo (documento “Errores y cosas a mejorar”)
 

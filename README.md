@@ -113,14 +113,18 @@ UI (FastAPI + Jinja2)  →  services (casos de uso, transacción)  →  domain (
 app/
 ├── main.py                  # FastAPI, sesión, routers y manejo global de VeterinariaError
 ├── db.py                    # engine, sesión, init_db con triggers de inmutabilidad
-├── seed.py                  # datos de prueba (60 días) creados a través de los servicios
+├── seed/                    # datos de prueba (60 días) creados a través de los servicios:
+│                            # datos.py (tablas), sembrador.py (operaciones) y un módulo por etapa
 ├── domain/
 │   ├── enums.py, excepciones.py, reloj.py (reloj inyectable), base.py
 │   ├── personas.py          # Titular, Mascota, HistoriaClinica, Vacuna, AplicacionVacuna
-│   ├── atencion.py          # Clinica, Profesional, AtencionClinica, DerivacionCirugia
-│   ├── laboratorio.py       # OrdenDerivacion, TipoAnalisis, MuestraBiologica, HistorialEstadoMuestra, ResultadoAnalisis, Laboratorio
+│   ├── clinica.py           # Clinica, Profesional
+│   ├── atencion.py          # AtencionClinica
+│   ├── cirugia.py           # DerivacionCirugia (proceso opcional)
+│   ├── laboratorio.py       # Laboratorio, TipoAnalisis, OrdenDerivacion
+│   ├── muestra.py           # MuestraBiologica, HistorialEstadoMuestra (inmutable), ResultadoAnalisis
 │   ├── transporte.py        # Contenedor, RemitoBiologico, Precinto, Envio, RecepcionRemito
-│   ├── facturacion.py       # Factura, ItemFactura
+│   ├── facturacion.py       # Factura, ItemFactura, ConFacturas (lo común a lo que se factura)
 │   ├── estados/             # PATRÓN STATE (estado_muestra.py, estado_remito.py)
 │   └── observadores/        # PATRÓN OBSERVER (observadores_muestra.py)
 ├── repositories/            # Repositorio genérico, HistorialRepository (solo agregar/listar), Numerador
@@ -128,7 +132,8 @@ app/
 │                            # resultados, facturacion, cirugias, catalogos, tableros (KPIs), fabrica_observadores
 ├── reportes/                # comun.py, pdf.py (exportación con ReportLab) y un módulo por reporte
 └── web/
-    ├── routers/             # comunes.py, portal_clinica.py, portal_laboratorio.py, reportes_web.py
+    ├── routers/             # _comun.py (helpers), comunes.py, portal_laboratorio.py, reportes_web.py y
+    │                        # portal_clinica/ (un módulo por sección: agenda, atenciones, clientes, …)
     ├── templates/           # base.html, clinica/*, laboratorio/*, componentes/* (badges, línea de tiempo, reporte)
     └── static/              # estilos.css, app.js
 tests/                       # pytest
@@ -150,7 +155,7 @@ docs/                        # consigna, diagrama, alcances, context.md, DECISIO
 | | `Recibida` | redefine `analizar` (→ Analizada al completar los resultados) |
 | | `Analizada` | final (`es_final() = True`) |
 | | `Rechazada` | final; `analizar` lanza `MuestraRechazadaError` |
-| `app/domain/laboratorio.py` | `MuestraBiologica` | Contexto: `empaquetar/despachar/recibir/rechazar/registrar_resultado` **solo delegan** en `self._estado`; `_cambiar_estado` es el único lugar donde cambia el estado; `@orm.reconstructor _rehidratar_estado` |
+| `app/domain/muestra.py` | `MuestraBiologica` | Contexto: `empaquetar/despachar/recibir/rechazar/registrar_resultado` **solo delegan** en `self._estado`; `_cambiar_estado` es el único lugar donde cambia el estado; `@orm.reconstructor _rehidratar_estado` |
 
 ### State — ciclo de vida del remito
 
@@ -170,7 +175,7 @@ docs/                        # consigna, diagrama, alcances, context.md, DECISIO
 | `app/domain/observadores/observadores_muestra.py` | `ObservadorMuestra` | «interface» `actualizar(muestra, anterior, nuevo, motivo, usuario)` |
 | | `RegistroHistorial` | crea el `HistorialEstadoMuestra` (único que escribe historial) |
 | | `ActualizadorEstadoOrden` | `orden.actualizar_estado()` → EN_PROCESO / COMPLETADA |
-| `app/domain/laboratorio.py` | `MuestraBiologica.agregar_observador`, `_notificar` | sujeto: notifica dentro de `_cambiar_estado` |
+| `app/domain/muestra.py` | `MuestraBiologica.agregar_observador`, `_notificar` | sujeto: notifica dentro de `_cambiar_estado` |
 | `app/services/fabrica_observadores.py` | `adjuntar_observadores` | **único lugar** donde se adjuntan (eventos `init` y `load` de la muestra) |
 
 ### Trazabilidad inmutable (3 capas)
