@@ -20,6 +20,8 @@ from app.services.base import (
 )
 from app.services.mascotas import MascotasService
 
+MEDIA_HORA = timedelta(minutes=30)
+
 
 @dataclass
 class ResultadoInicio:
@@ -107,6 +109,18 @@ class AtencionesService(ServicioBase):
     # --- consultas ------------------------------------------------------------------
     def obtener_atencion(self, atencion_id) -> AtencionClinica:
         return self.obtener(AtencionClinica, atencion_id)
+
+    def franjas_agenda(self, dia: date) -> list[datetime]:
+        """Franjas de 30 minutos del horario de atención del día (08:00, 08:30, … 18:30)."""
+        inicio = datetime.combine(dia, AtencionClinica.HORA_APERTURA)
+        cierre = datetime.combine(dia, AtencionClinica.HORA_CIERRE)
+        return [inicio + MEDIA_HORA * i for i in range((cierre - inicio) // MEDIA_HORA)]
+
+    @staticmethod
+    def grilla_agenda(turnos: list[AtencionClinica], franjas: list[datetime]) -> dict:
+        """(profesional_id, franja) → turno que la ocupa. Los cancelados no ocupan lugar (regla del dominio)."""
+        return {(a.profesional_id, f): a for a in turnos for f in franjas
+                if a.se_superpone_con_intervalo(f, f + MEDIA_HORA)}
 
     def agenda(self, clinica_id, dia: date) -> list[AtencionClinica]:
         desde = datetime.combine(dia, datetime.min.time())
