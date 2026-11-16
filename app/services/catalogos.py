@@ -1,9 +1,12 @@
 """Catálogos: alta/edición simple de clínicas, profesionales, laboratorios, tipos de análisis,
-vacunas (esquema obligatorio) y contenedores."""
+vacunas (esquema obligatorio) y contenedores.
+
+Cada catálogo se describe con sus campos (``CATALOGOS``); la pantalla de Gestión y la conversión
+de los datos del formulario se arman a partir de esa descripción.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal
 
 from sqlalchemy import select
 
@@ -24,6 +27,7 @@ class Campo:
     tipo: str = "text"          # text | number | bool | select | decimal
     opciones: tuple = ()
     requerido: bool = True
+    entero: bool = False        # number: se guarda como int si el valor no tiene decimales
 
 
 @dataclass(frozen=True)
@@ -61,19 +65,23 @@ CATALOGOS: dict[str, Catalogo] = {
         Campo("precio", "Precio", "decimal"),
         Campo("tipo_muestra_requerida", "Muestra requerida", "select", TIPOS_MUESTRA),
         Campo("temperatura_min", "Temp. mín (°C)", "number"), Campo("temperatura_max", "Temp. máx (°C)", "number"),
-        Campo("tiempo_estimado_horas", "Tiempo estimado (h)", "number")),
+        Campo("tiempo_estimado_horas", "Tiempo estimado (h)", "number", entero=True)),
         ("codigo", "nombre", "tipo_muestra_requerida", "precio", "temperatura_min", "temperatura_max")),
     "vacunas": Catalogo("vacunas", "Vacunas (esquema)", Vacuna, (
         Campo("nombre", "Nombre"), Campo("especie", "Especie", "select", ESPECIES),
-        Campo("obligatoria", "Obligatoria", "bool"), Campo("edad_minima_semanas", "Edad mínima (semanas)", "number"),
-        Campo("intervalo_refuerzo_dias", "Refuerzo cada (días)", "number")),
+        Campo("obligatoria", "Obligatoria", "bool"),
+        Campo("edad_minima_semanas", "Edad mínima (semanas)", "number", entero=True),
+        Campo("intervalo_refuerzo_dias", "Refuerzo cada (días)", "number", entero=True)),
         ("nombre", "especie", "obligatoria", "edad_minima_semanas", "intervalo_refuerzo_dias")),
     "contenedores": Catalogo("contenedores", "Contenedores", Contenedor, (
-        Campo("codigo", "Código"), Campo("capacidad", "Capacidad (muestras)", "number"),
+        Campo("codigo", "Código"), Campo("capacidad", "Capacidad (muestras)", "number", entero=True),
         Campo("temperatura_min", "Temp. mín (°C)", "number"), Campo("temperatura_max", "Temp. máx (°C)", "number"),
         Campo("clinica_id", "Clínica", "select")),
         ("codigo", "clinica", "capacidad", "temperatura_min", "temperatura_max", "estado")),
 }
+
+# Campos select que guardan un enum del dominio (el formulario manda el valor como texto).
+CAMPOS_ENUM = {TipoAnalisis: ("tipo_muestra_requerida", TipoMuestra), Vacuna: ("especie", Especie)}
 
 
 class CatalogosService(ServicioBase):
@@ -95,77 +103,81 @@ class CatalogosService(ServicioBase):
 
     @transaccional
     def guardar(self, clave: str, datos: dict, id_=None):
+        """Crea (sin ``id_``) o actualiza un registro del catálogo con los datos del formulario."""
         cat = self.catalogo(clave)
-        valores = self._convertir(cat, datos)
+        valores = {campo.nombre: _convertir_campo(campo, datos.get(campo.nombre)) for campo in cat.campos}
+        _a_enums(cat.modelo, valores)
         if id_:
             obj = self.obtener(cat.modelo, id_)
-            self._actualizar(cat, obj, valores)
+            self._actualizar(obj, valores)
         else:
-            obj = self._crear(cat, valores)
+            obj = self._crear(cat.modelo, valores)
             self.s.add(obj)
         return obj
 
     @transaccional
     def cambiar_estado_contenedor(self, contenedor_id, accion: str) -> Contenedor:
+        """``accion``: «mantenimiento» o «habilitar»."""
         c = self.obtener(Contenedor, contenedor_id)
         {"mantenimiento": c.enviar_a_mantenimiento, "habilitar": c.habilitar}[accion]()
         return c
 
-    # --- auxiliares -------------------------------------------------------------------
-    def _convertir(self, cat: Catalogo, datos: dict) -> dict:
-        valores = {}
-        for campo in cat.campos:
-            crudo = datos.get(campo.nombre)
-            if campo.tipo == "bool":
-                valores[campo.nombre] = a_bool(crudo) if crudo is not None else False
-                continue
-            if campo.requerido and texto(crudo) == "":
-                raise VeterinariaError(f"El campo «{campo.etiqueta}» es obligatorio.")
-            if campo.tipo == "number":
-                valor = a_float(crudo, campo.etiqueta)
-                valores[campo.nombre] = int(valor) if valor is not None and valor.is_integer() and campo.nombre in (
-                    "capacidad", "edad_minima_semanas", "intervalo_refuerzo_dias", "tiempo_estimado_horas") else valor
-            elif campo.tipo == "decimal":
-                try:
-                    valores[campo.nombre] = a_decimal(str(crudo).replace(",", "."))
-                except Exception as exc:
-                    raise DatosInvalidosError(f"El campo «{campo.etiqueta}» debe ser un número.") from exc
-                if valores[campo.nombre] < 0:
-                    raise DatosInvalidosError(f"El campo «{campo.etiqueta}» no puede ser negativo.")
-            elif campo.tipo == "select" and campo.nombre.endswith("_id"):
-                valores[campo.nombre] = int(crudo)
-            else:
-                valores[campo.nombre] = texto(crudo)
-        return valores
-
-    def _crear(self, cat: Catalogo, v: dict):
-        if cat.modelo is Profesional:
+    # --- alta y edición ------------------------------------------------------------------
+    def _crear(self, modelo: type, v: dict):
+        if modelo is Profesional:
             clinica = self.obtener(Clinica, v.pop("clinica_id"))
-            p = Profesional(**v)
-            clinica.agregar_profesional(p)
-            return p
-        if cat.modelo is Contenedor:
+            profesional = Profesional(**v)
+            clinica.agregar_profesional(profesional)
+            return profesional
+        if modelo is Contenedor:
             return Contenedor(v["codigo"], v["capacidad"], v["temperatura_min"], v["temperatura_max"],
                               self.obtener(Clinica, v["clinica_id"]))
-        if cat.modelo is TipoAnalisis:
-            v["tipo_muestra_requerida"] = TipoMuestra(v["tipo_muestra_requerida"])
-        if cat.modelo is Vacuna:
-            v["especie"] = Especie(v["especie"])
-        return cat.modelo(**v)
+        return modelo(**v)
 
-    def _actualizar(self, cat: Catalogo, obj, v: dict) -> None:
-        if cat.modelo is Contenedor:
+    def _actualizar(self, obj, v: dict) -> None:
+        if isinstance(obj, Contenedor):
             if v["temperatura_min"] > v["temperatura_max"] or v["capacidad"] <= 0:
                 raise VeterinariaError("Revisá capacidad y rango de temperatura.")
             v["clinica"] = self.obtener(Clinica, v.pop("clinica_id"))
-        if cat.modelo is Profesional:
-            clinica = self.obtener(Clinica, v.pop("clinica_id"))
-            clinica.agregar_profesional(obj)
-        if cat.modelo is TipoAnalisis:
-            v["tipo_muestra_requerida"] = TipoMuestra(v["tipo_muestra_requerida"])
-            if Decimal(v["precio"]) < 0:
-                raise VeterinariaError("El precio no puede ser negativo.")
-        if cat.modelo is Vacuna:
-            v["especie"] = Especie(v["especie"])
-        for k, valor in v.items():
-            setattr(obj, k, valor)
+        if isinstance(obj, Profesional):
+            self.obtener(Clinica, v.pop("clinica_id")).agregar_profesional(obj)
+        for campo, valor in v.items():
+            setattr(obj, campo, valor)
+
+
+# --- conversión de los datos del formulario --------------------------------------------------
+def _convertir_campo(campo: Campo, crudo):
+    if campo.tipo == "bool":
+        return a_bool(crudo) if crudo is not None else False
+    if campo.requerido and texto(crudo) == "":
+        raise VeterinariaError(f"El campo «{campo.etiqueta}» es obligatorio.")
+    if campo.tipo == "number":
+        return _numero(campo, crudo)
+    if campo.tipo == "decimal":
+        return _importe(campo, crudo)
+    if campo.tipo == "select" and campo.nombre.endswith("_id"):
+        return int(crudo)
+    return texto(crudo)
+
+
+def _numero(campo: Campo, crudo) -> float | int | None:
+    valor = a_float(crudo, campo.etiqueta)
+    if campo.entero and valor is not None and valor.is_integer():
+        return int(valor)
+    return valor
+
+
+def _importe(campo: Campo, crudo):
+    try:
+        valor = a_decimal(str(crudo).replace(",", "."))
+    except Exception as exc:
+        raise DatosInvalidosError(f"El campo «{campo.etiqueta}» debe ser un número.") from exc
+    if valor < 0:
+        raise DatosInvalidosError(f"El campo «{campo.etiqueta}» no puede ser negativo.")
+    return valor
+
+
+def _a_enums(modelo: type, valores: dict) -> None:
+    if modelo in CAMPOS_ENUM:
+        campo, enum = CAMPOS_ENUM[modelo]
+        valores[campo] = enum(valores[campo])
