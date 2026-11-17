@@ -7,7 +7,7 @@ import pytest
 from app import reportes
 from app.domain import reloj
 from app.domain.enums import FormaPago
-from app.reportes import Filtro, a_csv
+from app.reportes import Filtro
 from app.services.atenciones import AtencionesService
 from app.services.cirugias import CirugiasService
 from app.services.facturacion import FacturacionService
@@ -121,12 +121,6 @@ def test_r5_vacunas_pendientes(sesion, escenario):
     assert antirrabica[9] == (reloj.hoy() - antirrabica[8]).days
     assert antirrabica[10] == "Clínica Centro"
     assert reportes.generar("vacunas", sesion, Filtro(hasta=reloj.hoy(), especie="GATO")).tablas[0].filas == []
-
-
-def test_csv(sesion, escenario):
-    texto = a_csv(reportes.generar("facturacion", sesion, _filtro()))
-    assert texto.startswith("\ufeffFacturación por clínica y laboratorio")
-    assert "Clínica Centro;10000,00;23500,00" in texto
 
 
 def test_reportes_vacios_no_fallan(sesion):

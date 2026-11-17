@@ -2,9 +2,12 @@
 {% from "componentes/macros.html" import encabezado, badge_enum %}
 {% block contenido %}
 {% set t = f.transiciones_posibles() %}
-{% call encabezado("Comprobante " ~ f.numero, f.tipo.etiqueta ~ " · " ~ f.clinica.nombre) %}{{ badge_enum(f.estado) }}{% endcall %}
 <div class="row g-3">
-  <div class="col-lg-8"><div class="card"><div class="card-body">
+  <div class="col-lg-8">
+  {# El encabezado ocupa el ancho del comprobante: la píldora de estado queda sobre su borde derecho,
+     como en el detalle de la atención. #}
+  {% call encabezado("Comprobante " ~ f.numero, f.tipo.etiqueta ~ " · " ~ f.clinica.nombre) %}{{ badge_enum(f.estado) }}{% endcall %}
+  <div class="card"><div class="card-body">
     <div class="d-flex justify-content-between mb-3"><div><b>{{ f.clinica.nombre }}</b><br><small>{{ f.clinica.direccion }} · {{ f.clinica.telefono }}</small></div>
       <div class="text-end"><b>{{ f.numero }}</b><br><small>{{ f.fecha_emision|fecha_hora }}</small></div></div>
     <div class="mb-3">A nombre de: <b>{{ f.titular.nombre_completo() }}</b> · DNI {{ f.titular.dni }}</div>

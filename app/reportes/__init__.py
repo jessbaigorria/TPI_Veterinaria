@@ -1,6 +1,6 @@
 """Reportes (consultas agregadas). Se identifican por nombre en la interfaz y en las rutas."""
 from app.reportes import r1_atenciones, r2_rechazos, r3_tiempos, r4_facturacion, r5_vacunas
-from app.reportes.comun import Filtro, Reporte, a_csv  # noqa: F401
+from app.reportes.comun import Filtro, Reporte  # noqa: F401
 
 REPORTES = {
     "atenciones": r1_atenciones.generar,

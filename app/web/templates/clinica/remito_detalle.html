@@ -51,12 +51,12 @@
         <label class="form-label">Llegada estimada *</label>
         <input type="datetime-local" class="form-control mb-2" name="llegada_estimada" required value="{{ llegada_sugerida.strftime('%Y-%m-%dT%H:%M') }}">
         <input class="form-control mb-2" name="observaciones" placeholder="Observaciones">
-        <button class="btn btn-portal w-100">Despachar (muestras → En tránsito)</button></form></div></div>
+        <button class="btn btn-portal w-100">Despachar</button></form></div></div>
     {% endif %}
     {% if 'iniciar_transito' in acc %}
     <div class="card mb-3 border-warning"><div class="card-body">
       <p class="mb-2">El remito está despachado y espera que el transportista lo retire.</p>
-      <form method="post" action="/clinica/envios/{{ r.id }}/retiro"><button class="btn btn-warning w-100"><i class="bi bi-truck"></i> Confirmar retiro (en tránsito)</button></form>
+      <form method="post" action="/clinica/envios/{{ r.id }}/retiro"><button class="btn btn-warning w-100"><i class="bi bi-truck"></i> Confirmar retiro</button></form>
     </div></div>
     {% endif %}
   </div>
@@ -73,7 +73,7 @@
         {% for m in candidatas %}<div class="form-check"><input class="form-check-input" type="checkbox" name="muestra_id" value="{{ m.id }}" id="m{{ m.id }}">
           <label class="form-check-label" for="m{{ m.id }}">{{ m.codigo }} · {{ m.tipo.etiqueta }} · {{ m.orden.mascota.nombre }} · {{ m.orden.numero }} {{ badge_enum(m.orden.prioridad) }}</label></div>{% endfor %}
         <div class="form-text mb-2">Capacidad restante del contenedor: {{ r.contenedor.capacidad - r.muestras|length }}.</div>
-        <button class="btn btn-portal"><i class="bi bi-box-seam"></i> Empaquetar (Extraída → Empaquetada)</button></form>
+        <button class="btn btn-portal"><i class="bi bi-box-seam"></i> Empaquetar</button></form>
       {% else %}{{ vacio("No hay muestras extraídas para este laboratorio.") }}{% endif %}
     </div></div>
     {% endif %}

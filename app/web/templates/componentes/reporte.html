@@ -3,7 +3,6 @@
 {% block contenido %}
 {% call encabezado(rep.titulo, rep.descripcion) %}
   <a href="?{{ request.query_params }}{{ '&' if request.query_params }}formato=pdf" class="btn btn-portal"><i class="bi bi-file-earmark-pdf"></i> Exportar PDF</a>
-  <a href="?{{ request.query_params }}{{ '&' if request.query_params }}formato=csv" class="btn btn-outline-secondary"><i class="bi bi-filetype-csv"></i> CSV</a>
 {% endcall %}
 <ul class="nav nav-pills mb-3">{% for c in disponibles %}<li class="nav-item"><a class="nav-link {{ 'active' if c == codigo }} {{ 'btn-portal' if c == codigo }}" href="/{{ portal }}/reportes/{{ c }}">{{ titulos[c] }}</a></li>{% endfor %}</ul>
 <div class="card mb-3"><div class="card-body">

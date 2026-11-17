@@ -157,3 +157,42 @@ def test_la_seleccion_de_portal_no_muestra_la_sesion_abierta(entorno):
     login_clinica(c, s)
     visible = texto_visible(c.get("/").text)
     assert "Sesión actual" not in visible and "Cambiar" not in visible and "Clínica Centro ·" not in visible
+
+
+# --- 5, 6, 12 y 15: ajustes de pantallas --------------------------------------------------------------
+def test_comprobante_pildora_alineada_con_el_comprobante(entorno):
+    from app.domain.enums import EstadoFactura
+    from app.domain.facturacion import Factura
+    c, s = entorno
+    login_clinica(c, s)
+    f = s.query(Factura).filter_by(estado=EstadoFactura.PAGADA).first()
+    html = c.get(f"/clinica/facturacion/{f.id}").text
+    columna = html.split('<div class="col-lg-8">', 1)[1].split('<div class="card">', 1)[0]
+    assert f"Comprobante {f.numero}" in columna and "Pagada</span>" in columna
+
+
+def test_filtro_de_comprobantes_con_ancho_fijo(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    html = c.get("/clinica/facturacion").text
+    assert 'filtro-tipo-comprobante" name="tipo"' in html and 'filtro-estado-comprobante" name="estado"' in html
+    css = c.get("/static/estilos.css").text
+    assert ".filtro-tipo-comprobante { width:" in css
+
+
+def test_botones_del_remito_sin_el_estado_destino(entorno):
+    from app.domain.transporte import RemitoBiologico
+    c, s = entorno
+    login_clinica(c, s)
+    r = next(r for r in s.query(RemitoBiologico) if "iniciar_transito" in r.acciones())
+    login_clinica(c, s, r.clinica_origen.nombre)
+    visible = texto_visible(c.get(f"/clinica/envios/{r.id}").text)
+    assert "Confirmar retiro" in visible and "Confirmar retiro (en tránsito)" not in visible
+
+
+def test_reportes_sin_boton_csv(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    for slug in ("atenciones", "rechazos", "tiempos", "facturacion", "vacunas"):
+        visible = texto_visible(c.get(f"/clinica/reportes/{slug}").text)
+        assert "Exportar PDF" in visible and "CSV" not in visible

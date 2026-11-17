@@ -1,8 +1,6 @@
-"""Estructuras comunes de los reportes: filtros, resultado (tablas + gráficos) y exportación CSV."""
+"""Estructuras comunes de los reportes: filtros y resultado (tablas + gráficos)."""
 from __future__ import annotations
 
-import csv
-import io
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
@@ -108,35 +106,6 @@ def horas(expr_fin, expr_inicio):
 
 def porcentaje(parte, total) -> float:
     return round(100.0 * float(parte or 0) / float(total), 1) if total else 0.0
-
-
-def a_csv(reporte: Reporte) -> str:
-    """CSV con separador ';' y BOM UTF-8 (abre bien en Excel en español)."""
-    salida = io.StringIO()
-    salida.write("﻿")
-    w = csv.writer(salida, delimiter=";", lineterminator="\n")
-    w.writerow([reporte.titulo])
-    w.writerow([f"Desde: {_csv_valor(reporte.filtro.desde) or '-'}",
-                f"Hasta: {_csv_valor(reporte.filtro.hasta) or '-'}"])
-    for tabla in reporte.tablas:
-        w.writerow([])
-        w.writerow([tabla.titulo])
-        w.writerow(tabla.columnas)
-        for fila in tabla.filas:
-            w.writerow([_csv_valor(v) for v in fila])
-        if tabla.totales:
-            w.writerow([_csv_valor(v) for v in tabla.totales])
-    return salida.getvalue()
-
-
-def _csv_valor(v):
-    if isinstance(v, (Decimal, float)):
-        return f"{v:.2f}".replace(".", ",")
-    if isinstance(v, datetime):
-        return v.strftime("%d/%m/%Y %H:%M")
-    if isinstance(v, date):
-        return v.strftime("%d/%m/%Y")
-    return "" if v is None else v
 
 
 def _serializable(serie: dict) -> dict:

@@ -113,14 +113,15 @@ def test_paginas_portal_laboratorio(entorno):
     assert client.get("/laboratorio/reportes/facturacion").status_code == 400
 
 
-def test_csv_de_reportes(entorno):
+def test_reportes_sin_exportacion_csv(entorno):
     app, s = entorno
     client = TestClient(app)
     _login_clinica(client, s)
     for slug in ("atenciones", "rechazos", "tiempos", "facturacion", "vacunas"):
-        r = client.get(f"/clinica/reportes/{slug}?formato=csv")
-        assert r.status_code == 200 and r.headers["content-type"].startswith("text/csv")
-        assert r.text.startswith("\ufeff") and not r.text.startswith("\ufeffR")
+        html = client.get(f"/clinica/reportes/{slug}").text
+        assert "formato=csv" not in html and "Exportar PDF" in html
+        r = client.get(f"/clinica/reportes/{slug}?formato=csv")      # el parámetro viejo muestra la página
+        assert r.status_code == 200 and r.headers["content-type"].startswith("text/html")
 
 
 def test_error_de_negocio_se_muestra_en_aviso_rojo(entorno):

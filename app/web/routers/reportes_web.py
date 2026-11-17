@@ -1,4 +1,4 @@
-"""Helper compartido por ambos portales para mostrar reportes (filtros, gráfico, tabla y CSV)."""
+"""Helper compartido por ambos portales para mostrar reportes (filtros, gráfico, tabla y PDF)."""
 from __future__ import annotations
 
 from datetime import timedelta
@@ -9,7 +9,7 @@ from fastapi.responses import Response
 from app import reportes
 from app.domain import reloj
 from app.domain.excepciones import VeterinariaError
-from app.reportes import Filtro, a_csv
+from app.reportes import Filtro
 from app.services.base import a_fecha, validar_rango_fechas
 from app.web.formato import fecha
 from app.web.plantillas import render
@@ -58,8 +58,5 @@ def mostrar(request: Request, s, codigo: str, plantilla_base: str, filtro: Filtr
         contenido = a_pdf(rep, u.sede_nombre if u else "VetRed", describir_filtros(rep.filtro, **contexto))
         return Response(contenido, media_type="application/pdf",
                         headers={"Content-Disposition": f'attachment; filename="{codigo}_{reloj.hoy()}.pdf"'})
-    if request.query_params.get("formato") == "csv":
-        return Response(a_csv(rep), media_type="text/csv; charset=utf-8",
-                        headers={"Content-Disposition": f'attachment; filename="{codigo}_{reloj.hoy()}.csv"'})
     return render(request, "componentes/reporte.html", rep=rep, codigo=codigo, base=plantilla_base,
                   titulos=reportes.TITULOS, seccion="reportes", **contexto)
