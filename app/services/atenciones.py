@@ -106,7 +106,8 @@ class AtencionesService(ServicioBase):
     def _mascota_elegida_o_nueva(self, mascota_id, nueva_mascota: dict | None) -> Mascota:
         """La mascota elegida del titular o, si no se eligió ninguna, la mascota nueva (nunca las dos)."""
         if nueva_mascota and mascota_id:
-            raise DatosInvalidosError("Ya elegiste una mascota del titular: no se puede cargar además una mascota nueva.")
+            raise DatosInvalidosError("Ya elegiste una mascota del titular: "
+                                      "no se puede cargar además una mascota nueva.")
         if nueva_mascota:
             mascota = MascotasService(self.s).crear_mascota(**nueva_mascota)
             self.s.flush()

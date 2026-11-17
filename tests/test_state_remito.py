@@ -3,8 +3,7 @@ import pytest
 
 from app.domain.enums import EstadoContenedor, EstadoPrecinto, ResultadoRecepcion
 from app.domain.estados.estado_remito import (
-    EstadoRemito, Armado, Despachado, EnTransito, Recibido,
-    RecibidoConObservaciones,
+    Armado, Despachado, EnTransito, EstadoRemito, Recibido, RecibidoConObservaciones,
 )
 from app.domain.excepciones import (
     MuestraRechazadaError, TransicionInvalidaError, VeterinariaError,
@@ -187,3 +186,69 @@ def test_volver_a_medir_solo_en_armado_y_precintado(mundo):
     r2 = mundo.remito_en_transito([mundo.muestra()])
     with pytest.raises(TransicionInvalidaError):
         r2.registrar_temperatura_despacho(4.0)       # ya salió
+
+
+# --- Comportamiento del State del remito (R1–R4) ----------------------------------------------------
+def test_r1_acciones_disponibles_por_situacion(mundo):
+    r = mundo.remito()
+    assert r.acciones() == ["agregar_muestra"]                        # Armado vacío
+    r.agregar_muestra(mundo.muestra())
+    assert r.acciones() == ["agregar_muestra", "cerrar"]              # Armado con muestras
+    r.cerrar(Precinto("PRE-R1", "recepcion"), 4.0)
+    assert r.acciones() == ["despachar", "registrar_temperatura"]     # Armado con precinto
+    r.despachar(mundo.envio())
+    assert r.acciones() == ["iniciar_transito"]                       # Despachado
+    r.iniciar_transito()
+    assert r.acciones() == ["recibir"]                                # En tránsito
+    assert Recibido().acciones_disponibles(r) == [] and RecibidoConObservaciones().acciones_disponibles(r) == []
+
+
+def test_r2_iniciar_transito_no_toca_las_muestras(mundo):
+    m = mundo.muestra()
+    r = mundo.remito_cerrado([m])
+    r.despachar(mundo.envio())
+    antes = len(m.historial())
+    r.iniciar_transito()
+    assert isinstance(r.estado, EnTransito)
+    assert m.estado_codigo == "EnTransito" and len(m.historial()) == antes
+
+
+def test_r3_muestra_de_otra_clinica(mundo):
+    from app.domain.transporte import Contenedor, RemitoBiologico
+    contenedor = Contenedor("HOS-1", 6, 2, 8, mundo.hospital)
+    r = RemitoBiologico(mundo.hospital, mundo.lab, contenedor, "recepcion", numero="REM-H1")
+    m = mundo.muestra()                                    # de la orden de mundo.clinica
+    with pytest.raises(VeterinariaError, match="no pertenece"):
+        r.agregar_muestra(m)
+    assert m.estado_codigo == "Extraida" and m not in r.muestras
+
+
+def test_r3_muestra_de_una_orden_anulada(mundo):
+    orden = mundo.orden([mundo.hemograma])
+    m = mundo.muestra(orden)
+    orden.anular("x")
+    r = mundo.remito()
+    with pytest.raises(VeterinariaError):
+        r.agregar_muestra(m)
+    assert m.estado_codigo == "Extraida" and m not in r.muestras
+
+
+def test_r3_muestra_ya_empaquetada_en_otro_remito(mundo):
+    m = mundo.muestra()
+    remito1, remito2 = mundo.remito(), mundo.remito()
+    remito1.agregar_muestra(m)
+    with pytest.raises(TransicionInvalidaError):
+        remito2.agregar_muestra(m)
+    assert m not in remito2.muestras and m.remito is remito1
+
+
+def test_r4_cerrar_dos_veces_y_temperatura_vacia(mundo):
+    r = mundo.remito_cerrado([mundo.muestra()], temperatura=4.0)
+    precinto = r.precinto
+    with pytest.raises(TransicionInvalidaError):
+        r.cerrar(Precinto("PRE-OTRO", "recepcion"), 7.0)
+    assert r.precinto is precinto and r.contenedor.estado is EstadoContenedor.EN_USO
+    assert r.temperatura_despacho == 4.0               # un cierre fallido no pisa la temperatura
+    with pytest.raises(VeterinariaError):
+        r.registrar_temperatura_despacho(None)
+    assert r.temperatura_despacho == 4.0

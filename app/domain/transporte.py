@@ -151,9 +151,10 @@ class RemitoBiologico(Base):
         self._estado.agregar_muestra(self, m, usuario or self.usuario_armador)
 
     def cerrar(self, p: "Precinto", temperatura_despacho: float | None = None) -> None:
+        self._estado.cerrar(self, p)
+        # Después de la transición: si el cierre no es válido, la temperatura medida no cambia.
         if temperatura_despacho is not None:
             self.temperatura_despacho = float(temperatura_despacho)
-        self._estado.cerrar(self, p)
 
     def registrar_temperatura_despacho(self, temperatura: float) -> None:
         """Nueva medición de la temperatura de despacho (solo en Armado, ya precintado)."""
