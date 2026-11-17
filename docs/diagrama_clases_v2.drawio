@@ -1141,7 +1141,7 @@
             <mxPoint x="14" y="-16" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="n_vacunas" value="Validación: al registrar la atención se&lt;br&gt;llama a verificar_vacunas_obligatorias(),&lt;br&gt;que usa HistoriaClinica.vacunas_pendientes();&lt;br&gt;si faltan → VacunasPendientesError." style="shape=note;whiteSpace=wrap;html=1;size=14;align=left;spacingLeft=8;verticalAlign=top;spacingTop=4;fontSize=11;fillColor=#fffbe6;strokeColor=#b8a24a;" parent="1" vertex="1">
+        <mxCell id="n_vacunas" value="Validación: al registrar la atención se&lt;br&gt;llama a verificar_vacunas_obligatorias(),&lt;br&gt;que usa HistoriaClinica.vacunas_pendientes();&lt;br&gt;si faltan se avisa y queda constancia (no bloquea)." style="shape=note;whiteSpace=wrap;html=1;size=14;align=left;spacingLeft=8;verticalAlign=top;spacingTop=4;fontSize=11;fillColor=#fffbe6;strokeColor=#b8a24a;" parent="1" vertex="1">
           <mxGeometry x="417" y="960" width="256" height="76" as="geometry" />
         </mxCell>
         <mxCell id="n_vacunas_e" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;jumpStyle=arc;jumpSize=8;endArrow=none;dashed=1;strokeColor=#b8a24a;exitX=1.0000;exitY=0.5263;exitDx=0;exitDy=0;entryX=0.0000;entryY=1.0000;entryDx=0;entryDy=0;" parent="1" source="n_vacunas" target="c_AtencionClinica" edge="1">
@@ -1291,9 +1291,6 @@
         <mxCell id="AFVCrdDMIQIUp7gDftFk-6" value="&amp;laquo;exception&amp;raquo;&lt;br&gt;&lt;b&gt;MuestraRechazadaError&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=12;" parent="1" vertex="1">
           <mxGeometry x="-244" y="315" width="168" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="AFVCrdDMIQIUp7gDftFk-7" value="&amp;laquo;exception&amp;raquo;&lt;br&gt;&lt;b&gt;VacunasPendientesError&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=12;" parent="1" vertex="1">
-          <mxGeometry x="-52" y="315" width="172" height="40" as="geometry" />
-        </mxCell>
         <mxCell id="AFVCrdDMIQIUp7gDftFk-8" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;jumpStyle=arc;jumpSize=8;endArrow=block;endFill=0;endSize=14;exitX=0.5000;exitY=0.0000;exitDx=0;exitDy=0;entryX=0.5000;entryY=1.0000;entryDx=0;entryDy=0;" parent="1" source="AFVCrdDMIQIUp7gDftFk-3" target="AFVCrdDMIQIUp7gDftFk-2" edge="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
@@ -1322,14 +1319,6 @@
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="-160" y="280" />
-              <mxPoint x="-343" y="280" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="AFVCrdDMIQIUp7gDftFk-12" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;jumpStyle=arc;jumpSize=8;endArrow=block;endFill=0;endSize=14;exitX=0.5000;exitY=0.0000;exitDx=0;exitDy=0;entryX=0.5000;entryY=1.0000;entryDx=0;entryDy=0;" parent="1" source="AFVCrdDMIQIUp7gDftFk-7" target="AFVCrdDMIQIUp7gDftFk-2" edge="1">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="34" y="280" />
               <mxPoint x="-343" y="280" />
             </Array>
           </mxGeometry>

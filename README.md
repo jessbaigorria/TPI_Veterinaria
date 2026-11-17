@@ -12,7 +12,7 @@ laboratorio central, manteniendo la **cadena de custodia** y la **trazabilidad i
 **derivaciones para cirugías de alta complejidad**.
 
 - Patrones de diseño: **State** (ciclo de vida de la muestra y del remito) y **Observer** (historial + estado de la orden).
-- Los 7 procesos obligatorios, el opcional de cirugía, las 5 validaciones (+ la de cirugía) y 5 reportes con gráfico, tabla y exportación a PDF (y CSV).
+- Los 7 procesos obligatorios, el opcional de cirugía, las 5 validaciones (+ la de cirugía) y 5 reportes con gráfico, tabla y exportación a PDF.
 - Dos portales sobre los mismos datos: **Portal Clínica** (barra verde azulada) y **Portal Laboratorio** (barra violeta).
 
 ---
@@ -88,7 +88,8 @@ No hay contraseñas. En `/` se elige el portal:
 La sede elegida es el usuario de la sesión y queda en la auditoría. Donde importa la persona, el formulario la pide
 (solo letras): **Colocado por** al cerrar un remito con precinto, **Recibido por** en la recepción del laboratorio y
 **Analista** al cargar resultados. La extracción de la muestra queda a nombre del profesional de la atención.
-El botón **Cambiar** de la barra superior vuelve a esta pantalla.
+El botón **Cambiar** de la barra superior pide confirmación (“Se cerrará la sesión”, Sí / No): con **Sí** cierra la
+sesión y vuelve a esta pantalla; con **No** sigue en la misma página.
 
 ---
 
@@ -162,10 +163,10 @@ docs/                        # consigna, diagrama, alcances, context.md, DECISIO
 | Archivo | Clase | Rol |
 |---|---|---|
 | `app/domain/estados/estado_remito.py` | `EstadoRemito` | Base abstracta (todo inválido) |
-| | `RemitoArmado` | `agregar_muestra`, `cerrar` (precinto), `despachar` (muestras → En tránsito) |
-| | `RemitoDespachado` | `iniciar_transito` |
-| | `RemitoEnTransito` | `recibir` → `RemitoRecibido` (muestras Recibidas) o `RemitoRecibidoConObservaciones` (muestras Rechazadas) |
-| | `RemitoRecibido`, `RemitoRecibidoConObservaciones` | finales |
+| | `Armado` | `agregar_muestra`, `cerrar` (precinto), `despachar` (muestras → En tránsito) |
+| | `Despachado` | `iniciar_transito` |
+| | `EnTransito` | `recibir` → `Recibido` (muestras Recibidas) o `RecibidoConObservaciones` (muestras Rechazadas) |
+| | `Recibido`, `RecibidoConObservaciones` | finales |
 | `app/domain/transporte.py` | `RemitoBiologico` | Contexto; el estado se persiste como string y se rehidrata con `@orm.reconstructor` |
 
 ### Observer — trazabilidad
@@ -193,10 +194,10 @@ Toda muestra nace con el registro “— → Extraída” (motivo “Extracción
 | Validación | Excepción | Dónde |
 |---|---|---|
 | Toda mascota tiene un titular responsable | `MascotaSinTitularError` | `Mascota.__init__`, `Mascota.cambiar_titular` |
-| Precinto roto → muestras Rechazadas, sin procesar | `MuestraRechazadaError` | `RecepcionRemito.procesar` → `RemitoEnTransito.recibir` → `EnTransito.rechazar`; `Rechazada.analizar` |
+| Precinto roto → muestras Rechazadas, sin procesar | `MuestraRechazadaError` | `RecepcionRemito.procesar` → `EnTransito.recibir` (remito) → `EnTransito.rechazar` (muestra); `Rechazada.analizar` |
 | Trazabilidad inmutable | `HistorialInmutableError` / trigger | ver sección 3 |
 | Sin superposición de turnos | `TurnoSuperpuestoError` | `Profesional.esta_disponible` + `AtencionClinica.se_superpone_con` (ignora canceladas) |
-| Vacunas obligatorias al registrar la atención | `VacunasPendientesError` | `AtencionClinica.iniciar` → `verificar_vacunas_obligatorias` → `HistoriaClinica.vacunas_pendientes` (CONSULTA/CONTROL bloquean; URGENCIA advierte; VACUNACIÓN resuelve) |
+| Vacunas obligatorias al registrar la atención | aviso (no bloquea) | `AtencionClinica.iniciar` → `verificar_vacunas_obligatorias` → `HistoriaClinica.vacunas_pendientes` (avisa “Vacunas pendientes: …” y deja constancia en observaciones; VACUNACIÓN las resuelve) |
 | Cirugía: destino de alta complejidad, consentimiento, ASA ≥ III con estudios | `DerivacionCirugiaError` | `DerivacionCirugia.__init__`, `DerivacionCirugia.programar` |
 
 Además: temperatura fuera del rango del contenedor (despacho o recepción), capacidad del contenedor, tipo de muestra
@@ -233,7 +234,7 @@ Reglas agregadas en la ronda de correcciones del grupo (ver `docs/DECISIONES.md`
 | Envíos | Armar remito en 3 pasos (laboratorio + contenedor → tildar muestras → cerrar con precinto y temperatura), despachar, confirmar retiro; resultado de la recepción. |
 | Cirugías | Enviadas y (si la clínica es de alta complejidad) Recibidas: aceptar, rechazar, consentimiento, estudios, programar, registrar cirugía, cancelar, facturar. |
 | Facturación | Pendiente de facturar (atenciones, órdenes completadas, cirugías realizadas), comprobantes, pago y anulación. |
-| Reportes | Atenciones y derivaciones · Muestras rechazadas · Tiempos de tránsito · Facturación por clínica y laboratorio · Vacunas pendientes: filtros, gráfico, tabla y **Exportar PDF** (y CSV). |
+| Reportes | Atenciones y derivaciones · Muestras rechazadas · Tiempos de tránsito · Facturación por clínica y laboratorio · Vacunas pendientes: filtros, gráfico, tabla y **Exportar PDF**. |
 | Gestión | Clínicas, profesionales, laboratorios, tipos de análisis, vacunas (esquema) y contenedores (mantenimiento/habilitar). |
 
 **Portal Laboratorio** (`/laboratorio`)
@@ -277,11 +278,11 @@ sin triple felina y **Toby** (Martín Herrera), cachorro sin vacunar.
    profesional Laura Pérez, mañana 14:00 (el fin se completa solo: 14:30) → “Turno reservado”. Reservar otro para
    **Rocco** con la misma profesional a las 14:15 → aviso rojo “Laura Pérez ya tiene un turno de 14:00 a 14:30…”.
    (Un turno en el pasado, fuera de 08:00–19:00 o más largo que el máximo del tipo también se rechaza.)
-2. **Vacunas.** *Atenciones › Registrar atención*: titular García, mascota Rocco (aparece “vacunas pendientes”), tipo
-   **Control**, una hora de hoy ya pasada entre 08:00 y 19:00 → aviso rojo con la lista (Antirrábica, Séxtuple). Clic en
-   **“Atender ahora como VACUNACIÓN”** → registrar → en la atención, *Finalizar*: las vacunas pendientes vienen
-   tildadas; cargar diagnóstico e importe → “Se registraron 2 vacuna(s)”. Registrar de nuevo el **Control** de Rocco
-   (con otro horario o con otro profesional, para no superponer) → ahora pasa.
+2. **Vacunas.** *Atenciones › Registrar atención*: titular García, mascota Rocco (aparece “Vacunas pendientes:
+   Antirrábica, Séxtuple”), tipo **Control**, una hora de hoy ya pasada entre 08:00 y 19:00 → se registra igual (las
+   vacunas pendientes no bloquean): aviso amarillo y constancia en *Observaciones*. Registrar otra atención de Rocco,
+   tipo **Vacunación** (otro horario) → en la atención, *Finalizar*: las vacunas pendientes vienen tildadas; cargar
+   diagnóstico e importe → “Se registraron 2 vacuna(s)”. Al volver a elegir a Rocco ya no aparece el aviso.
 3. **Mascota sin titular.** *Mascotas › Nueva mascota* sin elegir titular → aviso rojo “No se puede registrar una
    mascota sin titular responsable”.
 4. **Orden y muestra.** En la atención de control **en curso**: **Emitir orden de laboratorio** → Hemograma completo +

@@ -10,7 +10,7 @@ Checklist para recorrer **a mano** todos los flujos del sistema y anotar qué fa
 - Prefijos: **(+)** = camino feliz · **(−)** = el sistema **debe rechazar** la operación con un aviso rojo.
 - Los códigos de remitos, muestras y órdenes son los que crea el seed. Si ya hiciste pruebas, regenerá la base:
   `run.bat --reset` (Windows) o `./run.sh --reset`.
-- **Cambiar** (arriba a la derecha) vuelve a la pantalla de ingreso para cambiar de portal o de usuario.
+- **Cambiar** (arriba a la derecha) pide confirmación (Sí / No); con Sí cierra la sesión y vuelve a la pantalla de ingreso.
 
 **Datos del seed útiles**
 
@@ -82,7 +82,7 @@ Checklist para recorrer **a mano** todos los flujos del sistema y anotar qué fa
   - Obs:
 - [ ] **LG-07 (−)** Logueado en el laboratorio, abrir `http://localhost:8000/clinica`. → Redirige al ingreso (no se mezclan portales).
   - Obs:
-- [ ] **LG-08 (+)** Con sesión abierta, volver a `/`. → Arriba aparece “Sesión actual … Continuar · Salir”.
+- [ ] **LG-08 (+)** Con sesión abierta, tocar **Cambiar** → **No**. → Sigue en la misma página. **Cambiar** → **Sí** → pantalla de portales simple (sin “Sesión actual”).
   - Obs:
 
 ## 2. Clientes (titulares) – Portal Clínica
@@ -146,7 +146,7 @@ Checklist para recorrer **a mano** todos los flujos del sistema y anotar qué fa
   - Obs:
 - [ ] **MA-18 (+)** Pestaña Facturas. → Comprobantes de atenciones, laboratorio y cirugías de la mascota.
   - Obs:
-- [ ] **MA-19 (+)** Dar de baja una mascota. → Queda “(baja)” y no aparece al elegir mascotas para atención o turno.
+- [ ] **MA-19 (+)** Dar de baja una mascota con un turno reservado. → Queda “(baja)”, no aparece al elegir mascotas para atención o turno y su turno queda **Cancelado**.
   - Obs:
 - [ ] **MA-20 (+)** Reactivar la mascota (con titular activo). → Vuelve a estar activa.
   - Obs:
@@ -169,7 +169,7 @@ Checklist para recorrer **a mano** todos los flujos del sistema y anotar qué fa
   - Obs:
 - [ ] **AG-07 (−)** Reservar con hora de fin anterior o igual a la de inicio. → Aviso rojo “La hora de fin debe ser posterior a la de inicio”.
   - Obs:
-- [ ] **AG-08 (+)** Al elegir Rocco al reservar. → Aviso amarillo de vacunas pendientes debajo de la mascota; al reservar una Consulta o un Control, aviso amarillo de que se bloqueará al iniciar.
+- [ ] **AG-08 (+)** Al elegir Rocco al reservar. → Aviso amarillo “Vacunas pendientes: …” debajo de la mascota; el turno se reserva igual.
   - Obs:
 - [ ] **AG-09 (−)** “¿Asiste el titular? No” sin completar el responsable presente. → No se permite.
   - Obs:
@@ -181,7 +181,7 @@ Checklist para recorrer **a mano** todos los flujos del sistema y anotar qué fa
   - Obs:
 - [ ] **AG-13 (+)** “Iniciar” un turno Reservado de una mascota al día. → Pasa a En progreso y abre el detalle de la atención.
   - Obs:
-- [ ] **AG-14 (−)** “Iniciar” el turno de Rocco (Control) de AG-11. → Aviso rojo **`VacunasPendientesError`**; el turno sigue Reservado.
+- [ ] **AG-14 (+)** “Iniciar” el turno de Rocco (Control) de AG-11. → Se inicia; aviso amarillo con las vacunas pendientes y constancia en Observaciones.
   - Obs:
 
 ## 5. Atenciones
@@ -194,11 +194,11 @@ Checklist para recorrer **a mano** todos los flujos del sistema y anotar qué fa
   - Obs:
 - [ ] **AT-04 (−)** Caso 3 sin completar el responsable. → No se permite.
   - Obs:
-- [ ] **AT-05 (−)** Atención tipo **Control** para **Rocco**. → Aviso rojo **`VacunasPendientesError`** con la lista y botones “Reservar turno de VACUNACIÓN” y “Atender ahora como VACUNACIÓN”; **no** se crea la atención. *(Validación 5)*
+- [ ] **AT-05 (+)** Atención tipo **Control** para **Rocco**. → Se registra igual; aviso amarillo con las vacunas pendientes y constancia en Observaciones.
   - Obs:
-- [ ] **AT-06 (−)** Lo mismo con tipo **Consulta**. → Mismo bloqueo.
+- [ ] **AT-06 (+)** Lo mismo con tipo **Consulta**. → Tampoco se bloquea.
   - Obs:
-- [ ] **AT-07 (+)** Rocco como **Urgencia**. → Se registra; aviso amarillo con las vacunas pendientes; en Observaciones queda “⚠ Atendida por urgencia con vacunas pendientes…”.
+- [ ] **AT-07 (+)** Rocco como **Urgencia**. → Se registra; aviso amarillo con las vacunas pendientes; en Observaciones queda “Atendida con vacunas pendientes…”.
   - Obs:
 - [ ] **AT-08 (+)** Desde el aviso de AT-05, “Atender ahora como VACUNACIÓN”. → Abre el formulario con Rocco y tipo Vacunación precargados; registrar.
   - Obs:
@@ -288,7 +288,7 @@ Checklist para recorrer **a mano** todos los flujos del sistema y anotar qué fa
   - Obs:
 - [ ] **EN-16 (+)** Despachar con transportista, vehículo y llegada estimada. → Remito **Despachado**; muestras **En tránsito**; la orden pasa a **En proceso** sola (Observer).
   - Obs:
-- [ ] **EN-17 (+)** Confirmar retiro (en tránsito). → Remito **En tránsito**.
+- [ ] **EN-17 (+)** Confirmar retiro. → Remito **En tránsito**.
   - Obs:
 - [ ] **EN-18 (+)** Envíos: filtrar por estado (Armado, En tránsito agrupa Despachado + En tránsito, Recibido con observaciones). → Funciona; la columna Recepción muestra Aceptada o Rechazada con motivo.
   - Obs:
@@ -545,7 +545,7 @@ Recorrer seguido, sin regenerar la base (es el escenario de demo de la sección 
 
 - [ ] **E2E-01** Turno y turno superpuesto (AG-03, AG-04).
   - Obs:
-- [ ] **E2E-02** Control de Rocco bloqueado → vacunación → control permitido (AT-05, AT-08, AT-09, AT-10).
+- [ ] **E2E-02** Control de Rocco con vacunas pendientes (se atiende con aviso) → vacunación → sin aviso (AT-05, AT-08, AT-09, AT-10).
   - Obs:
 - [ ] **E2E-03** Mascota sin titular (MA-03).
   - Obs:

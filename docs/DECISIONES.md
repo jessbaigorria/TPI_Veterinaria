@@ -35,16 +35,16 @@ Prioridad aplicada cuando algo chocaba: consigna → diagrama de clases → docu
 
 | # | Agregado / cambio | Motivo |
 |---|---|---|
-| 2.1 | `EstadoRemito.agregar_muestra(r, m, usuario)` y `EstadoRemito.cerrar(r, precinto)` (base = inválido) redefinidos solo en `RemitoArmado`. | Pedido explícito de `context.md` 5.2: agregar muestras y cerrar solo es válido en Armado. **Falta en el diagrama.** |
+| 2.1 | `EstadoRemito.agregar_muestra(r, m, usuario)` y `EstadoRemito.cerrar(r, precinto)` (base = inválido) redefinidos solo en `Armado`. | Pedido explícito de `context.md` 5.2: agregar muestras y cerrar solo es válido en Armado. **Falta en el diagrama.** |
 | 2.2 | `EstadoRemito.despachar(r, envio, usuario)` recibe además `usuario`. | Las muestras pasan a En tránsito y el historial necesita el usuario. |
 | 2.3 | `EstadoMuestra.acciones_disponibles()` y `EstadoRemito.acciones_disponibles(r)` (base = lista vacía). | La UI pregunta qué botones mostrar sin `if estado == …` (sugerido en `context.md` 5.1). |
 | 2.4 | `EstadoMuestra.fue_despachada()` (False en Extraída/Empaquetada; True desde En tránsito). | `OrdenDerivacion.actualizar_estado()` decide EN_PROCESO sin comparar estados. |
 | 2.5 | `codigo` (nombre de la clase), `desde_nombre()`, `todos()` en ambas bases; `__eq__`/`__hash__` por tipo. | Persistencia y listados. |
 | 2.6 | `Recibida.analizar()` agrega el resultado y pasa a **Analizada recién cuando la muestra tiene resultado para todos los análisis de la orden que usan su tipo de muestra**. | `registrar_resultado(r, usuario)` recibe un único resultado (diagrama), pero la consigna/`context.md` piden un formulario con todos los análisis compatibles: el formulario llama una vez por análisis y la última llamada produce la transición. |
-| 2.7 | Precondiciones de despacho (sin muestras, sin precinto, temperatura de despacho fuera del rango del contenedor) lanzan `TransicionInvalidaError` desde `RemitoArmado.despachar`. Agregar una muestra a un remito ya precintado también. | Son transiciones no permitidas en ese momento. |
-| 2.8 | `RemitoArmado.cerrar` exige al menos una muestra y asigna el contenedor (`DISPONIBLE → EN_USO`), como la tabla 5.3. | — |
-| 2.9 | `RemitoArmado.agregar_muestra` valida capacidad del contenedor, laboratorio de destino, clínica de origen y orden vigente; luego delega en `muestra.empaquetar()` (la muestra decide). | Tabla 5.3. |
-| 2.10 | `EstadoRemito.registrar_temperatura_despacho(r, t)` (base = inválido) redefinido solo en `RemitoArmado`, y `RemitoBiologico.registrar_temperatura_despacho(t)`. Permite **volver a medir** la temperatura de un remito ya precintado mientras no salió. | Si la temperatura de despacho daba fuera de rango, el remito quedaba trabado en Armado (no se podía despachar, ni agregar/quitar muestras) con el contenedor en uso. Ahora se acondiciona la conservadora, se registra una nueva medición y se despacha; la muestra nunca deja de estar Empaquetada en la clínica. **Falta en el diagrama.** |
+| 2.7 | Precondiciones de despacho (sin muestras, sin precinto, temperatura de despacho fuera del rango del contenedor) lanzan `TransicionInvalidaError` desde `Armado.despachar`. Agregar una muestra a un remito ya precintado también. | Son transiciones no permitidas en ese momento. |
+| 2.8 | `Armado.cerrar` exige al menos una muestra y asigna el contenedor (`DISPONIBLE → EN_USO`), como la tabla 5.3. | — |
+| 2.9 | `Armado.agregar_muestra` valida capacidad del contenedor, laboratorio de destino, clínica de origen y orden vigente; luego delega en `muestra.empaquetar()` (la muestra decide). | Tabla 5.3. |
+| 2.10 | `EstadoRemito.registrar_temperatura_despacho(r, t)` (base = inválido) redefinido solo en `Armado`, y `RemitoBiologico.registrar_temperatura_despacho(t)`. Permite **volver a medir** la temperatura de un remito ya precintado mientras no salió. | Si la temperatura de despacho daba fuera de rango, el remito quedaba trabado en Armado (no se podía despachar, ni agregar/quitar muestras) con el contenedor en uso. Ahora se acondiciona la conservadora, se registra una nueva medición y se despacha; la muestra nunca deja de estar Empaquetada en la clínica. **Falta en el diagrama.** |
 
 ## 3. Patrón Observer
 
@@ -74,13 +74,13 @@ Prioridad aplicada cuando algo chocaba: consigna → diagrama de clases → docu
 ### Atención clínica
 - Estados simples con **tabla de transiciones** (`_TRANSICIONES`) en `AtencionClinica`, `DerivacionCirugia`, `Factura` y `Contenedor`, en lugar de `if estado == …`.
 - `AtencionClinica.__init__(mascota, clinica, profesional, inicio, fin=None, tipo, observaciones, asiste_titular, responsable_presente)`: valida superposición (validación 4), `fin > inicio` (por defecto 30 min), que el profesional trabaje en la clínica y que si no asiste el titular se indique el responsable (caso 3).
-- `AtencionClinica.iniciar()` corre el control de vacunas y **devuelve** la lista de pendientes; en URGENCIA deja constancia en `observaciones`.
-- `AtencionClinica.verificar_vacunas_obligatorias()` lanza `VacunasPendientesError` para CONSULTA/CONTROL y devuelve la lista para URGENCIA/VACUNACION. Se ejecuta al **iniciar** la atención (también al registrar sin turno, que crea e inicia). Reservar un turno no se bloquea, pero la UI avisa.
+- `AtencionClinica.iniciar()` corre el control de vacunas y **devuelve** la lista de pendientes; deja constancia en `observaciones` (salvo en VACUNACIÓN). Desde la segunda ronda de correcciones no bloquea (ver S2.1).
+- `AtencionClinica.verificar_vacunas_obligatorias()` devuelve las vacunas obligatorias faltantes o vencidas a la fecha de la atención; **solo informa** (segunda ronda de correcciones, S2.1). Antes lanzaba `VacunasPendientesError` para CONSULTA/CONTROL.
 - `finalizar(diagnostico, peso_registrado=None, importe=None, observaciones=None)`: parámetros opcionales extra (el formulario carga peso e importe al finalizar; el peso actualiza el de la mascota).
 - `cancelar(motivo)` guarda el motivo en `observaciones` (no hay atributo propio).
 - `emitir_orden_derivacion(lab, analisis, prioridad, observaciones="", numero=None)` y `derivar_a_cirugia(destino, tipo, prioridad, diagnostico_presuntivo, riesgo_anestesico, estudios_prequirurgicos, numero)`: parámetros extra opcionales. Se permiten con la atención **en progreso o finalizada**.
 - `emitir_comprobante_atencion(numero=None)`: solo FINALIZADA, con importe > 0 y sin factura vigente.
-- Auxiliares: propiedades `mascota`, `titular`; `se_superpone_con_intervalo(inicio, fin)` (usado por `Profesional.esta_disponible` y por `se_superpone_con`), `esta_realizada()`, `esta_finalizada()`, `bloqueara_por_vacunas()`, `transiciones_posibles()`, `factura_vigente()`, `tiene_factura_vigente()`.
+- Auxiliares: propiedades `mascota`, `titular`; `se_superpone_con_intervalo(inicio, fin)` (usado por `Profesional.esta_disponible` y por `se_superpone_con`), `esta_realizada()`, `esta_finalizada()`, `transiciones_posibles()`, `factura_vigente()`, `tiene_factura_vigente()`.
 - `Profesional.esta_disponible(inicio, fin, excluir=None)`.
 
 ### Cirugía (opcional)
@@ -119,7 +119,7 @@ Prioridad aplicada cuando algo chocaba: consigna → diagrama de clases → docu
 
 - Se usan exactamente las del diagrama. Para validaciones menores (campos obligatorios, capacidad del contenedor, doble facturación, laboratorio equivocado, etc.) se lanza la base `VeterinariaError` con un mensaje claro, en lugar de crear excepciones nuevas.
 - Única excepción agregada: `HistorialInmutableError(VeterinariaError)` (la lanzan los listeners del ORM).
-- `VacunasPendientesError` lleva `vacunas` y `mascota` (y copias en texto plano) para que la UI muestre la lista y ofrezca reservar un turno de VACUNACIÓN.
+- `VacunasPendientesError` se quitó en la segunda ronda de correcciones: las vacunas pendientes ya no bloquean (S2.1).
 
 ## 7. Reportes
 
@@ -130,7 +130,7 @@ Prioridad aplicada cuando algo chocaba: consigna → diagrama de clases → docu
 | Tiempos de tránsito (ex R3) | Tránsito = llegada real − despacho (por clínica de origen). Procesamiento = primera vez Analizada − primera vez Recibida según el historial, por tipo de análisis (cada muestra cuenta para cada análisis de su tipo). |
 | Facturación por clínica y laboratorio (ex R4) | Excluye ANULADAS. Cobrado = PAGADAS; pendiente = EMITIDAS. Ranking por importe facturado por tipo de análisis. |
 | Vacunas pendientes (ex R5) | “Hasta” es la fecha de corte; “Desde” (obligatoria desde la ronda de correcciones) filtra por fecha de vencimiento. Se calcula con el método de dominio `detalle_vacunas_pendientes()` sobre una consulta que trae mascotas activas y la clínica de la última atención (subconsulta agregada). |
-| CSV | Separador `;` y BOM UTF‑8 para que abra bien en Excel en español (desde la ronda de correcciones, además, **Exportar PDF**: ver H.3). |
+| CSV | Se quitó en la segunda ronda de correcciones (S2.15): los reportes se exportan solo a PDF (ver H.3). |
 | Laboratorio | El portal del laboratorio ve Muestras rechazadas y Tiempos de tránsito filtrados a su laboratorio; el de clínica ve los cinco. |
 
 ## 8. UI
@@ -258,7 +258,7 @@ Prioridad aplicada cuando algo chocaba: consigna → diagrama de clases → docu
 | Excepciones (hoja “opciones”) | Agregar **`DatosInvalidosError`** y **`AtencionNoModificableError`** (heredan de `VeterinariaError`); ya existía `HistorialInmutableError`. |
 | `AtencionClinica` | Atributos de clase `HORA_APERTURA`, `HORA_CIERRE`, `DURACION_MAXIMA_MINUTOS`, `TIPOS_RESERVABLES`. Métodos **nuevos**: `reservar(...)` y `registrar_sin_turno(...)` (de clase), `duracion_maxima(tipo)`, `fin_sugerido(inicio, tipo)`, `admite_derivaciones()`, `validar_admite_derivaciones(accion)`, `-_validar_horario(inicio, fin, tipo)`. `finalizar()` exige importe > 0. `emitir_orden_derivacion()` y `derivar_a_cirugia()` solo con la atención en curso. |
 | `Titular` | Método **nuevo** `actualizar_datos(dni, nombre, apellido, direccion, telefono, email)`; todos los atributos obligatorios con formato validado. |
-| `EstadoRemito` / `RemitoArmado` / `RemitoBiologico` | `registrar_temperatura_despacho(...)` (ronda anterior; ver 2.10). |
+| `EstadoRemito` / `Armado` / `RemitoBiologico` | `registrar_temperatura_despacho(...)` (ronda anterior; ver 2.10). |
 | Paquete de validaciones | Módulo `validaciones` (`nombre_persona`, `dni`, `telefono`, `email`, `obligatorio`); se puede dibujar como utilidad del dominio. |
 | Servicios (no van en el diagrama de clases) | `RecepcionService.recibir(…, recibido_por)`, `ResultadosService.cargar_resultados(…, analista)`, `EmpaquetadoService.cerrar_remito(…, colocado_por)`, `validar_rango_fechas`. |
 
@@ -281,3 +281,28 @@ los datos del seed, los cinco reportes (datos, CSV y PDF), los KPIs y la tabla d
 | R.7 | `app/seed.py` pasa a ser el paquete `app/seed/`: `datos.py` (tablas), `sembrador.py` (operaciones reutilizables) y un módulo por etapa. `python -m app.seed` funciona igual. | Métodos de 60–100 líneas con bloques repetidos. Los datos generados son idénticos. |
 | R.8 | Reportes: cada `generar()` se divide en consulta, tabla, gráficos e indicadores; `Filtro.aplicar(...)` y `serie(...)` en `comun.py`; `pdf.py` en funciones chicas. `r4` usa `moneda()` de `web/formato.py` (daba el mismo texto que su `_pesos()`). | Funciones de 47–68 líneas y filtros repetidos. |
 | R.9 | `TablerosService`: un método por KPI y consultas comunes (`_muestras_en_estado`, `_cambios_a_estado`). `CatalogosService`: un conversor por tipo de campo (`Campo.entero` reemplaza la lista de nombres de campos enteros). | Legibilidad. Se quitó un control de precio negativo que nunca se ejecutaba (la conversión ya lo rechaza, ver X.1). |
+
+
+---
+
+# Segunda ronda de correcciones del grupo (PDF “Errores y cosas a mejorar”, rama `alvarez`)
+
+| # | Decisión | Motivo |
+|---|---|---|
+| S2.1 | Las vacunas pendientes **no bloquean** ninguna atención ni turno. `verificar_vacunas_obligatorias()` solo devuelve la lista; `iniciar()` deja “Atendida con vacunas pendientes: …” en observaciones (salvo VACUNACIÓN). El aviso dice solo “Vacunas pendientes: …”. Se quitan `VacunasPendientesError` y `bloqueara_por_vacunas()`. | Pedido del grupo (punto 1). |
+| S2.2 | «Nueva mascota» es excluyente con la mascota elegida: la UI deshabilita la sección y `AtencionesService._mascota_elegida_o_nueva` rechaza recibir las dos. Nombre y raza solo letras y espacios (mínimo 2; raza opcional) con `Mascota.validar_nombre/validar_raza`, también en la ficha de la mascota. | Puntos 2 y 3. Un único lugar para la regla (dominio) y el mismo macro en las dos pantallas. |
+| S2.3 | Reservar turno acepta una mascota nueva (`reservar_turno(…, nueva_mascota)`) y ofrece “Crear titular” con `?next=/clinica/agenda/nuevo`. | Punto 3. |
+| S2.4 | `Mascota.dar_de_baja()` cancela sus atenciones RESERVADA y EN_PROGRESO con `AtencionClinica.cancelar_por_baja()` (la única forma de cancelar una atención en curso: no se agrega a `_TRANSICIONES` para que la pantalla no ofrezca cancelar atenciones en curso). Lo usan la baja de la mascota y la del titular. | Punto 4: sin atención en curso no se emiten órdenes ni derivaciones (`validar_admite_derivaciones`). |
+| S2.5 | Teléfono y email de clínicas, profesionales y laboratorios (campos `tel`/`email` del catálogo) usan las mismas validaciones que los titulares cuando se cargan; siguen siendo opcionales. El seed usa teléfonos solo con números. | Punto 7. |
+| S2.6 | `Clinica.alta_complejidad` no se puede desactivar una vez habilitada (`@validates` → `DatosInvalidosError`); en la edición el interruptor queda fijo y se envía con un campo oculto. | Punto 8: las cirugías derivadas dejarían de verse en el perfil. |
+| S2.7 | «Cambiar» abre un modal de Bootstrap (Sí / No); Sí envía `POST /salir` (cierra la sesión) y vuelve a `/`. La selección de portal ya no muestra “Sesión actual … Continuar · Salir” ni la barra de sesión, aunque haya una abierta. | Punto 9. Sin `confirm()` del navegador (regla de `test_interfaz_limpia.py`). |
+| S2.8 | Estados del remito sin el prefijo “Remito”: `Armado`, `Despachado`, `EnTransito`, `Recibido`, `RecibidoConObservaciones` (también en el diagrama). `init_db` actualiza las bases ya creadas (`UPDATE … substr(estado, 7)`). El paquete `estados` no reexporta los del remito porque `EnTransito` existe en los dos ciclos. | Punto 11 (“Consideración”). |
+| S2.9 | Botones sin el estado destino: «Confirmar retiro», «Despachar», «Empaquetar». | Punto 12. |
+| S2.10 | «Valores» de los resultados sigue aceptando letras: los resultados son descriptivos (“Hto 42 %; GR 6,8 M/µL”, “Lipoma subcutáneo…”). | Punto 13 (pregunta). |
+| S2.11 | `RemitoBiologico.cerrar` guarda la temperatura **después** de la transición: un cierre inválido no la modifica. | Lo detectó el test R4. |
+| S2.12 | Comprobante: el encabezado ocupa el ancho de la tarjeta; facturación: filtros con ancho fijo; registrar atención: etiqueta «Motivo». | Puntos 5, 6 y 10. |
+| S2.15 | Sin exportación a CSV (botón, `formato=csv` y `a_csv`); queda Exportar PDF. | Punto 15. |
+
+Cambios para el diagrama de clases: estados del remito renombrados (hecho en `diagrama_clases_v2.drawio`); sin
+`VacunasPendientesError` (se quitó del diagrama); métodos nuevos `Mascota.dar_de_baja()`, `Mascota.validar_nombre/validar_raza`
+y `AtencionClinica.cancelar_por_baja()`.
