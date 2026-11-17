@@ -6,7 +6,8 @@
   {% if m.activa %}
   <a href="/clinica/agenda/nuevo?mascota={{ m.id }}" class="btn btn-outline-secondary"><i class="bi bi-calendar-plus"></i> Turno</a>
   <a href="/clinica/atenciones/nueva?mascota={{ m.id }}" class="btn btn-portal"><i class="bi bi-plus-lg"></i> Atención</a>
-  <form method="post" action="/clinica/mascotas/{{ m.id }}/baja" data-confirm="¿Confirmás dar de baja a {{ m.nombre }}?"><button class="btn btn-outline-danger"><i class="bi bi-archive"></i></button></form>
+  <form method="post" action="/clinica/mascotas/{{ m.id }}/baja" data-confirm="¿Confirmás dar de baja a {{ m.nombre }}?"
+        data-confirm-detalle="Se cancelan sus turnos reservados y la atención en curso, si la hay."><button class="btn btn-outline-danger"><i class="bi bi-archive"></i></button></form>
   {% else %}
   <form method="post" action="/clinica/mascotas/{{ m.id }}/reactivar"><button class="btn btn-outline-success">Reactivar</button></form>
   {% endif %}

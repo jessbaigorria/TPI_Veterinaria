@@ -7,7 +7,7 @@
   <a href="/clinica/mascotas/nueva?titular={{ t.id }}" class="btn btn-portal"><i class="bi bi-plus-lg"></i> Nueva mascota</a>
   {% set activas = t.mascotas_activas() %}
   <form method="post" action="/clinica/clientes/{{ t.id }}/baja" data-confirm="¿Confirmás dar de baja a {{ t.nombre_completo() }}?"
-        data-confirm-detalle="{% if activas %}También se van a dar de baja {{ 'su mascota' if activas|length == 1 else 'sus ' ~ activas|length ~ ' mascotas' }}: {{ activas|map(attribute='nombre')|join(', ') }}.{% endif %}">
+        data-confirm-detalle="{% if activas %}También se van a dar de baja {{ 'su mascota' if activas|length == 1 else 'sus ' ~ activas|length ~ ' mascotas' }}: {{ activas|map(attribute='nombre')|join(', ') }}, y se cancelan sus turnos reservados y atenciones en curso.{% endif %}">
     <button class="btn btn-outline-danger"><i class="bi bi-person-x"></i> Baja</button></form>
   {% else %}
   <form method="post" action="/clinica/clientes/{{ t.id }}/reactivar"><button class="btn btn-outline-success">Reactivar</button></form>

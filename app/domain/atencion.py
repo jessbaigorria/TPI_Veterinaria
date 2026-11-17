@@ -43,6 +43,8 @@ class AtencionClinica(ConFacturas, Base):
     _ESTADOS_REALIZADOS = {EstadoAtencion.EN_PROGRESO, EstadoAtencion.FINALIZADA}
     # Órdenes de laboratorio y derivaciones a cirugía solo mientras la atención está en curso.
     _ESTADOS_QUE_ADMITEN_DERIVAR = {EstadoAtencion.EN_PROGRESO}
+    # Al dar de baja la mascota se cancelan el turno reservado y la atención en curso (ver cancelar_por_baja).
+    _ESTADOS_QUE_CANCELA_LA_BAJA = {EstadoAtencion.RESERVADA, EstadoAtencion.EN_PROGRESO}
     # Las vacunas pendientes no bloquean ninguna atención: se avisa y queda constancia en las
     # observaciones (salvo en la vacunación, que es justamente la que las resuelve).
     _TIPOS_SIN_CONSTANCIA_DE_VACUNAS = {TipoAtencion.VACUNACION}
@@ -237,6 +239,16 @@ class AtencionClinica(ConFacturas, Base):
             raise VeterinariaError("Para cancelar un turno hay que indicar el motivo.")
         self.observaciones = f"{self.observaciones}\nCancelado: {motivo.strip()}".strip()
         self.estado = EstadoAtencion.CANCELADA
+
+    def cancelar_por_baja(self) -> bool:
+        """La mascota se dio de baja: se cancela el turno reservado o la atención en curso, así no se
+        siguen emitiendo órdenes de laboratorio ni derivaciones a cirugía. Es la única forma de cancelar
+        una atención EN_PROGRESO (no figura en ``_TRANSICIONES``). Devuelve True si se canceló."""
+        if self.estado not in self._ESTADOS_QUE_CANCELA_LA_BAJA:
+            return False
+        self.observaciones = f"{self.observaciones}\nCancelado: {self.mascota.nombre} fue dada de baja.".strip()
+        self.estado = EstadoAtencion.CANCELADA
+        return True
 
     def se_superpone_con(self, otra: "AtencionClinica") -> bool:
         if otra is self or otra.estado not in self._ESTADOS_QUE_OCUPAN_AGENDA:

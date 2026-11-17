@@ -68,7 +68,7 @@ class Titular(Base):
         """Baja lógica de una mascota del titular (no se borra: tiene historia)."""
         if m not in self.mascotas:
             raise VeterinariaError(f"{m.nombre} no pertenece a {self.nombre_completo()}.")
-        m.activa = False
+        m.dar_de_baja()
 
     # --- auxiliares ------------------------------------------------------------
     def nombre_completo(self) -> str:
@@ -78,7 +78,7 @@ class Titular(Base):
         """Baja lógica del titular y de todas sus mascotas."""
         self.activo = False
         for m in self.mascotas:
-            m.activa = False
+            m.dar_de_baja()
 
     def reactivar(self) -> None:
         self.activo = True
@@ -140,6 +140,12 @@ class Mascota(Base):
     def edad_en_semanas(self, fecha: date | None = None) -> int:
         fecha = fecha or reloj.hoy()
         return max(0, (fecha - self.fecha_nacimiento).days // 7)
+
+    def dar_de_baja(self) -> list["AtencionClinica"]:
+        """Baja lógica: no se le pueden reservar turnos ni registrar atenciones, y se cancelan sus turnos
+        reservados y la atención en curso. Devuelve las atenciones canceladas."""
+        self.activa = False
+        return [a for a in self.historia_clinica.atenciones if a.cancelar_por_baja()]
 
     def cambiar_titular(self, t: Titular | None) -> None:
         if t is None:

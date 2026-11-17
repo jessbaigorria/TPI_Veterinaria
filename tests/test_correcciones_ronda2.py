@@ -1,10 +1,10 @@
 """Segunda ronda de correcciones del grupo ("Errores y cosas a mejorar"): reglas de dominio y servicios."""
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 
 import pytest
 
 from app.domain.enums import EstadoAtencion
-from app.domain.excepciones import DatosInvalidosError
+from app.domain.excepciones import DatosInvalidosError, VeterinariaError
 from app.domain.personas import Mascota
 from app.services.atenciones import AtencionesService
 from app.services.mascotas import MascotasService
@@ -61,3 +61,41 @@ def test_reservar_turno_exige_una_mascota(sesion, base):
     with pytest.raises(DatosInvalidosError, match="Ya elegiste una mascota"):
         svc.reservar_turno(base.firulais.id, base.perez.id, base.centro.id, inicio,
                            inicio + timedelta(minutes=30), "CONSULTA", nueva_mascota=_nueva(base))
+
+
+# --- Baja de mascota: cancela turnos reservados y la atención en curso ------------------------------
+def test_baja_de_mascota_cancela_turno_reservado_y_atencion_en_curso(sesion, base):
+    from app.services.cirugias import CirugiasService
+    from app.services.derivaciones import DerivacionesService
+    svc = AtencionesService(sesion)
+    en_curso = base.atencion(mascota=base.firulais)
+    turno = svc.reservar_turno(base.firulais.id, base.perez.id, base.centro.id, datetime(2026, 3, 12, 10, 0),
+                               datetime(2026, 3, 12, 10, 30), "CONTROL")
+    finalizada = base.atencion(mascota=base.firulais)
+    svc.finalizar(finalizada.id, "Sano", importe=1000)
+
+    MascotasService(sesion).dar_de_baja(base.firulais.id)
+
+    assert en_curso.estado is EstadoAtencion.CANCELADA and turno.estado is EstadoAtencion.CANCELADA
+    assert "fue dada de baja" in turno.observaciones
+    assert finalizada.estado is EstadoAtencion.FINALIZADA          # lo ya atendido no se toca
+    with pytest.raises(VeterinariaError, match="en curso"):
+        DerivacionesService(sesion).emitir_orden(en_curso.id, base.lab.id, [base.hemograma.id])
+    with pytest.raises(VeterinariaError, match="en curso"):
+        CirugiasService(sesion).derivar(en_curso.id, base.sur.id, "Biopsia")
+
+
+def test_no_se_reservan_turnos_para_una_mascota_dada_de_baja(sesion, base):
+    MascotasService(sesion).dar_de_baja(base.rocco.id)
+    with pytest.raises(VeterinariaError, match="dada de baja"):
+        AtencionesService(sesion).reservar_turno(base.rocco.id, base.perez.id, base.centro.id,
+                                                 datetime(2026, 3, 12, 11, 0), datetime(2026, 3, 12, 11, 30))
+
+
+def test_baja_del_titular_cancela_los_turnos_de_sus_mascotas(sesion, base):
+    from app.services.clientes import ClientesService
+    turno = AtencionesService(sesion).reservar_turno(base.rocco.id, base.perez.id, base.centro.id,
+                                                     datetime(2026, 3, 12, 12, 0), datetime(2026, 3, 12, 12, 30))
+    ClientesService(sesion).dar_de_baja(base.titular.id)
+    assert turno.estado is EstadoAtencion.CANCELADA
+    assert not base.rocco.activa and not base.firulais.activa
