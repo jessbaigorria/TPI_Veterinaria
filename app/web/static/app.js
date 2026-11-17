@@ -56,7 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!aviso) return;
       const p = pendientes[selMascota.value];
       aviso.innerHTML = p
-        ? `<div class="alert alert-warning py-2 mb-0"><i class="bi bi-exclamation-triangle"></i> Vacunas pendientes: <b>${p}</b>. Para una consulta o un control primero hay que aplicarlas; se puede atender una urgencia o una vacunación.</div>`
+        ? `<div class="alert alert-warning py-2 mb-0"><i class="bi bi-exclamation-triangle"></i> Vacunas pendientes: <b>${p}</b>.</div>`
         : "";
     };
     const cargar = async () => {

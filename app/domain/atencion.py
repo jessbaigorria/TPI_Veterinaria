@@ -17,8 +17,7 @@ from app.domain.base import Base, Dinero, EnumCol, a_decimal
 from app.domain.clinica import Clinica, Profesional
 from app.domain.enums import EstadoAtencion, Prioridad, RiesgoAnestesico, TipoAtencion, TipoComprobante
 from app.domain.excepciones import (
-    AtencionNoModificableError, DatosInvalidosError, TurnoSuperpuestoError, VacunasPendientesError,
-    VeterinariaError,
+    AtencionNoModificableError, DatosInvalidosError, TurnoSuperpuestoError, VeterinariaError,
 )
 from app.domain.facturacion import ConFacturas, Factura
 from app.domain.personas import HistoriaClinica, Vacuna
@@ -44,8 +43,9 @@ class AtencionClinica(ConFacturas, Base):
     _ESTADOS_REALIZADOS = {EstadoAtencion.EN_PROGRESO, EstadoAtencion.FINALIZADA}
     # Órdenes de laboratorio y derivaciones a cirugía solo mientras la atención está en curso.
     _ESTADOS_QUE_ADMITEN_DERIVAR = {EstadoAtencion.EN_PROGRESO}
-    _TIPOS_QUE_BLOQUEAN_POR_VACUNAS = {TipoAtencion.CONSULTA, TipoAtencion.CONTROL}
-    _TIPOS_CON_ADVERTENCIA = {TipoAtencion.URGENCIA, TipoAtencion.CIRUGIA, TipoAtencion.OTRO}
+    # Las vacunas pendientes no bloquean ninguna atención: se avisa y queda constancia en las
+    # observaciones (salvo en la vacunación, que es justamente la que las resuelve).
+    _TIPOS_SIN_CONSTANCIA_DE_VACUNAS = {TipoAtencion.VACUNACION}
 
     # Horario de atención y duración máxima por tipo (ronda de correcciones, ver DECISIONES.md).
     HORA_APERTURA = time(8, 0)
@@ -202,12 +202,12 @@ class AtencionClinica(ConFacturas, Base):
     def iniciar(self) -> list[Vacuna]:
         """RESERVADA → EN_PROGRESO. Corre el control de vacunas (validación 5).
 
-        Devuelve las vacunas pendientes cuando se permite atender igual (urgencia o vacunación).
+        Las vacunas pendientes no impiden atender: se devuelven para avisar y quedan anotadas.
         """
         self._validar_transicion(EstadoAtencion.EN_PROGRESO)
         pendientes = self.verificar_vacunas_obligatorias()
-        if pendientes and self.tipo in self._TIPOS_CON_ADVERTENCIA:
-            nota = "Atendida por urgencia con vacunas pendientes: " + ", ".join(v.nombre for v in pendientes)
+        if pendientes and self.tipo not in self._TIPOS_SIN_CONSTANCIA_DE_VACUNAS:
+            nota = "Atendida con vacunas pendientes: " + ", ".join(v.nombre for v in pendientes)
             self.observaciones = f"{self.observaciones}\n{nota}".strip()
         self.estado = EstadoAtencion.EN_PROGRESO
         return pendientes
@@ -244,17 +244,9 @@ class AtencionClinica(ConFacturas, Base):
         return self.se_superpone_con_intervalo(otra.fecha_hora_inicio, otra.fecha_hora_fin)
 
     def verificar_vacunas_obligatorias(self) -> list[Vacuna]:
-        """Validación 5. CONSULTA/CONTROL con pendientes → VacunasPendientesError.
-        URGENCIA y VACUNACION se permiten y devuelven la lista de pendientes."""
-        pendientes = self.historia.vacunas_pendientes(fecha=self.fecha_hora_inicio.date())
-        if pendientes and self.tipo in self._TIPOS_QUE_BLOQUEAN_POR_VACUNAS:
-            raise VacunasPendientesError(
-                f"{self.mascota.nombre} tiene vacunas obligatorias pendientes o vencidas: "
-                + ", ".join(v.nombre for v in pendientes)
-                + ". Registrá una atención de VACUNACIÓN antes de la consulta/control.",
-                vacunas=pendientes, mascota=self.mascota,
-            )
-        return pendientes
+        """Validación 5: vacunas obligatorias faltantes o vencidas a la fecha de la atención.
+        Solo informa: no bloquea ningún tipo de atención ni de turno."""
+        return self.historia.vacunas_pendientes(fecha=self.fecha_hora_inicio.date())
 
     def emitir_orden_derivacion(self, lab: "Laboratorio", analisis: list["TipoAnalisis"],
                                 prioridad: Prioridad = Prioridad.NORMAL, observaciones: str = "",
@@ -324,11 +316,6 @@ class AtencionClinica(ConFacturas, Base):
 
     def esta_finalizada(self) -> bool:
         return self.estado is EstadoAtencion.FINALIZADA
-
-    def bloqueara_por_vacunas(self) -> bool:
-        """True si todavía no se inició y su tipo bloquea con vacunas pendientes (para avisar en la UI)."""
-        return (EstadoAtencion.EN_PROGRESO in self._TRANSICIONES[self.estado]
-                and self.tipo in self._TIPOS_QUE_BLOQUEAN_POR_VACUNAS)
 
     def _validar_transicion(self, nuevo: EstadoAtencion) -> None:
         if self.estado is EstadoAtencion.FINALIZADA:

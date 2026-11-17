@@ -78,11 +78,7 @@ def _fecha_y_hora(f: dict, campo_hora: str) -> str | None:
 
 
 def _avisar_vacunas_pendientes(request: Request, atencion) -> None:
-    """Si el turno es de un tipo que se bloquea por vacunas, avisa desde ya cuáles faltan."""
-    if not atencion.bloqueara_por_vacunas():
-        return
-    pendientes = atencion.historia.vacunas_pendientes(atencion.fecha_hora_inicio.date())
+    """Aviso informativo (no bloquea): vacunas obligatorias que faltan a la fecha del turno."""
+    pendientes = atencion.verificar_vacunas_obligatorias()
     if pendientes:
-        avisar(request, f"Atención: {atencion.mascota.nombre} tiene vacunas pendientes ("
-                        + ", ".join(v.nombre for v in pendientes)
-                        + "). Al iniciar la atención se bloqueará si no se vacuna antes.", "warning")
+        avisar(request, "Vacunas pendientes: " + ", ".join(v.nombre for v in pendientes) + ".", "warning")

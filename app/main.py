@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
 from app import db
-from app.domain.excepciones import VacunasPendientesError, VeterinariaError
+from app.domain.excepciones import VeterinariaError
 from app.web.plantillas import render
 from app.web.routers import comunes, portal_clinica, portal_laboratorio
 from app.web.sesion import avisar, guardar_formulario
@@ -41,10 +41,7 @@ def crear_app(url_db: str | None = None, motor=None) -> FastAPI:
 
     @app.exception_handler(VeterinariaError)
     async def manejar_error_negocio(request: Request, exc: VeterinariaError):
-        extra = {}
-        if isinstance(exc, VacunasPendientesError) and exc.mascota_id is not None:
-            extra = {"vacunas": exc.nombres_vacunas, "mascota_id": exc.mascota_id, "mascota": exc.mascota_nombre}
-        avisar(request, str(exc), "danger", **extra)
+        avisar(request, str(exc), "danger")
         if request.method == "POST":
             try:
                 guardar_formulario(request, dict(await request.form()))

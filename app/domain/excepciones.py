@@ -34,19 +34,6 @@ class MuestraRechazadaError(VeterinariaError):
     """Validación 2: no se puede registrar un resultado sobre una muestra rechazada."""
 
 
-class VacunasPendientesError(VeterinariaError):
-    """Validación 5: la mascota tiene vacunas obligatorias faltantes o vencidas."""
-
-    def __init__(self, mensaje: str, vacunas=None, mascota=None):
-        super().__init__(mensaje)
-        self.vacunas = list(vacunas or [])
-        self.mascota = mascota
-        # Datos planos (la UI los usa después del rollback, cuando los objetos ORM ya expiraron).
-        self.nombres_vacunas = [v.nombre for v in self.vacunas]
-        self.mascota_id = getattr(mascota, "id", None)
-        self.mascota_nombre = getattr(mascota, "nombre", "")
-
-
 class DerivacionCirugiaError(VeterinariaError):
     """Validación del proceso opcional de derivación a cirugía de alta complejidad."""
 

@@ -6,8 +6,7 @@ import pytest
 from app.domain import reloj
 from app.domain.enums import EstadoAtencion, RiesgoAnestesico
 from app.domain.excepciones import (
-    DerivacionCirugiaError, MascotaSinTitularError, MuestraRechazadaError, TurnoSuperpuestoError,
-    VacunasPendientesError, VeterinariaError,
+    DerivacionCirugiaError, MascotaSinTitularError, MuestraRechazadaError, TurnoSuperpuestoError, VeterinariaError,
 )
 from app.domain.personas import Mascota
 from app.services.atenciones import AtencionesService
@@ -114,21 +113,29 @@ def test_cachorro_menor_a_la_edad_minima_no_tiene_pendientes(sesion, base):
     assert cachorro.historia_clinica.vacunas_pendientes() == []
 
 
-def test_control_con_vacunas_pendientes_bloquea(sesion, base):
+def test_control_con_vacunas_pendientes_se_inicia_igual(sesion, base):
+    # Las vacunas pendientes no bloquean: se avisa y queda constancia en las observaciones.
     t = _turno(sesion, base, datetime(2026, 3, 10, 15, 0), mascota=base.rocco, tipo="CONTROL")
-    with pytest.raises(VacunasPendientesError) as exc:
-        AtencionesService(sesion).iniciar(t.id)
-    assert {v.nombre for v in exc.value.vacunas} == {"Antirrábica", "Séxtuple"}
-    assert sesion.get(type(t), t.id).estado is EstadoAtencion.RESERVADA
+    r = AtencionesService(sesion).iniciar(t.id)
+    assert {v.nombre for v in r.vacunas_pendientes} == {"Antirrábica", "Séxtuple"}
+    assert r.atencion.estado is EstadoAtencion.EN_PROGRESO
+    assert r.advertencia and "Antirrábica" in r.advertencia
+    assert "Atendida con vacunas pendientes" in r.atencion.observaciones
 
 
-def test_consulta_sin_turno_con_pendientes_no_se_registra(sesion, base):
+def test_consulta_sin_turno_con_pendientes_se_registra(sesion, base):
     from app.domain.atencion import AtencionClinica
     antes = sesion.query(AtencionClinica).count()
-    with pytest.raises(VacunasPendientesError):
-        AtencionesService(sesion).registrar_sin_turno(base.perez.id, base.centro.id, "CONSULTA",
+    r = AtencionesService(sesion).registrar_sin_turno(base.perez.id, base.centro.id, "CONSULTA",
                                                       mascota_id=base.rocco.id, inicio=datetime(2026, 3, 9, 16))
-    assert sesion.query(AtencionClinica).count() == antes
+    assert sesion.query(AtencionClinica).count() == antes + 1
+    assert r.atencion.estado is EstadoAtencion.EN_PROGRESO
+
+
+def test_turno_con_pendientes_se_reserva(sesion, base):
+    t = _turno(sesion, base, datetime(2026, 3, 11, 9, 0), mascota=base.rocco, tipo="CONSULTA")
+    assert t.estado is EstadoAtencion.RESERVADA
+    assert {v.nombre for v in t.verificar_vacunas_obligatorias()} == {"Antirrábica", "Séxtuple"}
 
 
 def test_urgencia_con_pendientes_se_permite_con_advertencia(sesion, base):

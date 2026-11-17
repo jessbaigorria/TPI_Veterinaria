@@ -53,13 +53,6 @@
       <div class="alert alert-{{ m.tipo }} alert-dismissible fade show shadow-sm" role="alert">
         <i class="bi bi-{{ 'x-octagon' if m.tipo == 'danger' else 'exclamation-triangle' }}"></i>
         {{ m.texto }}
-        {% if m.vacunas %}
-          <ul class="mb-1 mt-2">{% for v in m.vacunas %}<li>{{ v }}</li>{% endfor %}</ul>
-          <a class="btn btn-sm btn-light border" href="/clinica/agenda/nuevo?mascota={{ m.mascota_id }}&tipo=VACUNACION">
-            <i class="bi bi-calendar-plus"></i> Reservar turno de VACUNACIÓN para {{ m.mascota }}</a>
-          <a class="btn btn-sm btn-light border" href="/clinica/atenciones/nueva?mascota={{ m.mascota_id }}&tipo=VACUNACION">
-            <i class="bi bi-shield-plus"></i> Atender ahora como VACUNACIÓN</a>
-        {% endif %}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>
     {% endfor %}

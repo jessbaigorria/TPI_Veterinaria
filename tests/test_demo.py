@@ -117,12 +117,14 @@ def test_escenario_de_demo(demo):
              "/clinica/agenda/nuevo")
     assert "ya tiene un turno de" in r.text and "alert-danger" in r.text
 
-    # 2) Vacunas: CONTROL bloqueado → VACUNACIÓN → CONTROL pasa ----------------------------
+    # 2) Vacunas: pendientes no bloquean (avisa y deja constancia) → VACUNACIÓN → sin aviso -----
     atencion = {"titular_id": rocco.titular_id, "mascota_id": rocco.id, "profesional_id": perez.id,
                 "tipo": "CONTROL", "inicio": f"{HOY}T14:00", "duracion": "30", "asiste_titular": "1"}
     r = post(c, "/clinica/atenciones/registrar", atencion, "/clinica/atenciones/nueva")
-    assert "tiene vacunas obligatorias pendientes" in r.text and "Antirrábica" in r.text
-    assert "Reservar turno de VACUNACIÓN" in r.text
+    assert "Atención registrada e iniciada" in r.text and "alert-danger" not in r.text
+    assert "vacunas pendientes" in r.text and "Antirrábica" in r.text
+    con_pendientes = s.scalars(select(AtencionClinica).order_by(AtencionClinica.id.desc())).first()
+    assert "Atendida con vacunas pendientes" in con_pendientes.observaciones
     r = post(c, "/clinica/atenciones/registrar", {**atencion, "tipo": "VACUNACION", "inicio": f"{HOY}T14:30"},
              "/clinica/atenciones/nueva")
     vac = s.scalars(select(AtencionClinica).order_by(AtencionClinica.id.desc())).first()
@@ -135,6 +137,7 @@ def test_escenario_de_demo(demo):
     r = post(c, "/clinica/atenciones/registrar", {**atencion, "inicio": f"{HOY}T15:00"}, "/clinica/atenciones/nueva")
     assert "Atención registrada e iniciada" in r.text
     control = s.scalars(select(AtencionClinica).order_by(AtencionClinica.id.desc())).first()
+    assert "vacunas pendientes" not in control.observaciones
 
     # 3) Mascota sin titular ---------------------------------------------------------------
     r = post(c, "/clinica/mascotas", {"titular_id": "", "nombre": "Huérfano", "especie": "GATO", "sexo": "MACHO",
