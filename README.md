@@ -74,9 +74,15 @@ uvicorn app.main:app --reload
 pytest
 ```
 
-Corre ~240 tests sobre SQLite en memoria: State, Observer, inmutabilidad (3 capas), validaciones, coordinación
+Corre ~300 tests sobre SQLite en memoria: State, Observer, inmutabilidad (3 capas), validaciones, coordinación
 remito ↔ muestras ↔ precinto, facturación, reportes con números esperados, seed, smoke test de todas las páginas
 de ambos portales y el **escenario de demo completo por HTTP** (`tests/test_demo.py`).
+
+Los tests de **comportamiento de los patrones** están en `test_observer.py` (O1–O10: el observador ve el estado ya
+cambiado, una transición fallida o un resultado parcial no notifican, sin duplicados, desacople, pull de la orden,
+matriz de `actualizar_estado()`…), `test_state_muestra.py` (S1–S5) y `test_state_remito.py` (R1–R4). Las rondas de
+correcciones del grupo se verifican en `test_correcciones_web.py`, `test_correcciones_ronda2.py` y
+`test_correcciones_ronda2_web.py`.
 
 ### Ingreso
 
@@ -113,7 +119,7 @@ UI (FastAPI + Jinja2)  →  services (casos de uso, transacción)  →  domain (
 ```
 app/
 ├── main.py                  # FastAPI, sesión, routers y manejo global de VeterinariaError
-├── db.py                    # engine, sesión, init_db con triggers de inmutabilidad
+├── db.py                    # engine, sesión, init_db con triggers de inmutabilidad (y migración de nombres de estado)
 ├── seed/                    # datos de prueba (60 días) creados a través de los servicios:
 │                            # datos.py (tablas), sembrador.py (operaciones) y un módulo por etapa
 ├── domain/
@@ -137,7 +143,7 @@ app/
     │                        # portal_clinica/ (un módulo por sección: agenda, atenciones, clientes, …)
     ├── templates/           # base.html, clinica/*, laboratorio/*, componentes/* (badges, línea de tiempo, reporte)
     └── static/              # estilos.css, app.js
-tests/                       # pytest
+tests/                       # pytest: dominio, servicios, web por HTTP, demo y comportamiento de State/Observer
 docs/                        # consigna, diagrama, alcances, context.md, DECISIONES.md, TRAZABILIDAD.md
 ```
 
@@ -162,7 +168,7 @@ docs/                        # consigna, diagrama, alcances, context.md, DECISIO
 
 | Archivo | Clase | Rol |
 |---|---|---|
-| `app/domain/estados/estado_remito.py` | `EstadoRemito` | Base abstracta (todo inválido) |
+| `app/domain/estados/estado_remito.py` | `EstadoRemito` | Base abstracta (todo inválido). Los nombres de las clases indican el estado, sin el prefijo “Remito” (igual que en la muestra) |
 | | `Armado` | `agregar_muestra`, `cerrar` (precinto), `despachar` (muestras → En tránsito) |
 | | `Despachado` | `iniciar_transito` |
 | | `EnTransito` | `recibir` → `Recibido` (muestras Recibidas) o `RecibidoConObservaciones` (muestras Rechazadas) |
@@ -204,7 +210,7 @@ Además: temperatura fuera del rango del contenedor (despacho o recepción), cap
 compatible con los análisis, no facturar dos veces, no cobrar análisis de muestras rechazadas, transiciones inválidas
 de muestra/remito (`TransicionInvalidaError`).
 
-Reglas agregadas en la ronda de correcciones del grupo (ver `docs/DECISIONES.md`):
+Reglas agregadas en la primera ronda de correcciones del grupo (ver `docs/DECISIONES.md`):
 
 | Regla | Excepción | Dónde |
 |---|---|---|
@@ -217,6 +223,17 @@ Reglas agregadas en la ronda de correcciones del grupo (ver `docs/DECISIONES.md`
 | Nombres de personas (responsable presente, recibido por, analista, colocado por): solo letras, mín. 3 | `DatosInvalidosError` | `app/domain/validaciones.py` |
 | Rango de fechas de filtros y reportes: «Hasta» ≥ «Desde» (en reportes, las dos obligatorias) | `DatosInvalidosError` | `services/base.py::validar_rango_fechas` |
 
+Reglas de la segunda ronda de correcciones (PDF “Errores y cosas a mejorar”; ver `docs/DECISIONES.md`, sección S2):
+
+| Regla | Excepción | Dónde |
+|---|---|---|
+| Vacunas pendientes: solo avisan (“Vacunas pendientes: …”), no bloquean atenciones ni turnos | — | `AtencionClinica.verificar_vacunas_obligatorias`, `iniciar` |
+| Nombre y raza de la mascota: solo letras y espacios (raza opcional) | `DatosInvalidosError` | `Mascota.validar_nombre`, `Mascota.validar_raza` |
+| Mascota elegida **o** mascota nueva, nunca las dos (atención sin turno y reservar turno) | `DatosInvalidosError` | `AtencionesService._mascota_elegida_o_nueva` |
+| Baja de una mascota (o de su titular): se cancelan sus turnos reservados y la atención en curso; no se le reservan turnos | `VeterinariaError` | `Mascota.dar_de_baja` → `AtencionClinica.cancelar_por_baja`; `AtencionClinica._validar_participantes` |
+| Teléfono y email de clínicas, profesionales y laboratorios (si se cargan): mismo formato que los titulares | `DatosInvalidosError` | `CatalogosService` (campos `tel` / `email`) → `validaciones.telefono`, `validaciones.email` |
+| Una clínica de alta complejidad no puede desactivarla al editar (sí se puede habilitar al crear o editar) | `DatosInvalidosError` | `Clinica._validar_alta_complejidad` (`@validates`) |
+
 ---
 
 ## 5. Pantallas
@@ -226,16 +243,16 @@ Reglas agregadas en la ronda de correcciones del grupo (ver `docs/DECISIONES.md`
 | Sección | Qué se hace |
 |---|---|
 | Inicio | KPIs: turnos de hoy, atenciones en curso, muestras sin empaquetar, remitos armados, remitos en camino, **rechazadas en 7 días (alerta roja)**, resultados nuevos, cirugías pendientes; turnos del día, resultados recientes, últimos remitos. |
-| Agenda | Grilla del día por profesional (franjas de 30 min), reservar turno (titular → mascota → profesional → horario → tipo), iniciar y cancelar. |
-| Atenciones | Registrar atención sin turno con los **3 casos** del grupo (titular presente / “+ Nueva mascota” / no asiste el titular → responsable presente); control de vacunas; finalizar (diagnóstico, observaciones, peso, importe, vacunas aplicadas si es VACUNACIÓN); botones **Emitir orden de laboratorio · Derivar a cirugía · Emitir comprobante**. |
-| Clientes | ABM de titulares con búsqueda por DNI/nombre, ficha con mascotas y facturas, baja lógica. |
-| Mascotas | ABM (siempre con titular). Ficha = historia clínica con pestañas Resumen · Atenciones · Vacunas · Laboratorio (órdenes, muestras con línea de tiempo y resultados) · Cirugías · Facturas. |
+| Agenda | Grilla del día por profesional (franjas de 30 min), reservar turno (titular → mascota del titular **o** “Nueva mascota” → profesional → horario → tipo; “¿No existe? Crear titular”), iniciar y cancelar. |
+| Atenciones | Registrar atención sin turno con los **3 casos** del grupo (titular presente / “Nueva mascota”, solo si no se eligió una / no asiste el titular → responsable presente); aviso de vacunas pendientes (no bloquea); finalizar (diagnóstico, observaciones, peso, importe, vacunas aplicadas si es VACUNACIÓN); botones **Emitir orden de laboratorio · Derivar a cirugía · Emitir comprobante**. |
+| Clientes | ABM de titulares con búsqueda por DNI/nombre, ficha con mascotas y facturas, baja lógica (también de sus mascotas, con sus turnos cancelados). |
+| Mascotas | ABM (siempre con titular). Ficha = historia clínica con pestañas Resumen · Atenciones · Vacunas · Laboratorio (órdenes, muestras con línea de tiempo y resultados) · Cirugías · Facturas. Baja lógica: cancela los turnos reservados y la atención en curso. |
 | Órdenes lab | Lista y detalle: análisis, indicaciones, muestras con badge y línea de tiempo; registrar muestra (nace Extraída); anular. |
 | Envíos | Armar remito en 3 pasos (laboratorio + contenedor → tildar muestras → cerrar con precinto y temperatura), despachar, confirmar retiro; resultado de la recepción. |
 | Cirugías | Enviadas y (si la clínica es de alta complejidad) Recibidas: aceptar, rechazar, consentimiento, estudios, programar, registrar cirugía, cancelar, facturar. |
 | Facturación | Pendiente de facturar (atenciones, órdenes completadas, cirugías realizadas), comprobantes, pago y anulación. |
 | Reportes | Atenciones y derivaciones · Muestras rechazadas · Tiempos de tránsito · Facturación por clínica y laboratorio · Vacunas pendientes: filtros, gráfico, tabla y **Exportar PDF**. |
-| Gestión | Clínicas, profesionales, laboratorios, tipos de análisis, vacunas (esquema) y contenedores (mantenimiento/habilitar). |
+| Gestión | Clínicas, profesionales, laboratorios, tipos de análisis, vacunas (esquema) y contenedores (mantenimiento/habilitar). Teléfono y email con formato validado; la alta complejidad de una clínica, una vez habilitada, queda fija. |
 
 **Portal Laboratorio** (`/laboratorio`)
 
@@ -266,7 +283,12 @@ resultados; facturas pagadas, pendientes y una anulada; cirugías solicitada, ac
 rechazada y cancelada; y la agenda de hoy.
 
 Mascotas útiles para la demo: **Rocco** (titular Juan García) con vacunas vencidas, **Mía** (Carlos Fernández)
-sin triple felina y **Toby** (Martín Herrera), cachorro sin vacunar.
+sin triple felina y **Toby** (Martín Herrera), cachorro sin vacunar (las tres muestran el aviso de vacunas
+pendientes, pero se pueden atender).
+
+Si tenés una `veterinaria.db` creada antes de los últimos cambios, la app actualiza sola los nombres de estado de
+los remitos al arrancar. Los teléfonos con guiones del seed anterior (por ejemplo `351-422-1100`) hay que
+corregirlos al editar esa clínica o profesional, o regenerar la base con `--reset`.
 
 ---
 
@@ -290,7 +312,7 @@ sin triple felina y **Toby** (Martín Herrera), cachorro sin vacunar.
 5. **Remito.** *Envíos › Armar remito*: Laboratorio Central + contenedor CEN‑02 → tildar la muestra (**Empaquetada**) →
    *Cerrar* con el precinto propuesto (PRE‑…), temperatura 4 y **Colocado por** → *Despachar* (transportista, llegada
    estimada; muestra **En tránsito**, orden EN PROCESO) → *Confirmar retiro* (remito En tránsito).
-6. **Laboratorio.** *Cambiar* → *Entrar como Laboratorio*. *Recepción* → **Recibir** el remito: precinto íntegro **Sí**,
+6. **Laboratorio.** *Cambiar* → **Sí** → *Entrar como Laboratorio*. *Recepción* → **Recibir** el remito: precinto íntegro **Sí**,
    5 °C, **Recibido por** → **ACEPTADA**, muestra **Recibida** → *Cargar resultados* (con **Analista**) → **Analizada**.
    En el portal de la clínica la orden quedó **COMPLETADA** sola (Observer).
 7. **Precinto roto.** Repetir 4–6 con una orden nueva y el contenedor CEN‑03, pero al recibir marcar **No, roto** →
@@ -301,7 +323,7 @@ sin triple felina y **Toby** (Martín Herrera), cachorro sin vacunar.
    fecha, usuario y motivo de cada cambio, y la cadena de custodia. Los registros no se pueden editar ni borrar.
 9. **Cirugía de alta complejidad.** En la atención de Rocco **en curso**: **Derivar a cirugía** → probar destino Clínica
    Norte → aviso “no está habilitada para cirugías de alta complejidad”; destino Hospital Veterinario Sur → enviada.
-   *Cambiar* → *Clínica: Hospital Veterinario Sur* → *Cirugías › Recibidas*: **Aceptar** (cirujano) → *Programar* sin
+   *Cambiar* → **Sí** → *Clínica: Hospital Veterinario Sur* → *Cirugías › Recibidas*: **Aceptar** (cirujano) → *Programar* sin
    consentimiento → aviso rojo → *Registrar consentimiento* → *Programar* → *Registrar cirugía* (informe) →
    *Emitir comprobante* con el importe.
 10. **Facturación y reportes.** Volver a Clínica Centro: finalizar la atención (importe obligatorio) → *Facturación ›
@@ -317,6 +339,7 @@ sin triple felina y **Toby** (Martín Herrera), cachorro sin vacunar.
 - `docs/diagrama_clases_v2.drawio` – diagrama de clases (hoja “Diagrama de clases”) y notas del grupo (hoja “opciones”).
 - `docs/Presentacion-grupo_30.docx.md` – objetivos y alcances.
 - `docs/context.md` – contexto completo usado para el desarrollo.
-- `docs/DECISIONES.md` – **desvíos respecto del diagrama** y decisiones tomadas.
+- `docs/DECISIONES.md` – **desvíos respecto del diagrama** y decisiones tomadas (incluye las dos rondas de
+  correcciones del grupo y la refactorización del backend).
 - `docs/TRAZABILIDAD.md` – requisito de la consigna → clase/método → pantalla → test.
 - `docs/PRUEBAS_MANUALES.md` – checklist de pruebas manuales de todos los flujos.
