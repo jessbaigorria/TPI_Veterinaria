@@ -9,7 +9,13 @@
   {% for c in cat.campos %}
     {% set actual = previo[c.nombre] if c.nombre in previo else (obj[c.nombre] if obj else none) %}
     <div class="col-md-6 mb-3">
-    {% if c.tipo == 'bool' %}
+    {% if c.tipo == 'bool' and obj and c.nombre == 'alta_complejidad' and obj.alta_complejidad %}
+      {# Una vez habilitada no se desactiva (regla en Clinica): se muestra fija y se envía igual. #}
+      <div class="form-check form-switch mt-4"><input class="form-check-input" type="checkbox" id="{{ c.nombre }}" checked disabled>
+        <input type="hidden" name="{{ c.nombre }}" value="1">
+        <label class="form-check-label" for="{{ c.nombre }}">{{ c.etiqueta }}</label>
+        <div class="form-text">Ya está habilitada: no se puede desactivar.</div></div>
+    {% elif c.tipo == 'bool' %}
       <div class="form-check form-switch mt-4"><input class="form-check-input" type="checkbox" name="{{ c.nombre }}" value="1" id="{{ c.nombre }}" {{ 'checked' if actual or (not obj and c.nombre in ('activa','activo','obligatoria')) }}>
         <label class="form-check-label" for="{{ c.nombre }}">{{ c.etiqueta }}</label></div>
     {% elif c.tipo == 'select' %}
@@ -20,7 +26,14 @@
       </select>
     {% else %}
       <label class="form-label">{{ c.etiqueta }}{{ ' *' if c.requerido }}</label>
+      {% if c.tipo == 'tel' %}
+      <input class="form-control" type="tel" inputmode="numeric" pattern="[0-9]{8,15}" title="Solo números, de 8 a 15 dígitos"
+             name="{{ c.nombre }}" value="{{ actual if actual is not none }}" {{ 'required' if c.requerido }}>
+      {% elif c.tipo == 'email' %}
+      <input class="form-control" type="email" name="{{ c.nombre }}" value="{{ actual if actual is not none }}" {{ 'required' if c.requerido }}>
+      {% else %}
       <input class="form-control" name="{{ c.nombre }}" value="{{ actual if actual is not none }}" {{ 'required' if c.requerido }}>
+      {% endif %}
     {% endif %}
     </div>
   {% endfor %}

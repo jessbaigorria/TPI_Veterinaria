@@ -5,10 +5,11 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, ForeignKey, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.domain import reloj
 from app.domain.base import Base
+from app.domain.excepciones import DatosInvalidosError
 
 if TYPE_CHECKING:  # pragma: no cover
     from app.domain.atencion import AtencionClinica
@@ -32,6 +33,14 @@ class Clinica(Base):
     atenciones: Mapped[list["AtencionClinica"]] = relationship(back_populates="clinica")
     contenedores: Mapped[list["Contenedor"]] = relationship(back_populates="clinica",
                                                             order_by="Contenedor.codigo")
+
+    @validates("alta_complejidad")
+    def _validar_alta_complejidad(self, _campo: str, valor: bool) -> bool:
+        """Se puede habilitar al crear o al editar, pero una vez habilitada no se desactiva: sus
+        cirugías derivadas dejarían de verse en el perfil de la clínica."""
+        if self.alta_complejidad and not valor:
+            raise DatosInvalidosError(f"{self.nombre} ya es de alta complejidad: no se puede desactivar.")
+        return valor
 
     def agregar_profesional(self, p: "Profesional") -> None:
         if p not in self.profesionales:

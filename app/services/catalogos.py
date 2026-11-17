@@ -10,6 +10,7 @@ from dataclasses import dataclass
 
 from sqlalchemy import select
 
+from app.domain import validaciones
 from app.domain.base import a_decimal
 from app.domain.clinica import Clinica, Profesional
 from app.domain.enums import Especie, TipoMuestra
@@ -24,7 +25,7 @@ from app.services.base import ServicioBase, a_bool, a_float, texto, transacciona
 class Campo:
     nombre: str
     etiqueta: str
-    tipo: str = "text"          # text | number | bool | select | decimal
+    tipo: str = "text"          # text | number | bool | select | decimal | tel | email
     opciones: tuple = ()
     requerido: bool = True
     entero: bool = False        # number: se guarda como int si el valor no tiene decimales
@@ -45,19 +46,19 @@ TIPOS_MUESTRA = tuple((t.value, t.etiqueta) for t in TipoMuestra)
 CATALOGOS: dict[str, Catalogo] = {
     "clinicas": Catalogo("clinicas", "Clínicas", Clinica, (
         Campo("nombre", "Nombre"), Campo("direccion", "Dirección", requerido=False),
-        Campo("localidad", "Localidad", requerido=False), Campo("telefono", "Teléfono", requerido=False),
-        Campo("email", "Email", requerido=False), Campo("activa", "Activa", "bool"),
+        Campo("localidad", "Localidad", requerido=False), Campo("telefono", "Teléfono", "tel", requerido=False),
+        Campo("email", "Email", "email", requerido=False), Campo("activa", "Activa", "bool"),
         Campo("alta_complejidad", "Alta complejidad", "bool")),
         ("nombre", "localidad", "telefono", "alta_complejidad", "activa")),
     "profesionales": Catalogo("profesionales", "Profesionales", Profesional, (
         Campo("legajo", "Legajo"), Campo("matricula", "Matrícula"), Campo("dni", "DNI"),
         Campo("nombre", "Nombre"), Campo("apellido", "Apellido"), Campo("especialidad", "Especialidad"),
-        Campo("telefono", "Teléfono", requerido=False), Campo("email", "Email", requerido=False),
+        Campo("telefono", "Teléfono", "tel", requerido=False), Campo("email", "Email", "email", requerido=False),
         Campo("clinica_id", "Clínica", "select")),
         ("legajo", "matricula", "apellido", "nombre", "especialidad", "clinica")),
     "laboratorios": Catalogo("laboratorios", "Laboratorios", Laboratorio, (
         Campo("nombre", "Nombre"), Campo("direccion", "Dirección", requerido=False),
-        Campo("telefono", "Teléfono", requerido=False), Campo("email", "Email", requerido=False),
+        Campo("telefono", "Teléfono", "tel", requerido=False), Campo("email", "Email", "email", requerido=False),
         Campo("responsable", "Responsable", requerido=False), Campo("activo", "Activo", "bool")),
         ("nombre", "direccion", "responsable", "activo")),
     "analisis": Catalogo("analisis", "Tipos de análisis", TipoAnalisis, (
@@ -79,6 +80,9 @@ CATALOGOS: dict[str, Catalogo] = {
         Campo("clinica_id", "Clínica", "select")),
         ("codigo", "clinica", "capacidad", "temperatura_min", "temperatura_max", "estado")),
 }
+
+# Teléfono y email: si se cargan, con el mismo formato que los de los titulares (app/domain/validaciones.py).
+VALIDADORES_DE_FORMATO = {"tel": validaciones.telefono, "email": validaciones.email}
 
 # Campos select que guardan un enum del dominio (el formulario manda el valor como texto).
 CAMPOS_ENUM = {TipoAnalisis: ("tipo_muestra_requerida", TipoMuestra), Vacuna: ("especie", Especie)}
@@ -157,6 +161,8 @@ def _convertir_campo(campo: Campo, crudo):
         return _importe(campo, crudo)
     if campo.tipo == "select" and campo.nombre.endswith("_id"):
         return int(crudo)
+    if campo.tipo in VALIDADORES_DE_FORMATO and texto(crudo):
+        return VALIDADORES_DE_FORMATO[campo.tipo](crudo)
     return texto(crudo)
 
 

@@ -1,11 +1,17 @@
 """Etapa 1 del seed: clínicas, laboratorio, profesionales, vacunas, tipos de análisis y contenedores."""
 from __future__ import annotations
 
+import unicodedata
+
 from app.seed.datos import (
     ANALISIS, CLINICAS, CONTENEDOR_EN_MANTENIMIENTO, CONTENEDORES, LABORATORIO, PROFESIONALES,
     PROFESIONALES_DE_RUTINA, VACUNAS,
 )
 from app.seed.sembrador import Sembrador
+
+
+def _sin_tildes(texto: str) -> str:
+    return unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode()
 
 
 def sembrar_catalogos(sem: Sembrador) -> None:
@@ -18,7 +24,7 @@ def sembrar_catalogos(sem: Sembrador) -> None:
         sem.prof[clave] = c.guardar("profesionales", {
             "legajo": legajo, "matricula": f"MP-{legajo}", "dni": f"2{legajo}0{legajo}",
             "nombre": nombre, "apellido": apellido, "especialidad": especialidad,
-            "telefono": f"351-55{legajo}", "email": f"{apellido.lower()}@vetred.com.ar",
+            "telefono": f"35155{legajo}", "email": f"{_sin_tildes(apellido.lower())}@vetred.com.ar",
             "clinica_id": sem.clinica[clinica].id})
     sem.de_rutina = {sem.clinica[clinica].id: [sem.prof[p] for p in profesionales]
                      for clinica, profesionales in PROFESIONALES_DE_RUTINA.items()}

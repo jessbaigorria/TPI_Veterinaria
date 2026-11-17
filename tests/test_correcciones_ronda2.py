@@ -99,3 +99,56 @@ def test_baja_del_titular_cancela_los_turnos_de_sus_mascotas(sesion, base):
     ClientesService(sesion).dar_de_baja(base.titular.id)
     assert turno.estado is EstadoAtencion.CANCELADA
     assert not base.rocco.activa and not base.firulais.activa
+
+
+# --- Gestión: formato de email y teléfono -----------------------------------------------------------
+def _profesional(base, **extra):
+    return {"legajo": "100", "matricula": "MP100", "dni": "100", "nombre": "Laura", "apellido": "Pérez",
+            "especialidad": "Clínica general", "clinica_id": base.centro.id, **extra}
+
+
+@pytest.mark.parametrize("clave,campo,valor,mensaje", [
+    ("profesionales", "email", "sosavetred", "formato válido"),
+    ("profesionales", "telefono", "HGDHD", "solo admite números"),
+    ("clinicas", "email", "centro@", "formato válido"),
+    ("clinicas", "telefono", "351-422", "solo admite números"),
+    ("laboratorios", "telefono", "123", "entre 8 y 15"),
+])
+def test_catalogos_validan_email_y_telefono(sesion, base, clave, campo, valor, mensaje):
+    from app.services.catalogos import CatalogosService
+    datos = {"profesionales": _profesional(base), "clinicas": {"nombre": "Clínica Centro", "activa": "1"},
+             "laboratorios": {"nombre": "Laboratorio Central", "activo": "1"}}[clave]
+    obj = {"profesionales": base.perez, "clinicas": base.centro, "laboratorios": base.lab}[clave]
+    with pytest.raises(DatosInvalidosError, match=mensaje):
+        CatalogosService(sesion).guardar(clave, {**datos, campo: valor}, obj.id)
+    assert getattr(obj, campo) != valor
+
+
+def test_catalogos_aceptan_email_y_telefono_validos_o_vacios(sesion, base):
+    from app.services.catalogos import CatalogosService
+    cat = CatalogosService(sesion)
+    p = cat.guardar("profesionales", _profesional(base, email="Laura.Perez@VetRed.com.ar", telefono="3515551001"),
+                    base.perez.id)
+    assert p.email == "laura.perez@vetred.com.ar" and p.telefono == "3515551001"
+    p = cat.guardar("profesionales", _profesional(base, email="", telefono=""), base.perez.id)
+    assert p.email == "" and p.telefono == ""
+
+
+# --- Gestión: la alta complejidad no se desactiva ---------------------------------------------------
+def test_alta_complejidad_no_se_desactiva_al_editar(sesion, base):
+    from app.services.catalogos import CatalogosService
+    cat = CatalogosService(sesion)
+    with pytest.raises(DatosInvalidosError, match="no se puede desactivar"):
+        cat.guardar("clinicas", {"nombre": "Hospital Veterinario Sur", "activa": "1"}, base.sur.id)
+    assert base.sur.alta_complejidad
+    cat.guardar("clinicas", {"nombre": "Hospital Veterinario Sur", "activa": "1", "alta_complejidad": "1"}, base.sur.id)
+    assert base.sur.alta_complejidad
+
+
+def test_alta_complejidad_se_puede_habilitar_al_crear_o_editar(sesion, base):
+    from app.services.catalogos import CatalogosService
+    cat = CatalogosService(sesion)
+    nueva = cat.guardar("clinicas", {"nombre": "Clínica Oeste", "activa": "1", "alta_complejidad": "1"})
+    assert nueva.alta_complejidad
+    cat.guardar("clinicas", {"nombre": "Clínica Norte", "activa": "1", "alta_complejidad": "1"}, base.norte.id)
+    assert base.norte.alta_complejidad

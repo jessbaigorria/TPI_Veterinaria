@@ -96,3 +96,33 @@ def test_mascota_nueva_con_numeros_se_rechaza(entorno):
                    hora_inicio="18:00", hora_fin="18:30")
     html = post(c, "/clinica/agenda/reservar", datos, "/clinica/agenda/nuevo").text
     assert "solo admite letras" in aviso_rojo(html)
+
+
+# --- 7 y 8: Gestión ---------------------------------------------------------------------------------
+def test_editar_profesional_rechaza_email_y_telefono_invalidos(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    sosa = uno(s, Profesional, apellido="Sosa")
+    url = f"/clinica/gestion/profesionales/{sosa.id}"
+    html = c.get(f"{url}/editar").text
+    assert 'type="email"' in html and 'type="tel"' in html
+    datos = {"legajo": sosa.legajo, "matricula": sosa.matricula, "dni": sosa.dni, "nombre": sosa.nombre,
+             "apellido": sosa.apellido, "especialidad": sosa.especialidad, "clinica_id": sosa.clinica_id,
+             "telefono": sosa.telefono, "email": "sosavetred"}
+    assert "formato válido" in aviso_rojo(post(c, url, datos, f"{url}/editar").text)
+    assert "solo admite números" in aviso_rojo(post(c, url, {**datos, "email": sosa.email, "telefono": "HGDHD"},
+                                                    f"{url}/editar").text)
+    assert uno(s, Profesional, apellido="Sosa").email == "sosa@vetred.com.ar"
+
+
+def test_clinica_de_alta_complejidad_muestra_el_interruptor_fijo(entorno):
+    from app.domain.clinica import Clinica
+    c, s = entorno
+    login_clinica(c, s)
+    sur = uno(s, Clinica, nombre="Hospital Veterinario Sur")
+    html = c.get(f"/clinica/gestion/clinicas/{sur.id}/editar").text
+    assert 'name="alta_complejidad" value="1"' in html and "checked disabled" in html
+    assert "no se puede desactivar" in html
+    centro = uno(s, Clinica, nombre="Clínica Centro")
+    html = c.get(f"/clinica/gestion/clinicas/{centro.id}/editar").text
+    assert 'type="checkbox" name="alta_complejidad"' in html and "checked disabled" not in html

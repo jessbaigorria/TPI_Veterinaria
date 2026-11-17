@@ -6,16 +6,16 @@ from app.domain.enums import TipoAtencion
 # --- catálogos -----------------------------------------------------------------------------
 CLINICAS = {  # clave → datos del formulario de Gestión
     "centro": {"nombre": "Clínica Centro", "direccion": "Av. Colón 1250", "localidad": "Córdoba Centro",
-               "telefono": "351-422-1100", "email": "centro@vetred.com.ar", "activa": "1"},
+               "telefono": "3514221100", "email": "centro@vetred.com.ar", "activa": "1"},
     "norte": {"nombre": "Clínica Norte", "direccion": "Av. Rafael Núñez 4800", "localidad": "Cerro de las Rosas",
-              "telefono": "351-481-2200", "email": "norte@vetred.com.ar", "activa": "1"},
+              "telefono": "3514812200", "email": "norte@vetred.com.ar", "activa": "1"},
     "sur": {"nombre": "Hospital Veterinario Sur", "direccion": "Av. Vélez Sarsfield 3300",
-            "localidad": "Barrio Jardín", "telefono": "351-466-3300", "email": "hospital@vetred.com.ar",
+            "localidad": "Barrio Jardín", "telefono": "3514663300", "email": "hospital@vetred.com.ar",
             "activa": "1", "alta_complejidad": "1"},
 }
 
 LAB_NOMBRE = "Laboratorio Central de Diagnóstico Veterinario"
-LABORATORIO = {"nombre": LAB_NOMBRE, "direccion": "Bv. San Juan 900", "telefono": "351-425-9000",
+LABORATORIO = {"nombre": LAB_NOMBRE, "direccion": "Bv. San Juan 900", "telefono": "3514259000",
                "email": "recepcion@labcentral.com.ar", "responsable": "Bioq. Andrea Gómez", "activo": "1"}
 
 PROFESIONALES = [  # (clave, legajo, nombre, apellido, clínica, especialidad)
