@@ -12,7 +12,7 @@ from app.services.base import a_fecha
 from app.services.clientes import ClientesService
 from app.services.mascotas import MascotasService
 from app.web.plantillas import render
-from app.web.routers._comun import Db, UsrClinica, formulario, ir
+from app.web.routers._comun import Db, UsrClinica, datos_mascota_nueva, formulario, ir
 from app.web.sesion import UsuarioSesion, avisar
 
 router = APIRouter(prefix="/clinica")
@@ -45,7 +45,8 @@ async def reservar(request: Request, u: UsuarioSesion = UsrClinica, s: Session =
     a = AtencionesService(s).reservar_turno(
         f.get("mascota_id"), f.get("profesional_id"), u.clinica_id,
         _fecha_y_hora(f, "hora_inicio"), _fecha_y_hora(f, "hora_fin"), f.get("tipo") or "CONSULTA",
-        f.get("motivo", ""), f.get("asiste_titular", "1"), f.get("responsable_presente", ""))
+        f.get("motivo", ""), f.get("asiste_titular", "1"), f.get("responsable_presente", ""),
+        nueva_mascota=datos_mascota_nueva(f))
     avisar(request, f"Turno reservado: {a.mascota.nombre} con {a.profesional.nombre_completo()} el "
                     f"{a.fecha_hora_inicio:%d/%m/%Y %H:%M}.")
     _avisar_vacunas_pendientes(request, a)

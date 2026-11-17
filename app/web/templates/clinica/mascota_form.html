@@ -15,13 +15,13 @@
   </div>
   {% endif %}
   <div class="row">
-    <div class="col-md-4">{{ campo('nombre', 'Nombre', previo.nombre or (m.nombre if m), requerido=True) }}</div>
+    <div class="col-md-4">{{ campo('nombre', 'Nombre', previo.nombre or (m.nombre if m), requerido=True, extra='minlength="2" pattern="' ~ PATRON_LETRAS_2 ~ '" title="Solo letras y espacios (al menos 2)"') }}</div>
     <div class="col-md-4 mb-3"><label class="form-label">Especie *</label><select class="form-select" name="especie">
       {% for e in enums.Especie %}<option value="{{ e.value }}" {{ 'selected' if (previo.especie or (m.especie.value if m)) == e.value }}>{{ e.etiqueta }}</option>{% endfor %}</select></div>
     <div class="col-md-4 mb-3"><label class="form-label">Sexo *</label><select class="form-select" name="sexo">
       {% for e in enums.Sexo %}<option value="{{ e.value }}" {{ 'selected' if (previo.sexo or (m.sexo.value if m)) == e.value }}>{{ e.etiqueta }}</option>{% endfor %}</select></div>
     <div class="col-md-4">{{ campo('fecha_nacimiento', 'Fecha de nacimiento', previo.fecha_nacimiento or (m.fecha_nacimiento if m), tipo='date', requerido=True) }}</div>
-    <div class="col-md-4">{{ campo('raza', 'Raza', previo.raza or (m.raza if m)) }}</div>
+    <div class="col-md-4">{{ campo('raza', 'Raza', previo.raza or (m.raza if m), extra='minlength="2" pattern="' ~ PATRON_LETRAS_2 ~ '" title="Solo letras y espacios (al menos 2)"') }}</div>
     <div class="col-md-4">{{ campo('peso', 'Peso (kg)', previo.peso or (m.peso if m)) }}</div>
     {% if not m %}
     <div class="col-md-6 mb-3"><label class="form-label">Alergias</label><textarea class="form-control" name="alergias" rows="2">{{ previo.alergias }}</textarea></div>

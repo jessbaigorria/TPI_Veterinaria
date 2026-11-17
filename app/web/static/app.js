@@ -149,17 +149,32 @@ document.addEventListener("DOMContentLoaded", () => {
     recalcular(!duracion.value);
   }
 
-  // Registrar atención: se usa la mascota elegida o, si se completa el nombre, la mascota nueva.
+  // Atención sin turno y reservar turno: se usa la mascota elegida o, si no se eligió ninguna y se
+  // completa el nombre, la mascota nueva. Con una mascota elegida la sección «Nueva mascota» se deshabilita.
   const fNueva = document.querySelector("form[data-mascota-nueva]");
   if (fNueva) {
     const nombre = fNueva.querySelector("[name=nm_nombre]"), mascota = fNueva.querySelector("[name=mascota_id]");
-    const requeridosNueva = fNueva.querySelectorAll("input[data-nueva], select[data-nueva]");
+    const titular = fNueva.querySelector("[name=titular_id]");
+    const seccion = fNueva.querySelector("[data-seccion-nueva]");
+    const camposNueva = seccion.querySelectorAll("input, select");
+    const requeridosNueva = seccion.querySelectorAll("input[data-nueva], select[data-nueva]");
+    const ayuda = seccion.querySelector("[data-ayuda-nueva]"), textoAyuda = ayuda.textContent;
     const ajustar = () => {
-      const nueva = nombre.value.trim() !== "";
+      const elegida = mascota.value !== "";
+      camposNueva.forEach((el) => {
+        el.disabled = elegida;
+        if (el.tomselect) elegida ? el.tomselect.disable() : el.tomselect.enable();
+      });
+      seccion.classList.toggle("opacity-50", elegida);
+      ayuda.textContent = elegida ? "Ya elegiste una mascota del titular: para cargar una nueva, quitá la selección." : textoAyuda;
+      const nueva = !elegida && nombre.value.trim() !== "";
       mascota.required = !nueva;
       requeridosNueva.forEach((el) => { el.required = nueva; });
     };
-    nombre.addEventListener("input", ajustar); ajustar();
+    nombre.addEventListener("input", ajustar);
+    mascota.addEventListener("change", ajustar);
+    titular.addEventListener("change", ajustar);
+    ajustar();
   }
 
   // DNI con máscara ## ### ### mientras se escribe (solo dígitos; 7 dígitos → # ### ### al salir del campo).

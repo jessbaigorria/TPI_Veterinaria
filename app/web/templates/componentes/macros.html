@@ -9,6 +9,27 @@
 </div>
 {%- endmacro %}
 
+{# Mascota nueva del titular elegido (atención sin turno y reservar turno). Se usa solo si no se
+   eligió una mascota existente: con una elegida, app.js deshabilita la sección. #}
+{% macro seccion_mascota_nueva(previo) -%}
+<div class="border rounded p-3 mt-3 bg-light" data-seccion-nueva>
+  <div class="fw-semibold mb-2"><i class="bi bi-plus-circle text-secondary"></i> Nueva mascota</div>
+  <div class="form-text mt-0 mb-2" data-ayuda-nueva>Completá estos datos solo si la mascota todavía no está registrada; si no, elegila arriba.</div>
+  <div class="row g-2">
+    <div class="col-md-6"><label class="form-label" for="nm_nombre">Nombre</label><input class="form-control" id="nm_nombre" name="nm_nombre"
+      value="{{ previo.nm_nombre }}" minlength="2" pattern="{{ PATRON_LETRAS_2 }}" title="Solo letras y espacios (al menos 2)" data-nueva></div>
+    <div class="col-md-3"><label class="form-label">Especie</label><select class="form-select" name="nm_especie" data-nueva>
+      {% for e in enums.Especie %}<option value="{{ e.value }}" {{ 'selected' if previo.nm_especie == e.value }}>{{ e.etiqueta }}</option>{% endfor %}</select></div>
+    <div class="col-md-3"><label class="form-label">Sexo</label><select class="form-select" name="nm_sexo" data-nueva>
+      {% for e in enums.Sexo %}<option value="{{ e.value }}" {{ 'selected' if previo.nm_sexo == e.value }}>{{ e.etiqueta }}</option>{% endfor %}</select></div>
+    <div class="col-md-4"><label class="form-label">Nacimiento</label><input type="date" class="form-control" name="nm_fecha_nacimiento" max="{{ reloj.hoy() }}" value="{{ previo.nm_fecha_nacimiento }}" data-nueva></div>
+    <div class="col-md-5"><label class="form-label">Raza</label><input class="form-control" name="nm_raza" value="{{ previo.nm_raza }}"
+      minlength="2" pattern="{{ PATRON_LETRAS_2 }}" title="Solo letras y espacios (al menos 2)"></div>
+    <div class="col-md-3"><label class="form-label">Peso (kg)</label><input class="form-control" type="number" min="0" step="0.1" name="nm_peso" value="{{ previo.nm_peso }}"></div>
+  </div>
+</div>
+{%- endmacro %}
+
 {# <option> de profesionales agrupadas por especialidad (sin la especialidad en el texto) #}
 {% macro opciones_profesionales(profesionales, seleccionado='') -%}
 {% for especialidad, grupo in profesionales|groupby('especialidad') %}<optgroup label="{{ especialidad }}">

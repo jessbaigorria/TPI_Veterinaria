@@ -22,6 +22,16 @@ async def formulario(request: Request) -> dict:
     return dict(await request.form())
 
 
+def datos_mascota_nueva(f: dict) -> dict | None:
+    """Sección «Nueva mascota» de los formularios de atención y turno (campos «nm_…»), o None si no
+    se completó el nombre."""
+    if not (f.get("nm_nombre") or "").strip():
+        return None
+    return {"titular_id": f.get("titular_id"), "nombre": f.get("nm_nombre"), "especie": f.get("nm_especie"),
+            "sexo": f.get("nm_sexo"), "fecha_nacimiento": f.get("nm_fecha_nacimiento"),
+            "raza": f.get("nm_raza", ""), "peso": f.get("nm_peso")}
+
+
 def destino_interno(destino: str | None, defecto: str, prefijo: str) -> str:
     """Vuelve a la pantalla indicada solo si es una ruta interna del portal (si no, al defecto)."""
     return destino if destino and destino.startswith(prefijo) else defecto

@@ -42,8 +42,10 @@ class AtencionesService(ServicioBase):
     @transaccional
     def reservar_turno(self, mascota_id, profesional_id, clinica_id, inicio, fin=None,
                        tipo=TipoAtencion.CONSULTA, motivo="", asiste_titular=True,
-                       responsable_presente="") -> AtencionClinica:
-        a = AtencionClinica.reservar(self.obtener(Mascota, mascota_id), self.obtener(Clinica, clinica_id),
+                       responsable_presente="", nueva_mascota=None) -> AtencionClinica:
+        """``nueva_mascota`` (dict): mascota del titular que todavía no estaba registrada."""
+        mascota = self._mascota_elegida_o_nueva(mascota_id, nueva_mascota)
+        a = AtencionClinica.reservar(mascota, self.obtener(Clinica, clinica_id),
                                      self.obtener(Profesional, profesional_id), a_fecha_hora(inicio),
                                      a_fecha_hora(fin), TipoAtencion(tipo), observaciones=texto(motivo),
                                      asiste_titular=a_bool(asiste_titular),
@@ -70,12 +72,7 @@ class AtencionesService(ServicioBase):
                             duracion_minutos=None) -> ResultadoInicio:
         """Crea la atención y la inicia en el momento (urgencia/espontánea), validando superposición
         y vacunas. ``nueva_mascota`` (dict) permite el caso 2: cliente frecuente con mascota nueva."""
-        if nueva_mascota:
-            mascota = MascotasService(self.s).crear_mascota(**nueva_mascota)
-            self.s.flush()
-            mascota_id = mascota.id
-        elif not mascota_id:
-            raise DatosInvalidosError("Elegí una mascota del titular o completá los datos de la mascota nueva.")
+        mascota = self._mascota_elegida_o_nueva(mascota_id, nueva_mascota)
         inicio = a_fecha_hora(inicio) or reloj.ahora().replace(second=0)
         try:
             minutos = int(duracion_minutos) if duracion_minutos not in (None, "") else None
@@ -84,7 +81,7 @@ class AtencionesService(ServicioBase):
         if minutos is not None and minutos <= 0:
             raise DatosInvalidosError("La duración debe ser mayor que cero.")
         fin = inicio + timedelta(minutes=minutos) if minutos else None
-        a = AtencionClinica.registrar_sin_turno(self.obtener(Mascota, mascota_id), self.obtener(Clinica, clinica_id),
+        a = AtencionClinica.registrar_sin_turno(mascota, self.obtener(Clinica, clinica_id),
                                                 self.obtener(Profesional, profesional_id), inicio, fin,
                                                 TipoAtencion(tipo), observaciones=texto(motivo),
                                                 asiste_titular=a_bool(asiste_titular),
@@ -105,6 +102,18 @@ class AtencionesService(ServicioBase):
             a.historia.registrar_vacuna(aplicacion)
         a.finalizar(texto(diagnostico), a_float(peso, "peso"), importe, observaciones)
         return a
+
+    def _mascota_elegida_o_nueva(self, mascota_id, nueva_mascota: dict | None) -> Mascota:
+        """La mascota elegida del titular o, si no se eligió ninguna, la mascota nueva (nunca las dos)."""
+        if nueva_mascota and mascota_id:
+            raise DatosInvalidosError("Ya elegiste una mascota del titular: no se puede cargar además una mascota nueva.")
+        if nueva_mascota:
+            mascota = MascotasService(self.s).crear_mascota(**nueva_mascota)
+            self.s.flush()
+            return mascota
+        if not mascota_id:
+            raise DatosInvalidosError("Elegí una mascota del titular o completá los datos de la mascota nueva.")
+        return self.obtener(Mascota, mascota_id)
 
     # --- consultas ------------------------------------------------------------------
     def obtener_atencion(self, atencion_id) -> AtencionClinica:

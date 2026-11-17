@@ -10,7 +10,7 @@ from app.services.base import a_fecha
 from app.services.clientes import ClientesService
 from app.services.mascotas import MascotasService
 from app.web.plantillas import render
-from app.web.routers._comun import Db, UsrClinica, formulario, ir
+from app.web.routers._comun import Db, UsrClinica, datos_mascota_nueva, formulario, ir
 from app.web.sesion import UsuarioSesion, avisar
 
 router = APIRouter(prefix="/clinica")
@@ -36,7 +36,7 @@ async def atencion_registrar(request: Request, u: UsuarioSesion = UsrClinica, s:
     f = await formulario(request)
     r = AtencionesService(s).registrar_sin_turno(
         f.get("profesional_id"), u.clinica_id, f.get("tipo") or "CONSULTA", mascota_id=f.get("mascota_id"),
-        nueva_mascota=_datos_mascota_nueva(f), motivo=f.get("motivo", ""),
+        nueva_mascota=datos_mascota_nueva(f), motivo=f.get("motivo", ""),
         asiste_titular=f.get("asiste_titular", "1"), responsable_presente=f.get("responsable_presente", ""),
         inicio=f.get("inicio") or None, duracion_minutos=f.get("duracion") or 30)
     avisar(request, f"Atención registrada e iniciada para {r.atencion.mascota.nombre}.")
@@ -64,15 +64,6 @@ async def atencion_finalizar(request: Request, atencion_id: int, u: UsuarioSesio
 
 
 # --- auxiliares ----------------------------------------------------------------------------
-def _datos_mascota_nueva(f: dict) -> dict | None:
-    """Caso 2 del formulario: si se completó la mascota nueva («nm_…»), se crea y se usa esa."""
-    if not (f.get("nm_nombre") or "").strip():
-        return None
-    return {"titular_id": f.get("titular_id"), "nombre": f.get("nm_nombre"), "especie": f.get("nm_especie"),
-            "sexo": f.get("nm_sexo"), "fecha_nacimiento": f.get("nm_fecha_nacimiento"),
-            "raza": f.get("nm_raza", ""), "peso": f.get("nm_peso")}
-
-
 def _vacunas_aplicadas(form) -> list[dict]:
     """Vacunas tildadas al finalizar una atención de VACUNACIÓN, con su lote y número de dosis."""
     return [{"vacuna_id": vid, "lote": form.get(f"lote_{vid}", ""), "dosis_numero": form.get(f"dosis_{vid}") or 1}

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "componentes/macros.html" import encabezado, opciones_profesionales %}
+{% from "componentes/macros.html" import encabezado, opciones_profesionales, seccion_mascota_nueva %}
 {% block contenido %}
 {% call encabezado("Registrar atención médica sin turno previo") %}{% endcall %}
 <form method="post" action="/clinica/atenciones/registrar" data-horario-sin-turno data-duraciones='{{ DURACIONES|tojson }}' data-mascota-nueva>
@@ -18,20 +18,7 @@
               data-seleccionada="{{ query.mascota or previo.mascota_id }}"><option value="">— Elegí la mascota —</option></select>
       <div id="aviso-vacunas" class="mt-2"></div>
 
-      <div class="border rounded p-3 mt-3 bg-light">
-        <div class="fw-semibold mb-2"><i class="bi bi-plus-circle text-secondary"></i> Nueva mascota (cliente frecuente)</div>
-        <div class="form-text mt-0 mb-2">Completá estos datos solo si la mascota todavía no está registrada; si no, elegila arriba.</div>
-        <div class="row g-2">
-          <div class="col-md-6"><label class="form-label" for="nm_nombre">Nombre</label><input class="form-control" id="nm_nombre" name="nm_nombre" value="{{ previo.nm_nombre }}" data-nueva></div>
-          <div class="col-md-3"><label class="form-label">Especie</label><select class="form-select" name="nm_especie" data-nueva>
-            {% for e in enums.Especie %}<option value="{{ e.value }}" {{ 'selected' if previo.nm_especie == e.value }}>{{ e.etiqueta }}</option>{% endfor %}</select></div>
-          <div class="col-md-3"><label class="form-label">Sexo</label><select class="form-select" name="nm_sexo" data-nueva>
-            {% for e in enums.Sexo %}<option value="{{ e.value }}" {{ 'selected' if previo.nm_sexo == e.value }}>{{ e.etiqueta }}</option>{% endfor %}</select></div>
-          <div class="col-md-4"><label class="form-label">Nacimiento</label><input type="date" class="form-control" name="nm_fecha_nacimiento" max="{{ reloj.hoy() }}" value="{{ previo.nm_fecha_nacimiento }}" data-nueva></div>
-          <div class="col-md-5"><label class="form-label">Raza</label><input class="form-control" name="nm_raza" value="{{ previo.nm_raza }}"></div>
-          <div class="col-md-3"><label class="form-label">Peso (kg)</label><input class="form-control" type="number" min="0" step="0.1" name="nm_peso" value="{{ previo.nm_peso }}"></div>
-        </div>
-      </div>
+      {{ seccion_mascota_nueva(previo) }}
 
       <div class="row g-2 mt-2">
         <div class="col-md-4"><label class="form-label">¿Asiste el titular?</label>
@@ -60,7 +47,7 @@
           <input type="number" class="form-control" name="duracion" required value="{{ previo.duracion }}" min="5" step="5">
           <div class="form-text" data-ayuda-duracion></div></div>
       </div>
-      <label class="form-label">Motivo / anamnesis (lo que cuenta el cliente)</label>
+      <label class="form-label">Motivo</label>
       <textarea class="form-control" name="motivo" rows="3">{{ previo.motivo }}</textarea>
     </div></div>
     <button class="btn btn-portal btn-lg w-100"><i class="bi bi-play-circle"></i> Registrar e iniciar atención</button>

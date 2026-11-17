@@ -113,21 +113,29 @@ class Mascota(Base):
             raise MascotaSinTitularError("No se puede registrar una mascota sin titular responsable.")
         if not titular.activo:
             raise MascotaSinTitularError(f"El titular {titular.nombre_completo()} está dado de baja.")
-        if not (nombre or "").strip():
-            raise VeterinariaError("El nombre de la mascota es obligatorio.")
+        self.nombre = self.validar_nombre(nombre)
         if fecha_nacimiento is None or fecha_nacimiento > reloj.hoy():
             raise VeterinariaError("La fecha de nacimiento es obligatoria y no puede ser futura.")
-        self.nombre = nombre.strip()
         self.especie = Especie(especie)
         self.sexo = Sexo(sexo)
         self.fecha_nacimiento = fecha_nacimiento
-        self.raza = raza or ""
+        self.raza = self.validar_raza(raza)
         self.peso = float(peso or 0)
         self.activa = True
         titular.agregar_mascota(self)
         # Composición 1–1: la historia clínica nace con la mascota.
         self.historia_clinica = HistoriaClinica(numero=numero_historia, alergias=alergias,
                                                 antecedentes=antecedentes)
+
+    @staticmethod
+    def validar_nombre(nombre) -> str:
+        """Obligatorio, solo letras y espacios (mínimo 2)."""
+        return validaciones.nombre_persona(nombre, "Nombre de la mascota", minimo=2)
+
+    @staticmethod
+    def validar_raza(raza) -> str:
+        """Opcional; si se carga, solo letras y espacios (mínimo 2)."""
+        return validaciones.nombre_persona(raza, "Raza", minimo=2) if (raza or "").strip() else ""
 
     def edad_en_semanas(self, fecha: date | None = None) -> int:
         fecha = fecha or reloj.hoy()

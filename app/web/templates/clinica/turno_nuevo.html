@@ -1,24 +1,26 @@
 {% extends "base.html" %}
-{% from "componentes/macros.html" import encabezado, opciones_profesionales %}
+{% from "componentes/macros.html" import encabezado, opciones_profesionales, seccion_mascota_nueva %}
 {% block contenido %}
 {% call encabezado("Reservar turno") %}{% endcall %}
 <div class="card" style="max-width: 820px"><div class="card-body">
 <form method="post" action="/clinica/agenda/reservar" data-horario-turno data-duraciones='{{ DURACIONES|tojson }}'
-      data-hoy="{{ reloj.hoy() }}" data-ahora-min="{{ reloj.ahora().hour * 60 + reloj.ahora().minute }}">
+      data-hoy="{{ reloj.hoy() }}" data-ahora-min="{{ reloj.ahora().hour * 60 + reloj.ahora().minute }}" data-mascota-nueva>
   <div class="row g-3">
     <div class="col-md-6">
-      <label class="form-label">Titular <span class="text-danger">*</span></label>
+      <label class="form-label" for="titular_id">Titular <span class="text-danger">*</span></label>
       <select class="form-select" id="titular_id" name="titular_id" required data-buscar="Buscá por apellido o DNI">
         <option value="">— Elegí el titular —</option>
-        {% for t in titulares %}<option value="{{ t.id }}" {{ 'selected' if (mascota and mascota.titular.id == t.id) or previo.titular_id == t.id|string }}>{{ t.nombre_completo() }} · DNI {{ t.dni|dni }}</option>{% endfor %}
+        {% for t in titulares %}<option value="{{ t.id }}" {{ 'selected' if (mascota and mascota.titular.id == t.id) or query.titular == t.id|string or previo.titular_id == t.id|string }}>{{ t.nombre_completo() }} · DNI {{ t.dni|dni }}</option>{% endfor %}
       </select>
+      <div class="form-text">¿No existe? <a href="/clinica/clientes/nuevo?next=/clinica/agenda/nuevo">Crear titular</a></div>
     </div>
     <div class="col-md-6">
-      <label class="form-label">Mascota <span class="text-danger">*</span></label>
-      <select class="form-select" name="mascota_id" data-buscar="Buscá la mascota" required data-mascotas-de="titular_id" data-aviso="aviso-vacunas"
+      <label class="form-label" for="mascota_id">Mascota del titular</label>
+      <select class="form-select" id="mascota_id" name="mascota_id" data-buscar="Buscá la mascota" required data-mascotas-de="titular_id" data-aviso="aviso-vacunas"
               data-seleccionada="{{ mascota.id if mascota else previo.mascota_id }}"><option value="">— Elegí la mascota —</option></select>
     </div>
     <div class="col-12" id="aviso-vacunas"></div>
+    <div class="col-12 mt-0">{{ seccion_mascota_nueva(previo) }}</div>
     <div class="col-md-6">
       <label class="form-label">Profesional <span class="text-danger">*</span></label>
       <select class="form-select" name="profesional_id" required>

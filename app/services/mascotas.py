@@ -31,9 +31,7 @@ class MascotasService(ServicioBase):
     def actualizar_mascota(self, mascota_id, **datos) -> Mascota:
         m = self.obtener(Mascota, mascota_id)
         if "nombre" in datos:
-            if not texto(datos["nombre"]):
-                raise VeterinariaError("El nombre es obligatorio.")
-            m.nombre = texto(datos["nombre"])
+            m.nombre = Mascota.validar_nombre(datos["nombre"])
         if datos.get("especie"):
             m.especie = Especie(datos["especie"])
         if datos.get("sexo"):
@@ -41,7 +39,7 @@ class MascotasService(ServicioBase):
         if datos.get("fecha_nacimiento"):
             m.fecha_nacimiento = a_fecha(datos["fecha_nacimiento"])
         if "raza" in datos:
-            m.raza = texto(datos["raza"])
+            m.raza = Mascota.validar_raza(datos["raza"])
         if datos.get("peso") not in (None, ""):
             m.peso = a_float(datos["peso"], "peso")
         return m
