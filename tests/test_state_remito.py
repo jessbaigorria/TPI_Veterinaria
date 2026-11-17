@@ -3,8 +3,8 @@ import pytest
 
 from app.domain.enums import EstadoContenedor, EstadoPrecinto, ResultadoRecepcion
 from app.domain.estados.estado_remito import (
-    EstadoRemito, RemitoArmado, RemitoDespachado, RemitoEnTransito, RemitoRecibido,
-    RemitoRecibidoConObservaciones,
+    EstadoRemito, Armado, Despachado, EnTransito, Recibido,
+    RecibidoConObservaciones,
 )
 from app.domain.excepciones import (
     MuestraRechazadaError, TransicionInvalidaError, VeterinariaError,
@@ -16,20 +16,20 @@ from app.domain.transporte import Precinto
 def test_flujo_completo(mundo):
     m = mundo.muestra()
     r = mundo.remito()
-    assert isinstance(r.estado, RemitoArmado) and r.estado_actual() == "Armado"
+    assert isinstance(r.estado, Armado) and r.estado_actual() == "Armado"
     r.agregar_muestra(m)
     assert m.estado_codigo == "Empaquetada"
     r.cerrar(Precinto("PRE-1", "recepcion"), 4.0)
     assert r.precinto.estado is EstadoPrecinto.INTEGRO
     assert r.contenedor.estado is EstadoContenedor.EN_USO
     r.despachar(mundo.envio())
-    assert isinstance(r.estado, RemitoDespachado)
+    assert isinstance(r.estado, Despachado)
     assert m.estado_codigo == "EnTransito"
     r.iniciar_transito()
-    assert isinstance(r.estado, RemitoEnTransito)
+    assert isinstance(r.estado, EnTransito)
     rec = mundo.lab.recibir_remito(r, True, 5.0, "Lucas Gomez")
     assert rec.resultado is ResultadoRecepcion.ACEPTADA
-    assert isinstance(r.estado, RemitoRecibido) and r.estado.es_final()
+    assert isinstance(r.estado, Recibido) and r.estado.es_final()
     assert m.estado_codigo == "Recibida"
     assert r.envio.fecha_hora_llegada_real is not None
     assert r.contenedor.estado is EstadoContenedor.DISPONIBLE
@@ -52,7 +52,7 @@ def test_despachar_sin_precinto_falla(mundo):
     r.agregar_muestra(mundo.muestra())
     with pytest.raises(TransicionInvalidaError):
         r.despachar(mundo.envio())
-    assert isinstance(r.estado, RemitoArmado)
+    assert isinstance(r.estado, Armado)
 
 
 def test_despachar_con_temperatura_fuera_de_rango_falla(mundo):
@@ -126,7 +126,7 @@ def test_precinto_roto_rechaza_todas_las_muestras(mundo):
     rec = mundo.lab.recibir_remito(r, False, 5.0, "Lucas Gomez")
     assert rec.resultado is ResultadoRecepcion.RECHAZADA
     assert rec.motivo_rechazo == "Precinto roto"
-    assert isinstance(r.estado, RemitoRecibidoConObservaciones)
+    assert isinstance(r.estado, RecibidoConObservaciones)
     assert r.precinto.estado is EstadoPrecinto.ROTO
     assert {m.estado_codigo for m in ms} == {"Rechazada"}
     assert all(m.motivo_rechazo() == "Precinto roto" for m in ms)
@@ -141,7 +141,7 @@ def test_temperatura_fuera_de_rango_rechaza(mundo):
     assert rec.resultado is ResultadoRecepcion.RECHAZADA
     assert rec.motivo_rechazo.startswith("Temperatura fuera de rango")
     assert r.precinto.estado is EstadoPrecinto.INTEGRO
-    assert isinstance(r.estado, RemitoRecibidoConObservaciones)
+    assert isinstance(r.estado, RecibidoConObservaciones)
     assert m.estado_codigo == "Rechazada"
     assert r.contenedor.estado is EstadoContenedor.DISPONIBLE
 
@@ -163,8 +163,8 @@ def test_remito_a_otro_laboratorio_no_se_recibe(mundo):
 
 def test_estados_finales_y_rehidratacion():
     assert {e.codigo for e in EstadoRemito.todos() if e.es_final()} == {
-        "RemitoRecibido", "RemitoRecibidoConObservaciones"}
-    assert isinstance(EstadoRemito.desde_nombre("RemitoEnTransito"), RemitoEnTransito)
+        "Recibido", "RecibidoConObservaciones"}
+    assert isinstance(EstadoRemito.desde_nombre("EnTransito"), EnTransito)
 
 
 def test_temperatura_fuera_de_rango_se_puede_volver_a_medir(mundo):
@@ -176,7 +176,7 @@ def test_temperatura_fuera_de_rango_se_puede_volver_a_medir(mundo):
     assert "registrar_temperatura" in r.acciones()
     r.registrar_temperatura_despacho(4.0)
     r.despachar(mundo.envio())
-    assert isinstance(r.estado, RemitoDespachado) and m.estado_codigo == "EnTransito"
+    assert isinstance(r.estado, Despachado) and m.estado_codigo == "EnTransito"
 
 
 def test_volver_a_medir_solo_en_armado_y_precintado(mundo):

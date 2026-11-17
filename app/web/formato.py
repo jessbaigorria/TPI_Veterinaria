@@ -10,8 +10,8 @@ from app.domain.estados.estado_remito import EstadoRemito
 # Colores fijos de estado (CSS: .estado-<clave>). No deciden comportamiento: solo pintan.
 COLOR_MUESTRA = {"Extraida": "gris", "Empaquetada": "azul", "EnTransito": "naranja", "Recibida": "celeste",
                  "Analizada": "verde", "Rechazada": "rojo"}
-COLOR_REMITO = {"RemitoArmado": "gris", "RemitoDespachado": "azul", "RemitoEnTransito": "naranja",
-                "RemitoRecibido": "verde", "RemitoRecibidoConObservaciones": "rojo"}
+COLOR_REMITO = {"Armado": "gris", "Despachado": "azul", "EnTransito": "naranja",
+                "Recibido": "verde", "RecibidoConObservaciones": "rojo"}
 COLOR_POR_NOMBRE = {e.nombre: COLOR_MUESTRA[e.codigo] for e in EstadoMuestra.todos()}
 COLOR_POR_NOMBRE["—"] = "gris"
 COLOR_ENUM = {

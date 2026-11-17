@@ -31,7 +31,7 @@ def _estados(s, modelo):
 
 def test_remitos_y_muestras_en_todos_los_estados(sesion_seed):
     assert _estados(sesion_seed, RemitoBiologico) == {
-        "RemitoArmado", "RemitoDespachado", "RemitoEnTransito", "RemitoRecibido", "RemitoRecibidoConObservaciones"}
+        "Armado", "Despachado", "EnTransito", "Recibido", "RecibidoConObservaciones"}
     assert _estados(sesion_seed, MuestraBiologica) == {
         "Extraida", "Empaquetada", "EnTransito", "Recibida", "Analizada", "Rechazada"}
 

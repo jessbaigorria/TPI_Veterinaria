@@ -6,7 +6,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 from sqlalchemy.orm import Session
 
-from app.domain.estados.estado_remito import RemitoDespachado, RemitoEnTransito
+from app.domain.estados.estado_remito import Despachado, EnTransito
 from app.domain.excepciones import VeterinariaError
 from app.domain.transporte import RecepcionRemito
 from app.services.catalogos import CatalogosService
@@ -22,7 +22,7 @@ from app.web.sesion import UsuarioSesion, avisar
 
 router = APIRouter(prefix="/laboratorio")
 REPORTES_LAB = {"rechazos": "Muestras rechazadas", "tiempos": "Tiempos de tránsito"}
-EN_CAMINO = [RemitoEnTransito.__name__, RemitoDespachado.__name__]
+EN_CAMINO = [EnTransito.__name__, Despachado.__name__]
 
 
 @router.get("")
@@ -40,8 +40,8 @@ def bandeja(request: Request, u: UsuarioSesion = UsrLaboratorio, s: Session = Db
     emp = EmpaquetadoService(s)
     lab = u.laboratorio_id
     return render(request, "laboratorio/recepcion.html", seccion="recepcion",
-                  en_transito=emp.listar_remitos(laboratorio_id=lab, estados=[RemitoEnTransito.__name__]),
-                  esperando=emp.listar_remitos(laboratorio_id=lab, estados=[RemitoDespachado.__name__]))
+                  en_transito=emp.listar_remitos(laboratorio_id=lab, estados=[EnTransito.__name__]),
+                  esperando=emp.listar_remitos(laboratorio_id=lab, estados=[Despachado.__name__]))
 
 
 @router.get("/recepcion/{remito_id}")

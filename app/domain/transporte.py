@@ -10,7 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, reconstructor, relationship
 from app.domain import reloj
 from app.domain.base import Base, EnumCol
 from app.domain.enums import EstadoContenedor, EstadoPrecinto, ResultadoRecepcion
-from app.domain.estados.estado_remito import EstadoRemito, RemitoArmado
+from app.domain.estados.estado_remito import EstadoRemito, Armado
 from app.domain.excepciones import TransicionInvalidaError, VeterinariaError
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -139,7 +139,7 @@ class RemitoBiologico(Base):
         self.clinica_origen = clinica_origen
         self.laboratorio = laboratorio
         self.contenedor = contenedor
-        self._estado = RemitoArmado()
+        self._estado = Armado()
         self.estado_codigo = self._estado.codigo
 
     @reconstructor

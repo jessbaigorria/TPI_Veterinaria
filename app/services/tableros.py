@@ -11,14 +11,14 @@ from app.domain.atencion import AtencionClinica
 from app.domain.cirugia import DerivacionCirugia
 from app.domain.enums import EstadoAtencion, EstadoDerivacionCirugia
 from app.domain.estados.estado_muestra import Analizada, Extraida, Recibida, Rechazada
-from app.domain.estados.estado_remito import RemitoArmado, RemitoDespachado, RemitoEnTransito
+from app.domain.estados.estado_remito import Armado, Despachado, EnTransito
 from app.domain.laboratorio import OrdenDerivacion
 from app.domain.muestra import HistorialEstadoMuestraFila, MuestraBiologica, ResultadoAnalisis
 from app.domain.transporte import Envio, RemitoBiologico
 from app.reportes.comun import horas
 from app.services.base import ServicioBase
 
-EN_CAMINO = [RemitoDespachado.__name__, RemitoEnTransito.__name__]
+EN_CAMINO = [Despachado.__name__, EnTransito.__name__]
 CIRUGIAS_ABIERTAS = [EstadoDerivacionCirugia.SOLICITADA, EstadoDerivacionCirugia.ACEPTADA,
                      EstadoDerivacionCirugia.PROGRAMADA]
 Historial = HistorialEstadoMuestraFila
@@ -46,10 +46,10 @@ class TablerosService(ServicioBase):
                 "/clinica/atenciones?estado=EN_PROGRESO"),
             Kpi("Muestras sin empaquetar", self._muestras_en_estado(muestras, Extraida), "droplet-half", "secondary",
                 "/clinica/envios/nuevo"),
-            Kpi("Remitos armados", self._remitos_de_clinica(cid, [RemitoArmado.__name__]), "box-seam", "secondary",
-                "/clinica/envios?estado=RemitoArmado"),
+            Kpi("Remitos armados", self._remitos_de_clinica(cid, [Armado.__name__]), "box-seam", "secondary",
+                "/clinica/envios?estado=Armado"),
             Kpi("Remitos en camino", self._remitos_de_clinica(cid, EN_CAMINO), "truck", "warning",
-                "/clinica/envios?estado=RemitoEnTransito"),
+                "/clinica/envios?estado=EnTransito"),
             Kpi("Rechazadas (7 días)", rechazadas, "exclamation-octagon", "danger", "/clinica/ordenes",
                 alerta=bool(rechazadas)),
             Kpi("Resultados nuevos (7 días)", self._resultados_recientes(muestras), "clipboard2-pulse", "success",

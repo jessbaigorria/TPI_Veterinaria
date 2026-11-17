@@ -1,8 +1,9 @@
 """Patrón State – ciclo de vida de RemitoBiologico.
 
-    [creación] → RemitoArmado --despachar(envio)--> RemitoDespachado --iniciar_transito()--> RemitoEnTransito
-                                                         --recibir(recepcion)--> RemitoRecibido
-                                                         --recibir(recepcion)--> RemitoRecibidoConObservaciones
+    [creación] → Armado --despachar(envio)--> Despachado --iniciar_transito()--> EnTransito
+    EnTransito --recibir(recepcion)--> Recibido | RecibidoConObservaciones
+
+Los nombres de las clases indican el estado, sin el prefijo «Remito» (igual que los de la muestra).
 
 El estado del remito coordina el de sus muestras (tabla 5.3 de context.md):
 despachar → muestras En tránsito; recibir → muestras Recibidas o Rechazadas.
@@ -81,7 +82,7 @@ class EstadoRemito(ABC):
         return f"<{self.codigo}>"
 
 
-class RemitoArmado(EstadoRemito):
+class Armado(EstadoRemito):
     nombre = "Armado"
 
     def agregar_muestra(self, r, m, usuario):
@@ -132,7 +133,7 @@ class RemitoArmado(EstadoRemito):
                 f"contenedor ({r.contenedor.temperatura_min}–{r.contenedor.temperatura_max} °C)."
             )
         r.envio = envio
-        r._cambiar_estado(RemitoDespachado())
+        r._cambiar_estado(Despachado())
         for m in r.muestras:
             m.despachar(usuario)  # Empaquetada → En tránsito
 
@@ -142,17 +143,17 @@ class RemitoArmado(EstadoRemito):
         return ["despachar", "registrar_temperatura"]
 
 
-class RemitoDespachado(EstadoRemito):
+class Despachado(EstadoRemito):
     nombre = "Despachado"
 
     def iniciar_transito(self, r):
-        r._cambiar_estado(RemitoEnTransito())
+        r._cambiar_estado(EnTransito())
 
     def acciones_disponibles(self, r):
         return ["iniciar_transito"]
 
 
-class RemitoEnTransito(EstadoRemito):
+class EnTransito(EstadoRemito):
     nombre = "En tránsito"
 
     def recibir(self, r, recepcion):
@@ -161,11 +162,11 @@ class RemitoEnTransito(EstadoRemito):
         r.contenedor.liberar()
         usuario = recepcion.usuario_receptor
         if recepcion.es_aceptada():
-            r._cambiar_estado(RemitoRecibido())
+            r._cambiar_estado(Recibido())
             for m in r.muestras:
                 m.recibir(usuario)
         else:
-            r._cambiar_estado(RemitoRecibidoConObservaciones())
+            r._cambiar_estado(RecibidoConObservaciones())
             for m in r.muestras:
                 m.rechazar(recepcion.motivo_rechazo, usuario)
 
@@ -173,14 +174,14 @@ class RemitoEnTransito(EstadoRemito):
         return ["recibir"]
 
 
-class RemitoRecibido(EstadoRemito):
+class Recibido(EstadoRemito):
     nombre = "Recibido"
 
     def es_final(self):
         return True
 
 
-class RemitoRecibidoConObservaciones(EstadoRemito):
+class RecibidoConObservaciones(EstadoRemito):
     nombre = "Recibido con observaciones"
 
     def es_final(self):

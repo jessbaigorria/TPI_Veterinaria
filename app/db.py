@@ -51,12 +51,21 @@ def crear_engine(url: str | None = None) -> Engine:
     return engine
 
 
+# Bases creadas antes de renombrar los estados del remito (RemitoArmado → Armado, …).
+MIGRACIONES = [
+    "UPDATE remito_biologico SET estado = substr(estado, 7) WHERE estado LIKE 'Remito%'",
+]
+
+
 def init_db(engine: Engine) -> None:
-    """Crea las tablas y los triggers que hacen inmutable el historial (capa 3)."""
+    """Crea las tablas y los triggers que hacen inmutable el historial (capa 3) y actualiza datos
+    guardados con nombres anteriores."""
     Base.metadata.create_all(engine)
     with engine.begin() as conn:
         for ddl in TRIGGERS_HISTORIAL:
             conn.execute(text(ddl))
+        for sql in MIGRACIONES:
+            conn.execute(text(sql))
 
 
 def reset_db(engine: Engine) -> None:

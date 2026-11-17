@@ -385,7 +385,7 @@
         <mxCell id="c_EstadoRemito_s2" value="+ despachar(r, envio)&lt;br&gt;+ iniciar_transito(r)&lt;br&gt;+ recibir(r, recepcion)&lt;br&gt;+ es_final(): bool" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;" parent="c_EstadoRemito" vertex="1">
           <mxGeometry y="71" width="130" height="68" as="geometry" />
         </mxCell>
-        <mxCell id="c_RemitoArmado" value="RemitoArmado" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;swimlaneFillColor=#ffffff;strokeColor=#666666;fontSize=12;" parent="1" vertex="1">
+        <mxCell id="c_RemitoArmado" value="Armado" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;swimlaneFillColor=#ffffff;strokeColor=#666666;fontSize=12;" parent="1" vertex="1">
           <mxGeometry x="2380" y="1770" width="130" height="67" as="geometry" />
         </mxCell>
         <mxCell id="c_RemitoArmado_s0" value="" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;" parent="c_RemitoArmado" vertex="1">
@@ -397,7 +397,7 @@
         <mxCell id="c_RemitoArmado_s2" value="+ despachar(r, envio)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;" parent="c_RemitoArmado" vertex="1">
           <mxGeometry y="44" width="130" height="23" as="geometry" />
         </mxCell>
-        <mxCell id="c_RemitoDespachado" value="RemitoDespachado" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;swimlaneFillColor=#ffffff;strokeColor=#666666;fontSize=12;" parent="1" vertex="1">
+        <mxCell id="c_RemitoDespachado" value="Despachado" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;swimlaneFillColor=#ffffff;strokeColor=#666666;fontSize=12;" parent="1" vertex="1">
           <mxGeometry x="2535" y="1770" width="142" height="67" as="geometry" />
         </mxCell>
         <mxCell id="c_RemitoDespachado_s0" value="" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;" parent="c_RemitoDespachado" vertex="1">
@@ -409,7 +409,7 @@
         <mxCell id="c_RemitoDespachado_s2" value="+ iniciar_transito(r)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;" parent="c_RemitoDespachado" vertex="1">
           <mxGeometry y="44" width="142" height="23" as="geometry" />
         </mxCell>
-        <mxCell id="c_RemitoEnTransito" value="RemitoEnTransito" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;swimlaneFillColor=#ffffff;strokeColor=#666666;fontSize=12;" parent="1" vertex="1">
+        <mxCell id="c_RemitoEnTransito" value="EnTransito" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;swimlaneFillColor=#ffffff;strokeColor=#666666;fontSize=12;" parent="1" vertex="1">
           <mxGeometry x="2702" y="1770" width="132" height="67" as="geometry" />
         </mxCell>
         <mxCell id="c_RemitoEnTransito_s0" value="" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;" parent="c_RemitoEnTransito" vertex="1">
@@ -421,7 +421,7 @@
         <mxCell id="c_RemitoEnTransito_s2" value="+ recibir(r, recepcion)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;" parent="c_RemitoEnTransito" vertex="1">
           <mxGeometry y="44" width="132" height="23" as="geometry" />
         </mxCell>
-        <mxCell id="c_RemitoRecibido" value="RemitoRecibido" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;swimlaneFillColor=#ffffff;strokeColor=#666666;fontSize=12;" parent="1" vertex="1">
+        <mxCell id="c_RemitoRecibido" value="Recibido" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;swimlaneFillColor=#ffffff;strokeColor=#666666;fontSize=12;" parent="1" vertex="1">
           <mxGeometry x="2859" y="1770" width="130" height="67" as="geometry" />
         </mxCell>
         <mxCell id="c_RemitoRecibido_s0" value="" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;" parent="c_RemitoRecibido" vertex="1">
@@ -433,7 +433,7 @@
         <mxCell id="c_RemitoRecibido_s2" value="+ es_final(): bool" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;" parent="c_RemitoRecibido" vertex="1">
           <mxGeometry y="44" width="130" height="23" as="geometry" />
         </mxCell>
-        <mxCell id="c_RemitoRecibidoConObservaciones" value="RemitoRecibidoConObservaciones" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;swimlaneFillColor=#ffffff;strokeColor=#666666;fontSize=12;" parent="1" vertex="1">
+        <mxCell id="c_RemitoRecibidoConObservaciones" value="RecibidoConObservaciones" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;swimlaneFillColor=#ffffff;strokeColor=#666666;fontSize=12;" parent="1" vertex="1">
           <mxGeometry x="3014" y="1770" width="230" height="67" as="geometry" />
         </mxCell>
         <mxCell id="c_RemitoRecibidoConObservaciones_s0" value="" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;" parent="c_RemitoRecibidoConObservaciones" vertex="1">

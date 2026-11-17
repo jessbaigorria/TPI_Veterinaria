@@ -19,7 +19,7 @@ from app.web.sesion import UsuarioSesion, avisar
 router = APIRouter(prefix="/clinica")
 
 # El filtro "en camino" agrupa Despachado + En tránsito (es un filtro de listado, no una transición).
-FILTROS_REMITO = {"RemitoEnTransito": ["RemitoDespachado", "RemitoEnTransito"]}
+FILTROS_REMITO = {"EnTransito": ["Despachado", "EnTransito"]}
 
 
 @router.get("/envios")

@@ -8,7 +8,7 @@ from app.domain.atencion import AtencionClinica
 from app.domain.clinica import Clinica
 from app.domain.enums import EstadoContenedor
 from app.domain.estados.estado_muestra import Extraida
-from app.domain.estados.estado_remito import RemitoArmado
+from app.domain.estados.estado_remito import Armado
 from app.domain.excepciones import VeterinariaError
 from app.domain.laboratorio import Laboratorio, OrdenDerivacion
 from app.domain.muestra import MuestraBiologica
@@ -81,7 +81,7 @@ class EmpaquetadoService(ServicioBase):
 
     def _contenedores_reservados(self) -> set[Contenedor]:
         """Contenedores elegidos por remitos en armado todavía sin precinto."""
-        stmt = select(RemitoBiologico).where(RemitoBiologico.estado_codigo == RemitoArmado.__name__)
+        stmt = select(RemitoBiologico).where(RemitoBiologico.estado_codigo == Armado.__name__)
         return {r.contenedor for r in self.s.scalars(stmt) if r.precinto is None}
 
     def obtener_remito(self, remito_id) -> RemitoBiologico:
