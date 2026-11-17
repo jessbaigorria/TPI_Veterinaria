@@ -13,7 +13,7 @@ from app.services.catalogos import CatalogosService
 from app.services.clientes import ClientesService
 from app.web.plantillas import render
 from app.web.sesion import (
-    PORTAL_CLINICA, PORTAL_LABORATORIO, UsuarioSesion, avisar, cerrar, iniciar, usuario_actual,
+    PORTAL_CLINICA, PORTAL_LABORATORIO, UsuarioSesion, avisar, cerrar, iniciar,
 )
 
 router = APIRouter()
@@ -21,9 +21,11 @@ router = APIRouter()
 
 @router.get("/")
 def ingreso(request: Request, s: Session = Depends(obtener_sesion)):
+    """Selección de portal: siempre la pantalla simple (sin barra de sesión), aunque haya una abierta;
+    elegir un portal reemplaza la sesión anterior."""
     cat = CatalogosService(s)
     return render(request, "login.html", clinicas=[c for c in cat.clinicas() if c.activa],
-                  laboratorios=[l for l in cat.laboratorios() if l.activo], actual=usuario_actual(request))
+                  laboratorios=[l for l in cat.laboratorios() if l.activo], u=None)
 
 
 @router.post("/ingresar")
@@ -45,8 +47,10 @@ async def ingresar(request: Request, s: Session = Depends(obtener_sesion)):
     raise VeterinariaError("Elegí un portal.")
 
 
-@router.get("/salir")
+@router.api_route("/salir", methods=["GET", "POST"])
 def salir(request: Request):
+    """Botón «Cambiar» de la barra superior (después de confirmar en el modal): cierra la sesión y
+    vuelve a la selección de portal."""
     cerrar(request)
     return RedirectResponse("/", status_code=303)
 

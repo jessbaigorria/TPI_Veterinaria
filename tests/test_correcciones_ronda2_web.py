@@ -126,3 +126,34 @@ def test_clinica_de_alta_complejidad_muestra_el_interruptor_fijo(entorno):
     centro = uno(s, Clinica, nombre="Clínica Centro")
     html = c.get(f"/clinica/gestion/clinicas/{centro.id}/editar").text
     assert 'type="checkbox" name="alta_complejidad"' in html and "checked disabled" not in html
+
+
+# --- 9: botón «Cambiar» -----------------------------------------------------------------------------
+def test_cambiar_pide_confirmacion_sin_salir_de_la_pagina(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    html = c.get("/clinica/agenda").text
+    boton = html.split(">Cambiar</button>", 1)[0].rsplit("<button", 1)[1]
+    assert 'data-bs-toggle="modal"' in boton and 'data-bs-target="#modal-salir"' in boton and "href" not in boton
+    modal = html.split('id="modal-salir"', 1)[1].split("</form>", 1)[0]
+    assert "Se cerrará la sesión" in modal and "¿Estás seguro que deseás salir de la sesión?" in modal
+    assert ">No</button>" in modal and 'data-bs-dismiss="modal"' in modal          # «No»: se queda en la página
+    assert 'action="/salir"' in modal and ">Sí</button>" in modal
+
+
+def test_si_cierra_la_sesion_y_muestra_la_seleccion_de_portal_simple(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    r = c.post("/salir", follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/"
+    html = c.get("/").text
+    assert "Entrar como Clínica" in html and "Entrar como Laboratorio" in html
+    assert "Sesión actual" not in html and "Continuar" not in html and "modal-salir" not in html
+    assert c.get("/clinica", follow_redirects=False).headers["location"] == "/"      # la sesión se cerró
+
+
+def test_la_seleccion_de_portal_no_muestra_la_sesion_abierta(entorno):
+    c, s = entorno
+    login_clinica(c, s)
+    visible = texto_visible(c.get("/").text)
+    assert "Sesión actual" not in visible and "Cambiar" not in visible and "Clínica Centro ·" not in visible
